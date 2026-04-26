@@ -9,10 +9,14 @@ MOCK_WINES = [
         "country": "United States",
         "vintage": "2021",
         "description": (
-            "A graceful, cool-climate Pinot Noir with cherry, cranberry, rose, "
-            "soft spice, and a clean mineral finish."
+            "Argyle's Reserve Pinot Noir leans into the lifted, cool-climate "
+            "side of the Willamette Valley: red cherry and cranberry up front, "
+            "then rose petal, clove, forest floor, and a clean mineral line. "
+            "It is polished without feeling heavy, making it a graceful choice "
+            "for salmon, mushroom risotto, roast chicken, or any dinner where "
+            "you want fragrance and freshness more than power."
         ),
-        "imageUrl": None,
+        "imageUrl": "/images/wines/argyle-reserve-pinot-noir-2021.png",
         "averageRating": 4.3,
         "priceCents": 4200,
         "pairings": ["salmon", "mushroom risotto", "roast chicken"],
@@ -33,10 +37,14 @@ MOCK_WINES = [
         "country": "United States",
         "vintage": "2022",
         "description": (
-            "A crisp, mineral white with grapefruit, lemon zest, fresh herbs, "
-            "and a bright finish suited to seafood and spring vegetables."
+            "Frog's Leap Estate Sauvignon Blanc is bright, herbal, and sharply "
+            "refreshed by Napa Valley citrus. Expect grapefruit, lemon zest, "
+            "fresh-cut grass, wet stone, and a little orchard blossom rather "
+            "than tropical sweetness. Its high acidity keeps seafood, oysters, "
+            "goat cheese, sushi, and green vegetables feeling clean and lively "
+            "through the finish."
         ),
-        "imageUrl": None,
+        "imageUrl": "/images/wines/frogs-leap-estate-sauvignon-blanc-2022.png",
         "averageRating": 4.1,
         "priceCents": 3000,
         "pairings": ["oysters", "goat cheese", "green salad", "sushi"],
@@ -57,10 +65,14 @@ MOCK_WINES = [
         "country": "Spain",
         "vintage": "2018",
         "description": (
-            "A polished Rioja with red plum, dried cherry, cedar, leather, "
-            "vanilla, and savory structure."
+            "La Rioja Alta's Rioja Reserva shows the classic comfort of mature "
+            "Tempranillo: red plum, dried cherry, cedar, leather, vanilla, and "
+            "a savory tobacco edge. The texture is polished and medium-bodied, "
+            "with enough acidity to lift lamb, tapas, manchego, and roasted "
+            "pork. Choose it when you want a bottle that feels traditional, "
+            "layered, and generous without becoming bulky."
         ),
-        "imageUrl": None,
+        "imageUrl": "/images/wines/la-rioja-alta-rioja-reserva-2018.png",
         "averageRating": 4.5,
         "priceCents": 5200,
         "pairings": ["lamb", "tapas", "aged manchego", "roasted pork"],
@@ -81,10 +93,14 @@ MOCK_WINES = [
         "country": "Italy",
         "vintage": "2020",
         "description": (
-            "A savory Tuscan red with black cherry, violet, tomato leaf, "
-            "earth, and firm but elegant tannins."
+            "Marchesi Antinori Chianti Classico Riserva is a savory Tuscan red "
+            "built around black cherry, violet, tomato leaf, dried herbs, and "
+            "earth. The tannins are firm but elegant, and the bright Sangiovese "
+            "acidity makes rich tomato sauces, pizza, osso buco, and pecorino "
+            "taste more vivid. It is the right bottle when dinner wants energy, "
+            "structure, and an unmistakably Italian profile."
         ),
-        "imageUrl": None,
+        "imageUrl": "/images/wines/antinori-chianti-classico-riserva-2020.png",
         "averageRating": 4.2,
         "priceCents": 3600,
         "pairings": ["pasta bolognese", "pizza", "osso buco", "pecorino"],
@@ -105,10 +121,14 @@ MOCK_WINES = [
         "country": "France",
         "vintage": "NV",
         "description": (
-            "A celebratory sparkling wine with apple, brioche, citrus, fine "
-            "bubbles, and a clean golden finish."
+            "Veuve Clicquot Brut Champagne brings a polished celebration style: "
+            "green apple, lemon, almond, brioche, and fine bubbles that feel "
+            "creamy but still brisk. The brut dryness keeps it flexible at the "
+            "table, from caviar and brie to fried chicken or a first toast. It "
+            "is best for moments that need lift, ceremony, and a crisp golden "
+            "finish."
         ),
-        "imageUrl": None,
+        "imageUrl": "/images/wines/veuve-clicquot-brut-champagne-nv.png",
         "averageRating": 4.4,
         "priceCents": 6400,
         "pairings": ["caviar", "fried chicken", "brie", "celebration toast"],
@@ -129,10 +149,15 @@ MOCK_WINES = [
         "country": "United States",
         "vintage": "2019",
         "description": (
-            "A structured Napa Cabernet with cassis, blackberry, graphite, "
-            "tobacco, and refined oak."
+            "Chateau Montelena Estate Cabernet Sauvignon is the most structured "
+            "selection in this set, with cassis, blackberry, graphite, tobacco, "
+            "cedar, and refined oak wrapped in firm Napa tannins. It has the "
+            "depth for steak, prime rib, braised short ribs, and blue cheese, "
+            "but the Calistoga fruit keeps it composed rather than jammy. Open "
+            "it when the meal calls for concentration, cellar-worthy polish, "
+            "and a long, savory finish."
         ),
-        "imageUrl": None,
+        "imageUrl": "/images/wines/chateau-montelena-estate-cabernet-sauvignon-2019.png",
         "averageRating": 4.6,
         "priceCents": 9500,
         "pairings": ["steak", "braised short ribs", "blue cheese", "prime rib"],

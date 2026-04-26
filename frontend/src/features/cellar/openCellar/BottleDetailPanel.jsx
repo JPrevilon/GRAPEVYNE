@@ -127,8 +127,12 @@ export default function BottleDetailPanel({
           </button>
 
           <div className="interactive-detail-panel__hero">
-            <div className={`interactive-detail-panel__bottle interactive-detail-panel__bottle--${bottle.labelColor}`} aria-hidden="true">
-              <span />
+            <div className={`interactive-detail-panel__bottle interactive-detail-panel__bottle--${bottle.labelColor}${bottle.imageUrl ? " has-image" : ""}`}>
+              {bottle.imageUrl ? (
+                <img src={bottle.imageUrl} alt={`${bottle.name} bottle`} />
+              ) : (
+                <span aria-hidden="true" />
+              )}
             </div>
             <div>
               <p className="eyebrow">{bottle.type} · {bottle.varietal}</p>
