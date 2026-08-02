@@ -147,6 +147,10 @@ describe("DiscoverPage", () => {
     expect(
       screen.getByText(/No demonstration bottles will replace/i),
     ).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "Search wines" })).toHaveAttribute(
+      "maxlength",
+      "200",
+    );
     expect(mockedSearchWines).not.toHaveBeenCalled();
   });
 
@@ -167,6 +171,39 @@ describe("DiscoverPage", () => {
 
     view.unmount();
     expect(receivedSignal?.aborted).toBe(true);
+  });
+
+  it("aborts a stale search so it cannot replace the newer result or render an error", async () => {
+    let staleSignal: AbortSignal | undefined;
+    mockedSearchWines.mockImplementation((query, signal) => {
+      if (query === "steak") {
+        staleSignal = signal;
+        return new Promise<WineSearchResult>((_resolve, reject) => {
+          signal?.addEventListener("abort", () => {
+            reject(new DOMException("Search superseded.", "AbortError"));
+          });
+        });
+      }
+
+      return Promise.resolve(result([sauvignon], "salmon"));
+    });
+
+    renderDiscover("/discover?query=steak");
+    await screen.findByText("FOLLOWING THE VINE");
+
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search wines" }), {
+      target: { value: "salmon" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "1 bottle for “salmon”" }),
+    ).toBeInTheDocument();
+    expect(staleSignal?.aborted).toBe(true);
+    expect(
+      screen.getByRole("link", { name: "View Estate Sauvignon Blanc" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("THE WINE SOURCE COULD NOT COMPLETE THAT SEARCH")).not.toBeInTheDocument();
   });
 
   it("renders successful API results and derives filters only from those results", async () => {
@@ -288,6 +325,9 @@ describe("DiscoverPage", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("Could not reach the local API.")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Open read-only demo" }),
+    ).toHaveAttribute("href", "/demo/cellar");
     expect(screen.queryByText("Reserve Pinot Noir")).not.toBeInTheDocument();
     expect(screen.queryByText(/demo-entry-/i)).not.toBeInTheDocument();
   });

@@ -1,4 +1,4 @@
-import { apiRequest, unwrapData } from "@/api/client";
+import { ApiError, apiRequest, unwrapData } from "@/api/client";
 import { normalizeWineDetail, normalizeWineSearch } from "@/api/normalizers";
 import type {
   ApiSuccessEnvelope,
@@ -11,7 +11,16 @@ export async function searchWines(
   query: string,
   signal?: AbortSignal,
 ): Promise<WineSearchResult> {
-  const params = new URLSearchParams({ query });
+  const normalizedQuery = query.trim();
+
+  if (!normalizedQuery) {
+    throw new ApiError("Search query is required.", {
+      code: "missing_query",
+      status: 400,
+    });
+  }
+
+  const params = new URLSearchParams({ query: normalizedQuery });
   const envelope = await apiRequest<ApiSuccessEnvelope<WineSearchData>>(
     `/wines/search?${params.toString()}`,
     { signal },

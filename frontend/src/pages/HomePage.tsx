@@ -416,8 +416,10 @@ function FinaleChapter() {
           </p>
           <p>
             This homepage adds GSAP and Lenis choreography with reduced-motion,
-            accessible navigation, and responsive final media. WebGL, a recommendation
-            engine, and a personalized Taste Atlas remain future work.
+            accessible navigation, responsive final media, and a persistent React Three
+            Fiber WebGL bottle built from local desktop and mobile GLB models. Capability
+            checks and reduced-motion preferences retain the CSS bottle fallback when
+            needed. A recommendation engine and personalized Taste Atlas remain future work.
           </p>
         </div>
       </details>

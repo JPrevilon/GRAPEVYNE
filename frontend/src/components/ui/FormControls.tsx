@@ -143,6 +143,7 @@ interface NaturalLanguageSearchProps {
   id: string;
   isBusy?: boolean;
   label: string;
+  maxLength?: number;
   onChange: (value: string) => void;
   onSubmit: () => void;
   placeholder: string;
@@ -156,6 +157,7 @@ export function NaturalLanguageSearch({
   id,
   isBusy = false,
   label,
+  maxLength = 200,
   onChange,
   onSubmit,
   placeholder,
@@ -186,6 +188,7 @@ export function NaturalLanguageSearch({
           aria-invalid={Boolean(error) || undefined}
           autoComplete="off"
           id={id}
+          maxLength={maxLength}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
           type="search"

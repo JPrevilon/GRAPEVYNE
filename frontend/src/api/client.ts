@@ -10,12 +10,9 @@ interface ApiErrorOptions {
   cause?: unknown;
 }
 
-const browserApiHost =
-  typeof window !== "undefined" ? window.location.hostname : "localhost";
+const configuredApiBase = import.meta.env.VITE_API_BASE_URL?.trim();
 
-export const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL || `http://${browserApiHost}:5000/api`
-).replace(/\/+$/, "");
+export const API_BASE_URL = (configuredApiBase || "/api").replace(/\/+$/, "");
 
 export class ApiError extends Error {
   readonly status: number;
@@ -39,6 +36,22 @@ export class ApiError extends Error {
 
 function isJsonObject(value: unknown): value is JsonObject {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function isAbortError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    error.name === "AbortError"
+  );
+}
+
+export function isAuthenticationRequired(error: unknown): boolean {
+  return (
+    error instanceof ApiError &&
+    (error.status === 401 || error.code === "authentication_required")
+  );
 }
 
 async function readResponsePayload(response: Response): Promise<unknown> {
@@ -88,7 +101,11 @@ export async function apiRequest<T = unknown>(
 ): Promise<T> {
   const headers = new Headers(options.headers);
 
-  if (!headers.has("Content-Type")) {
+  if (
+    options.body !== undefined &&
+    !(options.body instanceof FormData) &&
+    !headers.has("Content-Type")
+  ) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -101,10 +118,7 @@ export async function apiRequest<T = unknown>(
       headers,
     });
   } catch (cause) {
-    if (
-      cause instanceof DOMException &&
-      cause.name === "AbortError"
-    ) {
+    if (isAbortError(cause)) {
       throw cause;
     }
 
@@ -117,7 +131,23 @@ export async function apiRequest<T = unknown>(
     );
   }
 
-  const payload = await readResponsePayload(response);
+  let payload: unknown;
+
+  try {
+    payload = await readResponsePayload(response);
+  } catch (cause) {
+    if (isAbortError(cause)) {
+      throw cause;
+    }
+
+    throw new ApiError(
+      "The GrapeVyne API response could not be read. Please try again.",
+      {
+        cause,
+        code: "network_error",
+      },
+    );
+  }
 
   if (!response.ok) {
     throw toApiError(response, payload);

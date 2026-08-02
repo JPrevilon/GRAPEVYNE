@@ -2,7 +2,7 @@ import { createContext } from "react";
 
 import type { User } from "../../types/domain";
 
-export type AuthStatus = "loading" | "ready";
+export type AuthStatus = "error" | "loading" | "ready";
 
 export interface LoginInput {
   email: string;
@@ -14,9 +14,11 @@ export interface SignupInput extends LoginInput {
 }
 
 export interface AuthContextValue {
+  error: Error | null;
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  handleAuthenticationRequired: (expectedUserId: User["id"]) => Promise<boolean>;
   login: (payload: LoginInput) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;

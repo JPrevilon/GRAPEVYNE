@@ -16,6 +16,7 @@ import type { User } from "@/types/domain";
 import ProductNavigation from "./ProductNavigation";
 
 interface ToastValue {
+  clearToasts: () => void;
   dismissToast: (id: string) => void;
   showToast: (toast: {
     message: string;
@@ -66,6 +67,8 @@ function renderNavigation(initialPath = "/") {
 
 function useAnonymousSession() {
   mockedUseAuth.mockReturnValue({
+    error: null,
+    handleAuthenticationRequired: vi.fn(),
     isAuthenticated: false,
     isLoading: false,
     login: vi.fn(),
@@ -79,6 +82,8 @@ function useAnonymousSession() {
 
 function useAuthenticatedSession() {
   mockedUseAuth.mockReturnValue({
+    error: null,
+    handleAuthenticationRequired: vi.fn(),
     isAuthenticated: true,
     isLoading: false,
     login: vi.fn(),
@@ -105,6 +110,7 @@ describe("ProductNavigation", () => {
     vi.clearAllMocks();
     logout.mockResolvedValue(undefined);
     mockedUseToast.mockReturnValue({
+      clearToasts: vi.fn(),
       dismissToast: vi.fn(),
       showToast,
     });
@@ -204,5 +210,19 @@ describe("ProductNavigation", () => {
       message: "Your private cellar is closed.",
       title: "Signed out",
     });
+  });
+
+  it("does not show a logout failure when the request was intentionally aborted", async () => {
+    logout.mockRejectedValueOnce(
+      new DOMException("Logout was superseded.", "AbortError"),
+    );
+    useAuthenticatedSession();
+    renderNavigation("/cellar");
+
+    fireEvent.click(screen.getByRole("button", { name: "Logout" }));
+
+    await waitFor(() => expect(logout).toHaveBeenCalledOnce());
+    expect(showToast).not.toHaveBeenCalled();
+    expect(screen.getByTestId("location")).toHaveTextContent("/cellar");
   });
 });

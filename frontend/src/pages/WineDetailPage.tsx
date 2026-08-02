@@ -8,11 +8,21 @@ import {
   Star,
   Thermometer,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { saveWineToCellar } from "@/api/cellar";
-import { ApiError, isNetworkFailure } from "@/api/client";
+import {
+  assertCellarEntryOwner,
+  isCellarErrorEntryOwnedBy,
+  isCellarIdentityMismatch,
+  saveWineToCellar,
+} from "@/api/cellar";
+import {
+  ApiError,
+  isAbortError,
+  isAuthenticationRequired,
+  isNetworkFailure,
+} from "@/api/client";
 import { getWineDetail } from "@/api/wines";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { ErrorPanel, LoadingPanel } from "@/components/ui/StatePanels";
@@ -71,9 +81,20 @@ export default function WineDetailPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
+  const {
+    handleAuthenticationRequired,
+    isAuthenticated,
+    status: authStatus,
+    user,
+  } = useAuth();
   const { showToast } = useToast();
   const [saveFeedback, setSaveFeedback] = useState<SaveFeedback>(null);
+  const activeAuthStatus = useRef(authStatus);
+  const activeUserId = useRef(user?.id);
+  const saveOperationId = useRef(0);
+
+  activeAuthStatus.current = authStatus;
+  activeUserId.current = user?.id;
 
   const wineQuery = useQuery({
     enabled: Boolean(wineId),
@@ -84,18 +105,29 @@ export default function WineDetailPage() {
 
   const saveMutation = useMutation({
     gcTime: 0,
-    mutationFn: (externalWineId: string) => saveWineToCellar({ externalWineId }),
+    mutationFn: async ({
+      externalWineId,
+      ownerId,
+    }: {
+      externalWineId: string;
+      ownerId: number;
+    }) =>
+      assertCellarEntryOwner(
+        await saveWineToCellar({ externalWineId }, ownerId),
+        ownerId,
+      ),
     mutationKey: user
       ? privateQueryKey(user.id, "cellar", "save", wineId)
-      : (["public", "wine-save", wineId] as const),
+      : (["private", "anonymous", "cellar", "save", wineId] as const),
   });
 
   useEffect(() => {
+    saveOperationId.current += 1;
     setSaveFeedback(null);
     saveMutation.reset();
     // Reset confirmation when the route or signed-in identity changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, wineId]);
+  }, [authStatus, user?.id, wineId]);
 
   const wine = wineQuery.data?.wine;
   const locationLabel = useMemo(
@@ -105,6 +137,10 @@ export default function WineDetailPage() {
 
   async function handleSave() {
     if (!wine) return;
+
+    if (authStatus !== "ready") {
+      return;
+    }
 
     if (!isAuthenticated) {
       navigate("/login", { state: { from: returnPath(location) } });
@@ -120,19 +156,66 @@ export default function WineDetailPage() {
     }
 
     setSaveFeedback(null);
+    const operationId = ++saveOperationId.current;
+    const savingUserId = user.id;
 
     try {
-      await saveMutation.mutateAsync(wine.externalWineId);
-      await queryClient.invalidateQueries({
-        queryKey: privateQueryKey(user.id, "cellar"),
+      await saveMutation.mutateAsync({
+        externalWineId: wine.externalWineId,
+        ownerId: savingUserId,
       });
+
+      if (
+        operationId !== saveOperationId.current ||
+        activeAuthStatus.current !== "ready" ||
+        activeUserId.current !== savingUserId
+      ) {
+        return;
+      }
+
+      await queryClient.invalidateQueries({
+        queryKey: privateQueryKey(savingUserId, "cellar"),
+      });
+
+      if (
+        operationId !== saveOperationId.current ||
+        activeAuthStatus.current !== "ready" ||
+        activeUserId.current !== savingUserId
+      ) {
+        return;
+      }
+
       setSaveFeedback({ kind: "success", message: "Saved to your private cellar." });
       showToast({
         message: `${wine.name} is now in your private cellar.`,
         title: "Bottle saved",
       });
     } catch (error) {
+      if (
+        operationId !== saveOperationId.current ||
+        activeAuthStatus.current !== "ready" ||
+        activeUserId.current !== savingUserId ||
+        isAbortError(error)
+      ) {
+        return;
+      }
+
+      if (isCellarIdentityMismatch(error)) {
+        await handleAuthenticationRequired(savingUserId);
+        return;
+      }
+
+      if (isAuthenticationRequired(error)) {
+        await handleAuthenticationRequired(savingUserId);
+        return;
+      }
+
       if (error instanceof ApiError && error.code === "cellar_entry_exists") {
+        if (!isCellarErrorEntryOwnedBy(error, savingUserId)) {
+          await handleAuthenticationRequired(savingUserId);
+          return;
+        }
+
         const message = "This bottle is already in your cellar.";
         setSaveFeedback({ kind: "duplicate", message });
         showToast({ message, title: "Already saved" });
@@ -185,6 +268,8 @@ export default function WineDetailPage() {
     ["Serve", wine.servingTemp],
   ].filter((entry): entry is [string, string] => Boolean(entry[1]));
   const hasTags = wine.tastingNotes.length > 0 || wine.pairings.length > 0 || Boolean(wine.occasion);
+  const displayedSaveFeedback =
+    authStatus === "ready" ? saveFeedback : null;
 
   return (
     <article className="gv-page-shell gv-wine-detail">
@@ -247,17 +332,17 @@ export default function WineDetailPage() {
             <Button
               busyLabel="Saving bottle…"
               disabled={
-                isAuthLoading ||
-                saveFeedback?.kind === "success" ||
-                saveFeedback?.kind === "duplicate"
+                authStatus !== "ready" ||
+                displayedSaveFeedback?.kind === "success" ||
+                displayedSaveFeedback?.kind === "duplicate"
               }
               isBusy={saveMutation.isPending}
               onClick={() => void handleSave()}
               variant="primary"
             >
-              {saveFeedback?.kind === "success" ? (
+              {displayedSaveFeedback?.kind === "success" ? (
                 <><Check aria-hidden="true" size={17} />Saved to cellar</>
-              ) : saveFeedback?.kind === "duplicate" ? (
+              ) : displayedSaveFeedback?.kind === "duplicate" ? (
                 <><Check aria-hidden="true" size={17} />Already in cellar</>
               ) : isAuthenticated ? (
                 <><Heart aria-hidden="true" size={17} />Save to my cellar</>
@@ -265,12 +350,12 @@ export default function WineDetailPage() {
                 <><ShieldCheck aria-hidden="true" size={17} />Sign in to save</>
               )}
             </Button>
-            {saveFeedback ? (
+            {displayedSaveFeedback ? (
               <p
-                className={`gv-inline-feedback gv-inline-feedback--${saveFeedback.kind}`}
-                role={saveFeedback.kind === "error" ? "alert" : "status"}
+                className={`gv-inline-feedback gv-inline-feedback--${displayedSaveFeedback.kind}`}
+                role={displayedSaveFeedback.kind === "error" ? "alert" : "status"}
               >
-                {saveFeedback.message}
+                {displayedSaveFeedback.message}
               </p>
             ) : null}
           </div>

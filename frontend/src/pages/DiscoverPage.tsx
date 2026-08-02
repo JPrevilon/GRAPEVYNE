@@ -3,9 +3,9 @@ import { Sparkles, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
+import { isAbortError, isNetworkFailure } from "@/api/client";
 import { searchWines } from "@/api/wines";
-import { isNetworkFailure } from "@/api/client";
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import {
   FilterChip,
   NaturalLanguageSearch,
@@ -65,7 +65,8 @@ export default function DiscoverPage() {
   const wineSearch = useQuery({
     enabled: submittedQuery.length > 0,
     queryFn: ({ signal }) => searchWines(submittedQuery, signal),
-    queryKey: ["wine-search", submittedQuery],
+    queryKey: ["public", "wine-search", submittedQuery],
+    staleTime: 5 * 60_000,
   });
 
   const results = wineSearch.data?.results ?? EMPTY_RESULTS;
@@ -158,7 +159,6 @@ export default function DiscoverPage() {
           buttonLabel="Search"
           error={validationMessage || undefined}
           id="wine-search"
-          isBusy={wineSearch.isFetching}
           label="Search wines"
           onChange={handleQueryChange}
           onSubmit={() => submitQuery(draftQuery)}
@@ -202,15 +202,22 @@ export default function DiscoverPage() {
         />
       ) : null}
 
-      {wineSearch.isError ? (
+      {wineSearch.isError && !isAbortError(wineSearch.error) ? (
         <ErrorPanel
           action={
-            <Button
-              onClick={() => void wineSearch.refetch()}
-              variant="secondary"
-            >
-              Try again
-            </Button>
+            <>
+              <Button
+                onClick={() => void wineSearch.refetch()}
+                variant="secondary"
+              >
+                Try again
+              </Button>
+              {isNetworkFailure(wineSearch.error) ? (
+                <ButtonLink to="/demo/cellar" variant="ghost">
+                  Open read-only demo
+                </ButtonLink>
+              ) : null}
+            </>
           }
           description={errorDescription(wineSearch.error)}
           eyebrow="Search unavailable"

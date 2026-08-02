@@ -1,6 +1,7 @@
 import { type ChangeEvent, type FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+import { isAbortError } from "@/api/client";
 import BrandLockup from "@/components/brand/BrandLockup";
 import { Button } from "@/components/ui/Button";
 import { PasswordInput, TextInput } from "@/components/ui/FormControls";
@@ -52,7 +53,7 @@ export default function AuthForm({
   navigationState,
   returnTo,
 }: AuthFormProps) {
-  const { isLoading, login, signup } = useAuth();
+  const { error: authError, isLoading, login, signup, status } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [formData, setFormData] = useState<AuthFormValues>(INITIAL_VALUES);
@@ -62,6 +63,11 @@ export default function AuthForm({
   const isBusy = isLoading || isSubmitting;
   const copy = AUTH_COPY[mode];
   const errorId = `${mode}-form-error`;
+  const sessionWarningId = `${mode}-session-warning`;
+  const sessionWarning =
+    status === "error"
+      ? authError?.message || "The existing session could not be checked."
+      : "";
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const fieldName = event.currentTarget.name as keyof AuthFormValues;
@@ -116,6 +122,10 @@ export default function AuthForm({
       });
       navigate(returnTo, { replace: true });
     } catch (error) {
+      if (isAbortError(error)) {
+        return;
+      }
+
       const message = getAuthErrorMessage(error);
 
       setErrorMessage(message);
@@ -132,7 +142,9 @@ export default function AuthForm({
   return (
     <form
       aria-busy={isBusy || undefined}
-      aria-describedby={errorMessage ? errorId : undefined}
+      aria-describedby={
+        errorMessage ? errorId : sessionWarning ? sessionWarningId : undefined
+      }
       aria-label={isSignup ? "Create account form" : "Sign in form"}
       className="gv-auth-card"
       noValidate
@@ -147,6 +159,15 @@ export default function AuthForm({
           role="alert"
         >
           {errorMessage}
+        </p>
+      ) : null}
+      {!errorMessage && sessionWarning ? (
+        <p
+          className="gv-auth-card__error"
+          id={sessionWarningId}
+          role="status"
+        >
+          Session check unavailable: {sessionWarning} You can retry by signing in.
         </p>
       ) : null}
 

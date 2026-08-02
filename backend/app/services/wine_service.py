@@ -171,6 +171,18 @@ MOCK_WINES = [
 ]
 
 
+class WineServiceError(Exception):
+    """Base exception for real failures behind the wine-service boundary."""
+
+
+class WineServiceUnavailableError(WineServiceError):
+    """Raised when a configured wine provider is unavailable."""
+
+
+class WineServiceTimeoutError(WineServiceError):
+    """Raised when a configured wine provider exceeds its timeout."""
+
+
 class WineService:
     """Wine discovery abstraction.
 

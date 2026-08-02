@@ -2,6 +2,7 @@ import { LogOut, Menu, Search, UserRound, X } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
+import { isAbortError } from "@/api/client";
 import BrandLockup from "@/components/brand/BrandLockup";
 import { useToast } from "@/components/ui/useToast.js";
 import { useAuth } from "@/features/auth/useAuth";
@@ -32,7 +33,7 @@ function getFocusableElements(container: HTMLElement): HTMLElement[] {
 }
 
 export default function ProductNavigation() {
-  const { isAuthenticated, isLoading, logout, user } = useAuth();
+  const { isAuthenticated, isLoading, logout, status, user } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -125,6 +126,10 @@ export default function ProductNavigation() {
       });
       navigate("/");
     } catch (error) {
+      if (isAbortError(error)) {
+        return;
+      }
+
       showToast({
         message:
           error instanceof Error
@@ -165,6 +170,10 @@ export default function ProductNavigation() {
         {isLoading ? (
           <span className="gv-nav__session-status" role="status">
             Checking session
+          </span>
+        ) : status === "error" ? (
+          <span className="gv-nav__session-status" role="status">
+            Session check unavailable
           </span>
         ) : isAuthenticated ? (
           <>
@@ -255,6 +264,10 @@ export default function ProductNavigation() {
               {isLoading ? (
                 <span className="gv-nav__session-status" role="status">
                   Checking session
+                </span>
+              ) : status === "error" ? (
+                <span className="gv-nav__session-status" role="status">
+                  Session check unavailable
                 </span>
               ) : isAuthenticated ? (
                 <>

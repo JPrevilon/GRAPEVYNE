@@ -1,13 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  assertCellarEntryOwner,
+  assertCellarListOwner,
   deleteCellarEntry,
   getCellarEntries,
+  isCellarIdentityMismatch,
   type CellarEntryChanges,
   updateCellarEntry,
 } from "@/api/cellar";
+import { isAbortError, isAuthenticationRequired } from "@/api/client";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { TextInput } from "@/components/ui/FormControls";
 import { PageShell } from "@/components/ui/PageShell";
@@ -26,6 +30,13 @@ import type { CellarEntry, CellarListResult } from "@/types/domain";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Your cellar could not be loaded.";
+}
+
+function staleCellarOperationError() {
+  return new DOMException(
+    "The cellar request was superseded by a session check.",
+    "AbortError",
+  );
 }
 
 function searchableWineFields(entry: CellarEntry) {
@@ -56,28 +67,82 @@ function repeatedWineCount(entries: CellarEntry[]) {
 }
 
 export default function CellarPage() {
-  const { user } = useAuth();
+  const { handleAuthenticationRequired, status: authStatus, user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const userId = user?.id;
+  const activeUserId = useRef(userId);
+  const activeAuthStatus = useRef(authStatus);
+  const isMounted = useRef(false);
   const queryKey = privateQueryKey(userId ?? 0, "cellar");
+
+  activeAuthStatus.current = authStatus;
+  activeUserId.current = userId;
+
+  useEffect(() => {
+    isMounted.current = true;
+
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const cellarQuery = useQuery({
     enabled: userId !== undefined,
     gcTime: 0,
-    queryFn: ({ signal }) => getCellarEntries(signal),
+    queryFn: async ({ signal }) => {
+      if (userId === undefined) {
+        throw new Error("An authenticated session is required.");
+      }
+
+      return assertCellarListOwner(
+        await getCellarEntries(signal),
+        userId,
+      );
+    },
     queryKey,
     staleTime: 0,
   });
 
+  useEffect(() => {
+    if (
+      userId !== undefined &&
+      (isAuthenticationRequired(cellarQuery.error) ||
+        isCellarIdentityMismatch(cellarQuery.error))
+    ) {
+      void handleAuthenticationRequired(userId);
+    }
+  }, [cellarQuery.error, handleAuthenticationRequired, userId]);
+
   const updateMutation = useMutation({
     gcTime: 0,
     mutationKey: privateQueryKey(userId ?? 0, "cellar", "update"),
-    mutationFn: ({ changes, entryId }: { changes: CellarEntryChanges; entryId: number }) =>
-      updateCellarEntry(entryId, changes),
-    onSuccess: (updatedEntry) => {
-      queryClient.setQueryData<CellarListResult>(queryKey, (current) =>
+    mutationFn: async ({ changes, entryId, ownerId }: { changes: CellarEntryChanges; entryId: number; ownerId: number }) =>
+      assertCellarEntryOwner(
+        await updateCellarEntry(entryId, changes, ownerId),
+        ownerId,
+      ),
+    onError: (error, { ownerId }) => {
+      if (!isMounted.current || isAbortError(error)) {
+        return;
+      }
+
+      if (
+        isAuthenticationRequired(error) ||
+        isCellarIdentityMismatch(error)
+      ) {
+        void handleAuthenticationRequired(ownerId);
+      }
+    },
+    onSuccess: (updatedEntry, { ownerId }) => {
+      if (!isMounted.current || activeUserId.current !== ownerId) {
+        return;
+      }
+
+      queryClient.setQueryData<CellarListResult>(
+        privateQueryKey(ownerId, "cellar"),
+        (current) =>
         current
           ? {
               ...current,
@@ -93,9 +158,28 @@ export default function CellarPage() {
   const deleteMutation = useMutation({
     gcTime: 0,
     mutationKey: privateQueryKey(userId ?? 0, "cellar", "delete"),
-    mutationFn: (entryId: number) => deleteCellarEntry(entryId),
-    onSuccess: (deletedId) => {
-      queryClient.setQueryData<CellarListResult>(queryKey, (current) =>
+    mutationFn: ({ entryId, ownerId }: { entryId: number; ownerId: number }) =>
+      deleteCellarEntry(entryId, ownerId),
+    onError: (error, { ownerId }) => {
+      if (!isMounted.current || isAbortError(error)) {
+        return;
+      }
+
+      if (
+        isAuthenticationRequired(error) ||
+        isCellarIdentityMismatch(error)
+      ) {
+        void handleAuthenticationRequired(ownerId);
+      }
+    },
+    onSuccess: (deletedId, { ownerId }) => {
+      if (!isMounted.current || activeUserId.current !== ownerId) {
+        return;
+      }
+
+      queryClient.setQueryData<CellarListResult>(
+        privateQueryKey(ownerId, "cellar"),
+        (current) =>
         current
           ? {
               count: Math.max(0, current.count - 1),
@@ -106,6 +190,11 @@ export default function CellarPage() {
       setSelectedEntryId(null);
     },
   });
+
+  useEffect(() => {
+    setSelectedEntryId(null);
+    setSearchQuery("");
+  }, [userId]);
 
   const entries = useMemo(
     () =>
@@ -125,14 +214,79 @@ export default function CellarPage() {
   const duplicateCount = useMemo(() => repeatedWineCount(entries), [entries]);
   const selectedEntry =
     entries.find((entry) => entry.id === selectedEntryId) ?? null;
-  const isMutating = updateMutation.isPending || deleteMutation.isPending;
+  const isMutating =
+    authStatus !== "ready" ||
+    updateMutation.isPending ||
+    deleteMutation.isPending;
 
-  function handleUpdate(entryId: number, changes: CellarEntryChanges) {
-    return updateMutation.mutateAsync({ changes, entryId });
+  async function handleUpdate(entryId: number, changes: CellarEntryChanges) {
+    if (userId === undefined) {
+      return Promise.reject(new Error("An authenticated session is required."));
+    }
+
+    const ownerId = userId;
+
+    try {
+      const updatedEntry = await updateMutation.mutateAsync({
+        changes,
+        entryId,
+        ownerId,
+      });
+
+      if (
+        activeAuthStatus.current !== "ready" ||
+        activeUserId.current !== ownerId
+      ) {
+        throw staleCellarOperationError();
+      }
+
+      return updatedEntry;
+    } catch (error) {
+      if (
+        activeAuthStatus.current !== "ready" ||
+        activeUserId.current !== ownerId ||
+        isAbortError(error) ||
+        isAuthenticationRequired(error) ||
+        isCellarIdentityMismatch(error)
+      ) {
+        throw staleCellarOperationError();
+      }
+
+      throw error;
+    }
   }
 
-  function handleDelete(entryId: number) {
-    return deleteMutation.mutateAsync(entryId);
+  async function handleDelete(entryId: number) {
+    if (userId === undefined) {
+      return Promise.reject(new Error("An authenticated session is required."));
+    }
+
+    const ownerId = userId;
+
+    try {
+      const deletedId = await deleteMutation.mutateAsync({ entryId, ownerId });
+
+      if (
+        activeAuthStatus.current !== "ready" ||
+        activeUserId.current !== ownerId
+      ) {
+        throw staleCellarOperationError();
+      }
+
+      return deletedId;
+    } catch (error) {
+      if (
+        activeAuthStatus.current !== "ready" ||
+        activeUserId.current !== ownerId ||
+        isAbortError(error) ||
+        isAuthenticationRequired(error) ||
+        isCellarIdentityMismatch(error)
+      ) {
+        throw staleCellarOperationError();
+      }
+
+      throw error;
+    }
   }
 
   function handleSearchChange(value: string) {

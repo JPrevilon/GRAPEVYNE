@@ -21,6 +21,12 @@ export function ToastProvider({ children }) {
     setToasts((current) => current.filter((toast) => toast.id !== id));
   }, [clearToastTimer]);
 
+  const clearToasts = useCallback(() => {
+    timers.current.forEach((timer) => window.clearTimeout(timer));
+    timers.current.clear();
+    setToasts([]);
+  }, []);
+
   const scheduleDismiss = useCallback((id, delay = 5200) => {
     clearToastTimer(id);
     timers.current.set(
@@ -51,10 +57,11 @@ export function ToastProvider({ children }) {
 
   const value = useMemo(
     () => ({
+      clearToasts,
       dismissToast,
       showToast,
     }),
-    [dismissToast, showToast]
+    [clearToasts, dismissToast, showToast]
   );
 
   return (

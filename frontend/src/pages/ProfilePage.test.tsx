@@ -26,6 +26,8 @@ function authValue(
   overrides: Partial<AuthContextValue> = {},
 ): AuthContextValue {
   return {
+    error: null,
+    handleAuthenticationRequired: vi.fn(),
     isAuthenticated: true,
     isLoading: false,
     login: vi.fn(),

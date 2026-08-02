@@ -7,6 +7,7 @@ export interface ToastInput {
 }
 
 export interface ToastApi {
+  clearToasts: () => void;
   dismissToast: (id: string) => void;
   showToast: (toast: ToastInput) => void;
 }

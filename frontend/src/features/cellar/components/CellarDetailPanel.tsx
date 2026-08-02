@@ -18,6 +18,7 @@ import {
 } from "react";
 
 import type { CellarEntryChanges } from "@/api/cellar";
+import { isAbortError } from "@/api/client";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { SelectControl, TextInput } from "@/components/ui/FormControls";
 import { SidePanel } from "@/components/ui/SidePanel";
@@ -108,6 +109,7 @@ function CellarEntryEditor({
   const [errorMessage, setErrorMessage] = useState("");
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const confirmDeleteRef = useRef<HTMLButtonElement>(null);
+  const isMounted = useRef(false);
   const removeButtonRef = useRef<HTMLButtonElement>(null);
   const isBusy = isMutating || status === "saving" || status === "deleting";
   const headingId = `cellar-entry-${entry.id}-title`;
@@ -119,6 +121,14 @@ function CellarEntryEditor({
   const detailPath = entry.wine.externalWineId
     ? `/wines/${encodeURIComponent(entry.wine.externalWineId)}`
     : null;
+
+  useEffect(() => {
+    isMounted.current = true;
+
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (isConfirmingDelete) {
@@ -185,6 +195,11 @@ function CellarEntryEditor({
         status: formData.status,
         userRating: formData.userRating ? Number(formData.userRating) : null,
       });
+
+      if (!isMounted.current) {
+        return;
+      }
+
       setFormData(formState(updatedEntry));
       setStatus("saved");
       showToast({
@@ -192,6 +207,15 @@ function CellarEntryEditor({
         title: "Bottle updated",
       });
     } catch (error) {
+      if (!isMounted.current) {
+        return;
+      }
+
+      if (isAbortError(error)) {
+        setStatus("idle");
+        return;
+      }
+
       const message = messageFrom(error, "Could not update this bottle.");
       setStatus("idle");
       setErrorMessage(message);
@@ -215,11 +239,25 @@ function CellarEntryEditor({
 
     try {
       await onDelete(entry.id);
+
+      if (!isMounted.current) {
+        return;
+      }
+
       showToast({
         message: `${entry.wine.name} was removed from your cellar.`,
         title: "Bottle removed",
       });
     } catch (error) {
+      if (!isMounted.current) {
+        return;
+      }
+
+      if (isAbortError(error)) {
+        setStatus("idle");
+        return;
+      }
+
       const message = messageFrom(error, "Could not remove this bottle.");
       setStatus("idle");
       setErrorMessage(message);

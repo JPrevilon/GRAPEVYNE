@@ -18,9 +18,11 @@ import SignupPage from "@/pages/SignupPage";
 
 const mocks = vi.hoisted(() => ({
   auth: {
+    error: null as Error | null,
     isAuthenticated: false,
     isLoading: false,
     login: vi.fn(),
+    status: "ready" as "error" | "loading" | "ready",
     signup: vi.fn(),
   },
   showToast: vi.fn(),
@@ -94,8 +96,10 @@ function fillSignupForm(password = "secure-password") {
 }
 
 beforeEach(() => {
+  mocks.auth.error = null;
   mocks.auth.isAuthenticated = false;
   mocks.auth.isLoading = false;
+  mocks.auth.status = "ready";
   mocks.auth.login.mockReset();
   mocks.auth.signup.mockReset();
   mocks.showToast.mockReset();
@@ -104,6 +108,19 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("AuthForm", () => {
+  it("reports an unavailable session boot without treating it as signed out", () => {
+    mocks.auth.error = new Error("Could not reach the GrapeVyne API.");
+    mocks.auth.status = "error";
+    renderAuthRoutes("/login");
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Session check unavailable: Could not reach the GrapeVyne API.",
+    );
+    expect(screen.getByRole("form", { name: "Sign in form" })).toHaveAccessibleDescription(
+      /Session check unavailable/i,
+    );
+  });
+
   it("provides accessible login labels and browser autocomplete contracts", () => {
     renderAuthRoutes("/login");
 
@@ -196,6 +213,22 @@ describe("AuthForm", () => {
       "An account with that email already exists.",
     );
     expect(screen.getByRole("button", { name: "Create account" })).toBeEnabled();
+  });
+
+  it("does not report a superseded authentication request as a login failure", async () => {
+    mocks.auth.login.mockRejectedValue(
+      new DOMException("The request was superseded.", "AbortError"),
+    );
+    renderAuthRoutes("/login");
+    fillLoginForm();
+
+    fireEvent.submit(screen.getByRole("form", { name: "Sign in form" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled();
+    });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(mocks.showToast).not.toHaveBeenCalled();
   });
 
   it("disables every login field and exposes a busy state until login resolves", async () => {

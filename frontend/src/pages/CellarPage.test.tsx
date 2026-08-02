@@ -10,6 +10,7 @@ import {
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ApiError } from "@/api/client";
 import { ToastProvider } from "@/components/ui/ToastProvider.jsx";
 import type { CellarEntry, Wine } from "@/types/domain";
 
@@ -18,10 +19,14 @@ import CellarPage from "./CellarPage";
 const mocks = vi.hoisted(() => ({
   deleteCellarEntry: vi.fn(),
   getCellarEntries: vi.fn(),
+  handleAuthenticationRequired: vi.fn(),
+  authStatus: "ready" as "error" | "loading" | "ready",
   updateCellarEntry: vi.fn(),
+  userId: 42,
 }));
 
-vi.mock("@/api/cellar", () => ({
+vi.mock("@/api/cellar", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/api/cellar")>()),
   deleteCellarEntry: mocks.deleteCellarEntry,
   getCellarEntries: mocks.getCellarEntries,
   updateCellarEntry: mocks.updateCellarEntry,
@@ -29,7 +34,9 @@ vi.mock("@/api/cellar", () => ({
 
 vi.mock("@/features/auth/useAuth", () => ({
   useAuth: () => ({
-    user: { id: 42, email: "live@example.com", name: "Live User" },
+    handleAuthenticationRequired: mocks.handleAuthenticationRequired,
+    status: mocks.authStatus,
+    user: { id: mocks.userId, email: "live@example.com", name: "Live User" },
   }),
 }));
 
@@ -92,15 +99,22 @@ function renderCellar() {
     },
   });
 
-  return render(
+  const cellarTree = () => (
     <MemoryRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
           <CellarPage />
         </ToastProvider>
       </QueryClientProvider>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
+  const view = render(cellarTree());
+
+  return {
+    ...view,
+    queryClient,
+    rerenderCellar: () => view.rerender(cellarTree()),
+  };
 }
 
 function entryButton(name = "Live Session Merlot") {
@@ -109,6 +123,9 @@ function entryButton(name = "Live Session Merlot") {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.authStatus = "ready";
+  mocks.userId = 42;
+  mocks.handleAuthenticationRequired.mockResolvedValue(true);
 });
 
 afterEach(() => {
@@ -191,6 +208,42 @@ describe("protected live cellar", () => {
       screen.getByText(/No demonstration bottles have been substituted/i),
     ).toBeInTheDocument();
     expect(screen.queryByText("Estate Cabernet Sauvignon")).not.toBeInTheDocument();
+  });
+
+  it("revalidates the current owner when the cellar list reports session expiry", async () => {
+    mocks.getCellarEntries.mockRejectedValue(
+      new ApiError("Authentication is required.", {
+        code: "authentication_required",
+        status: 401,
+      }),
+    );
+
+    renderCellar();
+
+    await screen.findByRole("heading", { name: /saved cellar is unavailable/i });
+    await waitFor(() => {
+      expect(mocks.handleAuthenticationRequired).toHaveBeenCalledWith(42);
+    });
+  });
+
+  it("rejects and never caches a cellar list containing another owner's entry", async () => {
+    mocks.getCellarEntries.mockResolvedValue({
+      count: 1,
+      entries: [createEntry({ userId: 99 })],
+    });
+
+    const { queryClient } = renderCellar();
+
+    expect(
+      await screen.findByRole("heading", { name: /saved cellar is unavailable/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Live Session Merlot/i })).not.toBeInTheDocument();
+    expect(
+      queryClient.getQueryData(["private", 42, "cellar"]),
+    ).toBeUndefined();
+    await waitFor(() => {
+      expect(mocks.handleAuthenticationRequired).toHaveBeenCalledWith(42);
+    });
   });
 
   it("shows the live empty state only after the API confirms an empty cellar", async () => {
@@ -302,13 +355,17 @@ describe("protected live cellar", () => {
     expect(screen.getByRole("button", { name: "Saving changes…" })).toBeDisabled();
     expect(screen.getByLabelText("Occasion")).toBeDisabled();
     await waitFor(() =>
-      expect(mocks.updateCellarEntry).toHaveBeenCalledWith(91, {
-        favorite: true,
-        notes: "Black cherry and cedar.",
-        occasion: "Anniversary dinner",
-        status: "tasted",
-        userRating: 5,
-      }),
+      expect(mocks.updateCellarEntry).toHaveBeenCalledWith(
+        91,
+        {
+          favorite: true,
+          notes: "Black cherry and cedar.",
+          occasion: "Anniversary dinner",
+          status: "tasted",
+          userRating: 5,
+        },
+        42,
+      ),
     );
 
     await act(async () => {
@@ -320,6 +377,124 @@ describe("protected live cellar", () => {
       await screen.findByText("Changes saved to your private cellar."),
     ).toBeInTheDocument();
     expect(screen.getByText("Bottle updated")).toBeInTheDocument();
+  });
+
+  it("keeps server-confirmed cellar data unchanged when PATCH fails", async () => {
+    const entry = createEntry();
+    mocks.getCellarEntries.mockResolvedValue({ count: 1, entries: [entry] });
+    mocks.updateCellarEntry.mockRejectedValue(
+      new Error("This request did not come from a trusted application origin."),
+    );
+
+    renderCellar();
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Live Session Merlot/i }),
+    );
+    fireEvent.click(screen.getByLabelText("Mark as favorite"));
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(
+          "This request did not come from a trusted application origin.",
+        ),
+      ).toHaveLength(2);
+    });
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
+    expect(screen.getByText("Update failed")).toBeInTheDocument();
+    expect(entry.favorite).toBe(false);
+  });
+
+  it("suppresses a PATCH result and private toast during session revalidation", async () => {
+    const entry = createEntry();
+    const updatedEntry = createEntry({ favorite: true });
+    let resolveUpdate: ((value: CellarEntry) => void) | undefined;
+    mocks.getCellarEntries.mockResolvedValue({ count: 1, entries: [entry] });
+    mocks.updateCellarEntry.mockReturnValue(
+      new Promise<CellarEntry>((resolve) => {
+        resolveUpdate = resolve;
+      }),
+    );
+
+    const { queryClient, rerenderCellar } = renderCellar();
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Live Session Merlot/i }),
+    );
+    fireEvent.click(screen.getByLabelText("Mark as favorite"));
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(mocks.updateCellarEntry).toHaveBeenCalledOnce());
+
+    mocks.authStatus = "loading";
+    rerenderCellar();
+
+    await act(async () => {
+      resolveUpdate?.(updatedEntry);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(screen.queryByText("Bottle updated")).not.toBeInTheDocument();
+    expect(
+      queryClient.getQueryData<{ entries: CellarEntry[] }>([
+        "private",
+        42,
+        "cellar",
+      ])?.entries[0],
+    ).toMatchObject({ favorite: true, userId: 42 });
+  });
+
+  it("revalidates the current owner when PATCH reports session expiry", async () => {
+    mocks.getCellarEntries.mockResolvedValue({
+      count: 1,
+      entries: [createEntry()],
+    });
+    mocks.updateCellarEntry.mockRejectedValue(
+      new ApiError("Authentication is required.", {
+        code: "authentication_required",
+        status: 401,
+      }),
+    );
+
+    renderCellar();
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Live Session Merlot/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => {
+      expect(mocks.handleAuthenticationRequired).toHaveBeenCalledWith(42);
+    });
+    expect(screen.queryByText("Bottle updated")).not.toBeInTheDocument();
+  });
+
+  it("rejects a PATCH response owned by another user before cache or success feedback", async () => {
+    const originalEntry = createEntry();
+    mocks.getCellarEntries.mockResolvedValue({
+      count: 1,
+      entries: [originalEntry],
+    });
+    mocks.updateCellarEntry.mockResolvedValue(
+      createEntry({ favorite: true, userId: 99 }),
+    );
+
+    const { queryClient } = renderCellar();
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Live Session Merlot/i }),
+    );
+    fireEvent.click(screen.getByLabelText("Mark as favorite"));
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => {
+      expect(mocks.handleAuthenticationRequired).toHaveBeenCalledWith(42);
+    });
+    expect(screen.queryByText("Bottle updated")).not.toBeInTheDocument();
+    expect(
+      queryClient.getQueryData<{ entries: CellarEntry[] }>([
+        "private",
+        42,
+        "cellar",
+      ])?.entries[0],
+    ).toMatchObject({ favorite: false, userId: 42 });
   });
 
   it("requires inline confirmation before DELETE and reports the resulting empty state", async () => {
@@ -351,7 +526,7 @@ describe("protected live cellar", () => {
 
     expect(screen.getByRole("button", { name: "Removing bottle…" })).toBeDisabled();
     await waitFor(() =>
-      expect(mocks.deleteCellarEntry).toHaveBeenCalledWith(91),
+      expect(mocks.deleteCellarEntry).toHaveBeenCalledWith(91, 42),
     );
 
     await act(async () => {
@@ -365,5 +540,92 @@ describe("protected live cellar", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("Bottle removed")).toBeInTheDocument();
+  });
+
+  it("reconciles a confirmed DELETE but suppresses its toast during revalidation", async () => {
+    const entry = createEntry();
+    let resolveDelete: ((value: number) => void) | undefined;
+    mocks.getCellarEntries.mockResolvedValue({ count: 1, entries: [entry] });
+    mocks.deleteCellarEntry.mockReturnValue(
+      new Promise<number>((resolve) => {
+        resolveDelete = resolve;
+      }),
+    );
+
+    const { queryClient, rerenderCellar } = renderCellar();
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Live Session Merlot/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Remove bottle" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm removal" }));
+    await waitFor(() => expect(mocks.deleteCellarEntry).toHaveBeenCalledOnce());
+
+    mocks.authStatus = "loading";
+    rerenderCellar();
+    await act(async () => {
+      resolveDelete?.(91);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(screen.queryByText("Bottle removed")).not.toBeInTheDocument();
+    expect(
+      queryClient.getQueryData<{ entries: CellarEntry[] }>([
+        "private",
+        42,
+        "cellar",
+      ]),
+    ).toMatchObject({ count: 0, entries: [] });
+  });
+
+  it("keeps the bottle visible and retryable when DELETE fails", async () => {
+    const entry = createEntry();
+    mocks.getCellarEntries.mockResolvedValue({ count: 1, entries: [entry] });
+    mocks.deleteCellarEntry.mockRejectedValue(
+      new Error("The cellar service is unavailable."),
+    );
+
+    renderCellar();
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Live Session Merlot/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Remove bottle" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm removal" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText("The cellar service is unavailable."),
+      ).toHaveLength(2);
+    });
+    expect(entryButton()).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Confirm removal" })).toBeEnabled();
+    expect(screen.getByText("Remove failed")).toBeInTheDocument();
+    expect(screen.queryByText("Bottle removed")).not.toBeInTheDocument();
+  });
+
+  it("revalidates the current owner when DELETE reports session expiry", async () => {
+    mocks.getCellarEntries.mockResolvedValue({
+      count: 1,
+      entries: [createEntry()],
+    });
+    mocks.deleteCellarEntry.mockRejectedValue(
+      new ApiError("Authentication is required.", {
+        code: "authentication_required",
+        status: 401,
+      }),
+    );
+
+    renderCellar();
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Live Session Merlot/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Remove bottle" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm removal" }));
+
+    await waitFor(() => {
+      expect(mocks.handleAuthenticationRequired).toHaveBeenCalledWith(42);
+    });
+    expect(entryButton()).toBeInTheDocument();
+    expect(screen.queryByText("Bottle removed")).not.toBeInTheDocument();
   });
 });

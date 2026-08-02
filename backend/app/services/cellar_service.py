@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
@@ -6,6 +8,8 @@ from app.services.wine_service import WineService
 
 
 class CellarService:
+    manual_source_prefix = "manual:user:"
+
     def __init__(self, wine_service=None):
         self.wine_service = wine_service or WineService()
 
@@ -21,12 +25,12 @@ class CellarService:
         return CellarEntry.query.filter_by(id=entry_id, user_id=user_id).first()
 
     def create_entry_for_user(self, user_id, payload):
-        wine_payload = self._resolve_wine_payload(payload)
+        wine_payload, source = self._resolve_wine_payload(user_id, payload)
 
         if not wine_payload:
             return None, "wine_not_found"
 
-        wine = self._find_or_create_wine(wine_payload)
+        wine, metadata_changed = self._find_or_create_wine(wine_payload, source)
 
         existing_entry = CellarEntry.query.filter_by(
             user_id=user_id,
@@ -34,11 +38,15 @@ class CellarService:
         ).first()
 
         if existing_entry:
+            if metadata_changed:
+                db.session.commit()
+
             return existing_entry, "already_exists"
 
+        wine_id = wine.id
         entry = CellarEntry(
             user_id=user_id,
-            wine_id=wine.id,
+            wine_id=wine_id,
             notes=self._clean_optional_string(payload.get("notes")),
             user_rating=payload.get("userRating"),
             favorite=bool(payload.get("favorite", False)),
@@ -47,7 +55,20 @@ class CellarService:
         )
 
         db.session.add(entry)
-        db.session.commit()
+
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            existing_entry = CellarEntry.query.filter_by(
+                user_id=user_id,
+                wine_id=wine_id,
+            ).first()
+
+            if existing_entry:
+                return existing_entry, "already_exists"
+
+            raise
 
         return entry, "created"
 
@@ -71,27 +92,48 @@ class CellarService:
         return entry
 
     def delete_entry(self, entry):
+        wine = entry.wine
+        remove_orphaned_manual_wine = bool(
+            wine
+            and wine.source == self._manual_source_for_user(entry.user_id)
+        )
+
         db.session.delete(entry)
+
+        if remove_orphaned_manual_wine:
+            db.session.flush()
+            remaining_entry = CellarEntry.query.filter_by(wine_id=wine.id).first()
+
+            if not remaining_entry:
+                db.session.delete(wine)
+
         db.session.commit()
 
-    def _resolve_wine_payload(self, payload):
+    def _resolve_wine_payload(self, user_id, payload):
         wine_payload = payload.get("wine")
 
         if isinstance(wine_payload, dict):
-            return wine_payload
-
-        external_wine_id = payload.get("externalWineId")
+            external_wine_id = wine_payload.get(
+                "externalWineId"
+            ) or wine_payload.get("externalApiId")
+        else:
+            external_wine_id = payload.get("externalWineId")
 
         if external_wine_id:
-            return self.wine_service.get_by_external_id(external_wine_id)
+            canonical_wine = self.wine_service.get_by_external_id(external_wine_id)
 
-        return None
+            if canonical_wine:
+                return canonical_wine, self.wine_service.source
 
-    def _find_or_create_wine(self, wine_payload):
+            if isinstance(wine_payload, dict):
+                return wine_payload, self._manual_source_for_user(user_id)
+
+        return None, None
+
+    def _find_or_create_wine(self, wine_payload, source):
         external_api_id = wine_payload.get("externalWineId") or wine_payload.get(
             "externalApiId"
         )
-        source = wine_payload.get("source") or self.wine_service.source
 
         wine = Wine.query.filter_by(
             source=source,
@@ -99,22 +141,17 @@ class CellarService:
         ).first()
 
         if wine:
-            return wine
+            if source == self.wine_service.source:
+                return wine, self._reconcile_wine_metadata(wine, wine_payload)
+
+            return wine, False
 
         wine = Wine(
             external_api_id=external_api_id,
             source=source,
             name=wine_payload["name"],
-            winery=wine_payload.get("winery"),
-            varietal=wine_payload.get("varietal"),
-            region=wine_payload.get("region"),
-            country=wine_payload.get("country"),
-            vintage=wine_payload.get("vintage"),
-            description=wine_payload.get("description"),
-            image_url=wine_payload.get("imageUrl"),
-            average_rating=wine_payload.get("averageRating"),
-            price_cents=wine_payload.get("priceCents"),
         )
+        self._reconcile_wine_metadata(wine, wine_payload)
 
         db.session.add(wine)
 
@@ -127,7 +164,34 @@ class CellarService:
                 external_api_id=external_api_id,
             ).first()
 
-        return wine
+            if not wine:
+                raise
+
+            if source == self.wine_service.source:
+                return wine, self._reconcile_wine_metadata(wine, wine_payload)
+
+            return wine, False
+
+        return wine, False
+
+    def _reconcile_wine_metadata(self, wine, wine_payload):
+        average_rating = wine_payload.get("averageRating")
+        wine.name = wine_payload["name"]
+        wine.winery = wine_payload.get("winery")
+        wine.varietal = wine_payload.get("varietal")
+        wine.region = wine_payload.get("region")
+        wine.country = wine_payload.get("country")
+        wine.vintage = wine_payload.get("vintage")
+        wine.description = wine_payload.get("description")
+        wine.image_url = wine_payload.get("imageUrl")
+        wine.average_rating = (
+            Decimal(str(average_rating)) if average_rating is not None else None
+        )
+        wine.price_cents = wine_payload.get("priceCents")
+        return db.session.is_modified(wine, include_collections=False)
+
+    def _manual_source_for_user(self, user_id):
+        return f"{self.manual_source_prefix}{user_id}"
 
     def _clean_optional_string(self, value):
         if not isinstance(value, str):

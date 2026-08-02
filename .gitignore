@@ -1,6 +1,7 @@
 # Python
 __pycache__/
 *.py[cod]
+.pytest_cache/
 .venv/
 .env
 
@@ -16,4 +17,3 @@ dist/
 .DS_Store
 .idea/
 .vscode/
-

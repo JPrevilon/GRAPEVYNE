@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ApiError, apiRequest } from "@/api/client";
+import {
+  API_BASE_URL,
+  ApiError,
+  apiRequest,
+  isAbortError,
+  isNetworkFailure,
+} from "@/api/client";
 import type { ApiSuccessEnvelope } from "@/types/api";
 
 const fetchMock = vi.fn<typeof fetch>();
@@ -29,7 +35,28 @@ describe("apiRequest", () => {
 
     const requestInit = fetchMock.mock.calls[0]?.[1];
 
-    expect(fetchMock.mock.calls[0]?.[0]).toMatch(/\/api\/health$/);
+    expect(API_BASE_URL).toBe("/api");
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/health");
+    expect(requestInit?.credentials).toBe("include");
+    expect(new Headers(requestInit?.headers).has("Content-Type")).toBe(false);
+  });
+
+  it("cannot be downgraded from credentialed requests and labels JSON bodies", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ data: { authenticated: false } }), {
+        headers: { "Content-Type": "application/json" },
+        status: 200,
+      }),
+    );
+
+    await apiRequest("/auth/logout", {
+      body: JSON.stringify({}),
+      credentials: "omit",
+      method: "POST",
+    });
+
+    const requestInit = fetchMock.mock.calls[0]?.[1];
+
     expect(requestInit?.credentials).toBe("include");
     expect(new Headers(requestInit?.headers).get("Content-Type")).toBe(
       "application/json",
@@ -81,5 +108,44 @@ describe("apiRequest", () => {
     fetchMock.mockRejectedValue(abortError);
 
     await expect(apiRequest("/auth/me")).rejects.toBe(abortError);
+    expect(isAbortError(abortError)).toBe(true);
+    expect(isAbortError({ name: "AbortError" })).toBe(true);
+  });
+
+  it("normalizes a response-body stream failure as a useful network error", async () => {
+    const cause = new TypeError("The response stream terminated early.");
+    fetchMock.mockResolvedValue({
+      headers: new Headers({ "Content-Type": "application/json" }),
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      text: vi.fn().mockRejectedValue(cause),
+    } as unknown as Response);
+
+    const error = await apiRequest("/health").catch(
+      (reason: unknown) => reason,
+    );
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({
+      cause,
+      code: "network_error",
+      message: "The GrapeVyne API response could not be read. Please try again.",
+      status: 0,
+    });
+    expect(isNetworkFailure(error)).toBe(true);
+  });
+
+  it("preserves AbortError when response-body reading is canceled", async () => {
+    const abortError = new DOMException("Reading was canceled.", "AbortError");
+    fetchMock.mockResolvedValue({
+      headers: new Headers({ "Content-Type": "application/json" }),
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      text: vi.fn().mockRejectedValue(abortError),
+    } as unknown as Response);
+
+    await expect(apiRequest("/health")).rejects.toBe(abortError);
   });
 });

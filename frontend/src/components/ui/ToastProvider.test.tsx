@@ -5,7 +5,7 @@ import { ToastProvider } from "./ToastProvider.jsx";
 import { useToast } from "./useToast.js";
 
 function ToastHarness() {
-  const { showToast } = useToast();
+  const { clearToasts, showToast } = useToast();
 
   return (
     <div>
@@ -31,6 +31,9 @@ function ToastHarness() {
         type="button"
       >
         Show error
+      </button>
+      <button onClick={clearToasts} type="button">
+        Clear notifications
       </button>
     </div>
   );
@@ -88,5 +91,18 @@ describe("ToastProvider", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(alert).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent("Save failed");
+  });
+
+  it("clears every notification and its dismissal timer", () => {
+    renderToasts();
+    fireEvent.click(screen.getByRole("button", { name: "Show success" }));
+    fireEvent.click(screen.getByRole("button", { name: "Show error" }));
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Clear notifications" }),
+    );
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

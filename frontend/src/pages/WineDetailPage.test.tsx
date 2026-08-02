@@ -30,7 +30,8 @@ import type {
 
 import WineDetailPage from "./WineDetailPage";
 
-vi.mock("@/api/cellar", () => ({
+vi.mock("@/api/cellar", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/api/cellar")>()),
   saveWineToCellar: vi.fn(),
 }));
 
@@ -122,6 +123,8 @@ function authValue(
   overrides: Partial<AuthContextValue> = {},
 ): AuthContextValue {
   return {
+    error: null,
+    handleAuthenticationRequired: vi.fn().mockResolvedValue(true),
     isAuthenticated: true,
     isLoading: false,
     login: vi.fn(),
@@ -175,7 +178,7 @@ function renderDetail(
     },
   });
   const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
-  const view = render(
+  const detailTree = () => (
     <QueryClientProvider client={queryClient}>
       <MemoryRouter
         future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
@@ -187,13 +190,18 @@ function renderDetail(
           <Route path="/discover" element={<h1>Discover destination</h1>} />
         </Routes>
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+  const view = render(detailTree());
 
   return {
     ...view,
     invalidateQueries,
     queryClient,
+    rerenderAuth: (nextAuth: AuthContextValue) => {
+      mockedUseAuth.mockReturnValue(nextAuth);
+      view.rerender(detailTree());
+    },
     unmount: () => {
       view.unmount();
       queryClient.clear();
@@ -206,6 +214,7 @@ beforeEach(() => {
   mockedSaveWineToCellar.mockResolvedValue(savedEntry);
   mockedUseAuth.mockReturnValue(authValue());
   mockedUseToast.mockReturnValue({
+    clearToasts: vi.fn(),
     dismissToast: vi.fn(),
     showToast,
   });
@@ -364,6 +373,25 @@ describe("WineDetailPage", () => {
     expect(mockedSaveWineToCellar).not.toHaveBeenCalled();
   });
 
+  it("does not permit a stale authenticated identity to save when session verification failed", async () => {
+    renderDetail(
+      `/wines/${EXTERNAL_WINE_ID}`,
+      authValue({
+        error: new Error("Could not reach the GrapeVyne API."),
+        isLoading: false,
+        status: "error",
+      }),
+    );
+
+    const saveButton = await screen.findByRole("button", {
+      name: "Save to my cellar",
+    });
+    expect(saveButton).toBeDisabled();
+    fireEvent.click(saveButton);
+
+    expect(mockedSaveWineToCellar).not.toHaveBeenCalled();
+  });
+
   it("keeps save pending until backend confirmation, then confirms and invalidates only the user's cellar", async () => {
     const pendingSave = deferred<CellarEntry>();
     mockedSaveWineToCellar.mockReturnValue(pendingSave.promise);
@@ -378,9 +406,10 @@ describe("WineDetailPage", () => {
     });
     expect(pendingButton).toBeDisabled();
     expect(pendingButton).toHaveAttribute("aria-busy", "true");
-    expect(mockedSaveWineToCellar).toHaveBeenCalledWith({
-      externalWineId: EXTERNAL_WINE_ID,
-    });
+    expect(mockedSaveWineToCellar).toHaveBeenCalledWith(
+      { externalWineId: EXTERNAL_WINE_ID },
+      user.id,
+    );
     expect(invalidateQueries).not.toHaveBeenCalled();
     expect(showToast).not.toHaveBeenCalled();
 
@@ -405,6 +434,32 @@ describe("WineDetailPage", () => {
     });
   });
 
+  it("suppresses private save feedback when revalidation starts during cache refresh", async () => {
+    const pendingSave = deferred<CellarEntry>();
+    const pendingInvalidation = deferred<void>();
+    mockedSaveWineToCellar.mockReturnValue(pendingSave.promise);
+    const { invalidateQueries, rerenderAuth } = renderDetail();
+    invalidateQueries.mockReturnValue(pendingInvalidation.promise);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save to my cellar" }),
+    );
+    await act(async () => {
+      pendingSave.resolve(savedEntry);
+      await pendingSave.promise;
+    });
+    await waitFor(() => expect(invalidateQueries).toHaveBeenCalledOnce());
+
+    rerenderAuth(authValue({ isLoading: true, status: "loading" }));
+    await act(async () => {
+      pendingInvalidation.resolve();
+      await pendingInvalidation.promise;
+    });
+
+    expect(screen.queryByText("Saved to your private cellar.")).not.toBeInTheDocument();
+    expect(showToast).not.toHaveBeenCalled();
+  });
+
   it("reports the backend duplicate contract without claiming a new save", async () => {
     mockedSaveWineToCellar.mockRejectedValue(
       new ApiError("This wine is already in your cellar.", {
@@ -423,14 +478,42 @@ describe("WineDetailPage", () => {
       "This bottle is already in your cellar.",
     );
     expect(screen.getByRole("button", { name: "Already in cellar" })).toBeDisabled();
-    expect(mockedSaveWineToCellar).toHaveBeenCalledWith({
-      externalWineId: EXTERNAL_WINE_ID,
-    });
+    expect(mockedSaveWineToCellar).toHaveBeenCalledWith(
+      { externalWineId: EXTERNAL_WINE_ID },
+      user.id,
+    );
     expect(invalidateQueries).not.toHaveBeenCalled();
     expect(showToast).toHaveBeenCalledWith({
       message: "This bottle is already in your cellar.",
       title: "Already saved",
     });
+  });
+
+  it("revalidates instead of claiming a duplicate owned by another session", async () => {
+    const handleAuthenticationRequired = vi.fn().mockResolvedValue(true);
+    mockedSaveWineToCellar.mockRejectedValue(
+      new ApiError("This wine is already in your cellar.", {
+        code: "cellar_entry_exists",
+        details: { entry: { ...savedEntry, userId: 99 } },
+        status: 409,
+      }),
+    );
+    const { invalidateQueries } = renderDetail(
+      `/wines/${EXTERNAL_WINE_ID}`,
+      authValue({ handleAuthenticationRequired }),
+    );
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save to my cellar" }),
+    );
+
+    await waitFor(() => {
+      expect(handleAuthenticationRequired).toHaveBeenCalledWith(user.id);
+    });
+    expect(invalidateQueries).not.toHaveBeenCalled();
+    expect(showToast).not.toHaveBeenCalled();
+    expect(screen.queryByText("This bottle is already in your cellar.")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save to my cellar" })).toBeEnabled();
   });
 
   it("renders a failed save as an alert and leaves retry available", async () => {
@@ -450,14 +533,89 @@ describe("WineDetailPage", () => {
       "A database error occurred.",
     );
     expect(screen.getByRole("button", { name: "Save to my cellar" })).toBeEnabled();
-    expect(mockedSaveWineToCellar).toHaveBeenCalledWith({
-      externalWineId: EXTERNAL_WINE_ID,
-    });
+    expect(mockedSaveWineToCellar).toHaveBeenCalledWith(
+      { externalWineId: EXTERNAL_WINE_ID },
+      user.id,
+    );
     expect(invalidateQueries).not.toHaveBeenCalled();
     expect(showToast).toHaveBeenCalledWith({
       message: "A database error occurred.",
       title: "Save failed",
       tone: "error",
     });
+  });
+
+  it("renders a production origin rejection honestly without a false save", async () => {
+    mockedSaveWineToCellar.mockRejectedValue(
+      new ApiError("This request did not come from a trusted application origin.", {
+        code: "csrf_origin_rejected",
+        status: 403,
+      }),
+    );
+    const { invalidateQueries } = renderDetail();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save to my cellar" }),
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "This request did not come from a trusted application origin.",
+    );
+    expect(screen.getByRole("button", { name: "Save to my cellar" })).toBeEnabled();
+    expect(invalidateQueries).not.toHaveBeenCalled();
+    expect(showToast).toHaveBeenCalledWith({
+      message: "This request did not come from a trusted application origin.",
+      title: "Save failed",
+      tone: "error",
+    });
+  });
+
+  it("revalidates the current owner when save reports session expiry", async () => {
+    const handleAuthenticationRequired = vi.fn().mockResolvedValue(true);
+    mockedSaveWineToCellar.mockRejectedValue(
+      new ApiError("Authentication is required.", {
+        code: "authentication_required",
+        status: 401,
+      }),
+    );
+    const { invalidateQueries } = renderDetail(
+      `/wines/${EXTERNAL_WINE_ID}`,
+      authValue({ handleAuthenticationRequired }),
+    );
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save to my cellar" }),
+    );
+
+    await waitFor(() => {
+      expect(handleAuthenticationRequired).toHaveBeenCalledWith(user.id);
+    });
+    expect(invalidateQueries).not.toHaveBeenCalled();
+    expect(showToast).not.toHaveBeenCalled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("rejects a save response owned by another user before cache or success feedback", async () => {
+    const handleAuthenticationRequired = vi.fn().mockResolvedValue(true);
+    mockedSaveWineToCellar.mockResolvedValue({
+      ...savedEntry,
+      userId: 99,
+    });
+    const { invalidateQueries } = renderDetail(
+      `/wines/${EXTERNAL_WINE_ID}`,
+      authValue({ handleAuthenticationRequired }),
+    );
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save to my cellar" }),
+    );
+
+    await waitFor(() => {
+      expect(handleAuthenticationRequired).toHaveBeenCalledWith(user.id);
+    });
+    expect(invalidateQueries).not.toHaveBeenCalled();
+    expect(showToast).not.toHaveBeenCalled();
+    expect(screen.queryByText("Saved to your private cellar.")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save to my cellar" })).toBeEnabled();
   });
 });

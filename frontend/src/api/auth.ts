@@ -33,34 +33,42 @@ export async function getCurrentUser(signal?: AbortSignal): Promise<User> {
   return normalizeAuthenticatedUser(unwrapData<AuthenticatedUserData>(envelope));
 }
 
-export async function login(input: LoginInput): Promise<User> {
+export async function login(
+  input: LoginInput,
+  signal?: AbortSignal,
+): Promise<User> {
   const envelope = await apiRequest<ApiSuccessEnvelope<AuthenticatedUserData>>(
     "/auth/login",
     {
       body: JSON.stringify(input),
       method: "POST",
+      signal,
     },
   );
 
   return normalizeAuthenticatedUser(unwrapData<AuthenticatedUserData>(envelope));
 }
 
-export async function signup(input: SignupInput): Promise<User> {
+export async function signup(
+  input: SignupInput,
+  signal?: AbortSignal,
+): Promise<User> {
   const envelope = await apiRequest<ApiSuccessEnvelope<AuthenticatedUserData>>(
     "/auth/signup",
     {
       body: JSON.stringify(input),
       method: "POST",
+      signal,
     },
   );
 
   return normalizeAuthenticatedUser(unwrapData<AuthenticatedUserData>(envelope));
 }
 
-export async function logout(): Promise<LoggedOutData> {
+export async function logout(signal?: AbortSignal): Promise<LoggedOutData> {
   const envelope = await apiRequest<ApiSuccessEnvelope<LoggedOutData>>(
     "/auth/logout",
-    { method: "POST" },
+    { method: "POST", signal },
   );
   const data = unwrapData<LoggedOutData>(envelope);
 

@@ -253,4 +253,21 @@ describe("HomePage scroll story", () => {
     expect(container.textContent).not.toMatch(/\d+\s*%/);
     expect(container.textContent).toMatch(/personalized engine is not implemented yet/i);
   });
+
+  it("keeps the engineering disclosure factual about implemented WebGL and deferred engines", () => {
+    renderHome();
+
+    expect(
+      screen.getByText(/persistent React Three Fiber WebGL bottle/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/local desktop and mobile GLB models/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/A recommendation engine and personalized Taste Atlas remain future work/i),
+    ).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(
+      "WebGL, a recommendation engine, and a personalized Taste Atlas remain future work.",
+    );
+  });
 });
