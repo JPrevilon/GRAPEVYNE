@@ -1,4 +1,4 @@
-import { apiRequest } from "../../api/client.js";
+import { apiRequest } from "../../api/client";
 
 export function getCellarEntries() {
   return apiRequest("/cellar");

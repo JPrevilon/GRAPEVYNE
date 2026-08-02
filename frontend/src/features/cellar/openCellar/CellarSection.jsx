@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 export default function CellarSection({
   isActive,
@@ -8,6 +8,8 @@ export default function CellarSection({
   onSelect,
   section,
 }) {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <motion.button
       aria-label={`Open ${section.sectionName}: ${section.description}`}
@@ -20,7 +22,7 @@ export default function CellarSection({
         .filter(Boolean)
         .join(" ")}
       initial={false}
-      whileHover={{ y: -4 }}
+      whileHover={prefersReducedMotion ? undefined : { y: -4 }}
       onBlur={() => onHover(null)}
       onClick={() => onSelect(section.sectionId)}
       onFocus={() => onHover(section.sectionId)}

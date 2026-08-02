@@ -1,10 +1,11 @@
 import { ArrowLeft, Heart, MapPin, Star } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { useToast } from "../components/ui/useToast.js";
 import { saveWineToCellar } from "../features/cellar/cellarApi.js";
-import { useAuth } from "../features/auth/useAuth.js";
+import { useAuth } from "../features/auth/useAuth";
 import WineBottleMark from "../features/wines/components/WineBottleMark.jsx";
 import { getWineDetail } from "../features/wines/wineApi.js";
 
@@ -38,6 +39,7 @@ export default function WineDetailPage() {
   const { wineId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { showToast } = useToast();
   const [wine, setWine] = useState(null);
@@ -93,6 +95,7 @@ export default function WineDetailPage() {
       await saveWineToCellar({
         wine,
       });
+      await queryClient.invalidateQueries({ queryKey: ["private"] });
       setSaveStatus("saved");
       setSaveMessage("Saved to your cellar.");
       showToast({

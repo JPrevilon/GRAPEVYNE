@@ -389,7 +389,8 @@ h2 {
   box-shadow: var(--shadow-soft);
 }
 
-.state-panel h1 {
+.state-panel h1,
+.state-panel h2 {
   font-size: clamp(2.2rem, 5vw, 4.8rem);
 }
 
@@ -3717,4 +3718,112 @@ textarea:focus {
   background: rgba(239, 197, 182, 0.46);
   border-color: rgba(126, 75, 64, 0.28);
   color: #7e4b40;
+}
+
+/* Prompt 02 typed route foundation */
+.brand-mark {
+  min-width: 9rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 0.65rem;
+  background: #261430;
+}
+
+.brand-wordmark {
+  display: block;
+  width: clamp(8.25rem, 12vw, 11rem);
+  height: 2.15rem;
+  object-fit: contain;
+}
+
+.state-panel__mark {
+  width: 3.5rem;
+  height: 3.5rem;
+  object-fit: contain;
+}
+
+.demo-page {
+  min-width: 0;
+}
+
+.demo-notice {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0 0 1.5rem;
+  padding: clamp(1.1rem, 3vw, 1.75rem);
+  border: 1px solid rgba(126, 75, 64, 0.26);
+  border-left: 0.4rem solid var(--color-burgundy);
+  border-radius: var(--radius-md);
+  background: rgba(247, 248, 251, 0.94);
+  box-shadow: 0 18px 50px rgba(38, 20, 48, 0.1);
+  color: var(--color-ink);
+}
+
+.demo-notice h1,
+.demo-notice p {
+  max-width: 58rem;
+  margin: 0;
+}
+
+.demo-notice h1 {
+  font-size: clamp(2rem, 5vw, 4rem);
+}
+
+.demo-notice p:not(.eyebrow) {
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+
+.text-link {
+  justify-self: start;
+  color: var(--color-merlot);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.22em;
+}
+
+.demo-read-only-note {
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid rgba(126, 75, 64, 0.25);
+  border-radius: var(--radius-sm);
+  background: rgba(239, 197, 182, 0.4);
+  color: var(--color-merlot);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.demo-atlas-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.demo-atlas-grid .tool-surface {
+  display: grid;
+  align-content: start;
+  gap: 0.9rem;
+}
+
+.demo-atlas-grid h2,
+.demo-atlas-grid p {
+  margin: 0;
+}
+
+.live-cellar-page .page-header__content > p {
+  max-width: 48rem;
+}
+
+@media (max-width: 860px) {
+  .brand-mark {
+    min-width: auto;
+  }
+
+  .brand-wordmark {
+    width: 8.25rem;
+  }
+
+  .demo-atlas-grid {
+    grid-template-columns: 1fr;
+  }
 }

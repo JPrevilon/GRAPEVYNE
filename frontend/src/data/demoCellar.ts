@@ -1,4 +1,34 @@
-export const mockCellarSections = [
+export interface DemoBottle {
+  cellarEntryId: string;
+  wineId: string;
+  name: string;
+  producer: string;
+  varietal: string;
+  type: string;
+  vintage: number;
+  region: string;
+  country: string;
+  rating: number;
+  notes: string;
+  occasion: string;
+  pairings: string[];
+  imageUrl: string;
+  labelColor: string;
+  favorite: boolean;
+  dateAdded: string;
+}
+
+export interface DemoCellarSection {
+  sectionId: string;
+  sectionName: string;
+  theme: string;
+  category: string;
+  description: string;
+  position: { x: number; y: number; width: number; height: number };
+  bottles: DemoBottle[];
+}
+
+export const demoCellarSections: DemoCellarSection[] = [
   {
     sectionId: "private-reserve",
     sectionName: "Private Reserve",
@@ -8,8 +38,8 @@ export const mockCellarSections = [
     position: { x: 7, y: 16, width: 26, height: 32 },
     bottles: [
       {
-        cellarEntryId: "entry-001",
-        wineId: "wine-001",
+        cellarEntryId: "demo-entry-001",
+        wineId: "demo-wine-001",
         name: "Estate Cabernet Sauvignon",
         producer: "Aurelian Ridge",
         varietal: "Cabernet Sauvignon",
@@ -27,8 +57,8 @@ export const mockCellarSections = [
         dateAdded: "2026-04-01",
       },
       {
-        cellarEntryId: "entry-002",
-        wineId: "wine-002",
+        cellarEntryId: "demo-entry-002",
+        wineId: "demo-wine-002",
         name: "Gran Reserva Rioja",
         producer: "Bodega Las Lomas",
         varietal: "Tempranillo",
@@ -56,8 +86,8 @@ export const mockCellarSections = [
     position: { x: 37, y: 12, width: 27, height: 38 },
     bottles: [
       {
-        cellarEntryId: "entry-003",
-        wineId: "wine-003",
+        cellarEntryId: "demo-entry-003",
+        wineId: "demo-wine-003",
         name: "Old Vine Malbec",
         producer: "Finca Dorada",
         varietal: "Malbec",
@@ -75,8 +105,8 @@ export const mockCellarSections = [
         dateAdded: "2026-03-05",
       },
       {
-        cellarEntryId: "entry-004",
-        wineId: "wine-004",
+        cellarEntryId: "demo-entry-004",
+        wineId: "demo-wine-004",
         name: "Left Bank Rouge",
         producer: "Maison Corbeau",
         varietal: "Bordeaux Blend",
@@ -94,8 +124,8 @@ export const mockCellarSections = [
         dateAdded: "2026-01-18",
       },
       {
-        cellarEntryId: "entry-005",
-        wineId: "wine-005",
+        cellarEntryId: "demo-entry-005",
+        wineId: "demo-wine-005",
         name: "Block 7 Syrah",
         producer: "Hearth & Vale",
         varietal: "Syrah",
@@ -123,8 +153,8 @@ export const mockCellarSections = [
     position: { x: 68, y: 18, width: 24, height: 30 },
     bottles: [
       {
-        cellarEntryId: "entry-006",
-        wineId: "wine-006",
+        cellarEntryId: "demo-entry-006",
+        wineId: "demo-wine-006",
         name: "Willow Block Pinot Noir",
         producer: "Fogline Cellars",
         varietal: "Pinot Noir",
@@ -142,8 +172,8 @@ export const mockCellarSections = [
         dateAdded: "2026-04-10",
       },
       {
-        cellarEntryId: "entry-007",
-        wineId: "wine-007",
+        cellarEntryId: "demo-entry-007",
+        wineId: "demo-wine-007",
         name: "Brut Reserve",
         producer: "Maison Veyrac",
         varietal: "Chardonnay / Pinot Noir",
@@ -171,8 +201,8 @@ export const mockCellarSections = [
     position: { x: 17, y: 58, width: 31, height: 28 },
     bottles: [
       {
-        cellarEntryId: "entry-008",
-        wineId: "wine-008",
+        cellarEntryId: "demo-entry-008",
+        wineId: "demo-wine-008",
         name: "Sancerre Les Pierres",
         producer: "Domaine Clarette",
         varietal: "Sauvignon Blanc",
@@ -190,8 +220,8 @@ export const mockCellarSections = [
         dateAdded: "2026-04-13",
       },
       {
-        cellarEntryId: "entry-009",
-        wineId: "wine-009",
+        cellarEntryId: "demo-entry-009",
+        wineId: "demo-wine-009",
         name: "Late Harvest Gold",
         producer: "Sunmere Estate",
         varietal: "Semillon",
@@ -219,8 +249,8 @@ export const mockCellarSections = [
     position: { x: 54, y: 58, width: 30, height: 28 },
     bottles: [
       {
-        cellarEntryId: "entry-010",
-        wineId: "wine-010",
+        cellarEntryId: "demo-entry-010",
+        wineId: "demo-wine-010",
         name: "Library Barolo",
         producer: "Casa Velluto",
         varietal: "Nebbiolo",
@@ -238,8 +268,8 @@ export const mockCellarSections = [
         dateAdded: "2025-12-18",
       },
       {
-        cellarEntryId: "entry-011",
-        wineId: "wine-011",
+        cellarEntryId: "demo-entry-011",
+        wineId: "demo-wine-011",
         name: "Single Vineyard Brunello",
         producer: "Tenuta Rocca Scura",
         varietal: "Sangiovese",
@@ -259,3 +289,31 @@ export const mockCellarSections = [
     ],
   },
 ];
+
+export const demoCellarBottles = demoCellarSections.flatMap(
+  (section) => section.bottles,
+);
+
+export function searchDemoCellar(query: string): DemoBottle[] {
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+
+  if (!normalizedQuery) {
+    return [...demoCellarBottles];
+  }
+
+  return demoCellarBottles.filter((bottle) =>
+    [
+      bottle.name,
+      bottle.producer,
+      bottle.varietal,
+      bottle.type,
+      bottle.region,
+      bottle.country,
+      bottle.occasion,
+      ...bottle.pairings,
+    ]
+      .join(" ")
+      .toLocaleLowerCase()
+      .includes(normalizedQuery),
+  );
+}

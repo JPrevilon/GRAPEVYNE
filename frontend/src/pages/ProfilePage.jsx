@@ -1,5 +1,5 @@
-import PageHeader from "../components/ui/PageHeader.jsx";
-import { useAuth } from "../features/auth/useAuth.js";
+import PageHeader from "../components/ui/PageHeader";
+import { useAuth } from "../features/auth/useAuth";
 
 export default function ProfilePage() {
   const { user } = useAuth();

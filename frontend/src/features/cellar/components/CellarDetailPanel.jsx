@@ -29,6 +29,7 @@ export default function CellarDetailPanel({ entry, onDelete, onUpdate }) {
   });
   const [status, setStatus] = useState("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const isBusy = status === "saving" || status === "deleting";
 
   useEffect(() => {
     setFormData({
@@ -43,7 +44,7 @@ export default function CellarDetailPanel({ entry, onDelete, onUpdate }) {
 
   if (!entry) {
     return (
-      <aside className="open-cellar-detail">
+      <aside className="open-cellar-detail" id="live-cellar-detail">
         <div className="open-cellar-detail__empty">
           <Wine size={28} />
           <h2>Select a bottle</h2>
@@ -135,7 +136,7 @@ export default function CellarDetailPanel({ entry, onDelete, onUpdate }) {
   }
 
   return (
-    <aside className="open-cellar-detail">
+    <aside className="open-cellar-detail" id="live-cellar-detail">
       <div className="open-cellar-detail__hero">
         <div className="open-cellar-detail__bottle">
           {entry.wine.imageUrl ? (
@@ -173,6 +174,7 @@ export default function CellarDetailPanel({ entry, onDelete, onUpdate }) {
           Personal rating
           <select
             name="userRating"
+            disabled={isBusy}
             onChange={handleChange}
             value={formData.userRating}
           >
@@ -189,6 +191,7 @@ export default function CellarDetailPanel({ entry, onDelete, onUpdate }) {
           Occasion
           <input
             name="occasion"
+            disabled={isBusy}
             onChange={handleChange}
             placeholder="Dinner, gift, celebration..."
             type="text"
@@ -200,6 +203,7 @@ export default function CellarDetailPanel({ entry, onDelete, onUpdate }) {
           Notes
           <textarea
             name="notes"
+            disabled={isBusy}
             onChange={handleChange}
             placeholder="What did you taste? Who was there? Would you buy it again?"
             rows="5"
@@ -210,6 +214,7 @@ export default function CellarDetailPanel({ entry, onDelete, onUpdate }) {
         <label className="checkbox-row">
           <input
             checked={formData.favorite}
+            disabled={isBusy}
             name="favorite"
             onChange={handleChange}
             type="checkbox"
@@ -218,13 +223,13 @@ export default function CellarDetailPanel({ entry, onDelete, onUpdate }) {
         </label>
 
         <div className="cellar-entry__actions">
-          <button className="primary-button" disabled={status === "saving"} type="submit">
+          <button className="primary-button" disabled={isBusy} type="submit">
             <Save size={17} />
             {status === "saving" ? "Saving..." : status === "saved" ? "Saved" : "Save"}
           </button>
           <button
             className="secondary-button danger-button"
-            disabled={status === "deleting"}
+            disabled={isBusy}
             onClick={handleDelete}
             type="button"
           >

@@ -1,4 +1,4 @@
-import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRef } from "react";
 
 import CellarSection from "./CellarSection.jsx";
@@ -17,27 +17,13 @@ export default function CellarScene({
 }) {
   const sceneRef = useRef(null);
   const prefersReducedMotion = useReducedMotion();
-  const { scrollYProgress } = useScroll({
-    target: sceneRef,
-    offset: ["start end", "end start"],
-  });
-  const wallY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    prefersReducedMotion ? [0, 0] : [-24, 34]
-  );
-  const lightY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    prefersReducedMotion ? ["45%", "45%"] : ["18%", "78%"]
-  );
   const selectedSection = sections.find((section) => section.sectionId === activeSection);
 
   return (
     <section className="interactive-cellar-scene" ref={sceneRef} aria-label="Interactive wine cellar">
-      <motion.div className="interactive-cellar-scene__ambient" style={{ y: wallY }} aria-hidden="true">
-        <motion.span style={{ top: lightY }} />
-      </motion.div>
+      <div className="interactive-cellar-scene__ambient" aria-hidden="true">
+        <span />
+      </div>
 
       <div className="interactive-cellar-scene__copy">
         <p className="eyebrow">The wine wall</p>
@@ -58,12 +44,16 @@ export default function CellarScene({
 
         <motion.div
           className="interactive-cellar-wall__surface"
-          animate={{
+          animate={prefersReducedMotion ? {
+            scale: 1,
+            x: "0%",
+            y: "0%",
+          } : {
             scale: activeSection ? 1.08 : 1,
             x: activeSection && selectedSection ? `${50 - selectedSection.position.x - selectedSection.position.width / 2}%` : "0%",
             y: activeSection && selectedSection ? `${42 - selectedSection.position.y - selectedSection.position.height / 2}%` : "0%",
           }}
-          transition={{ duration: 0.72, ease: [0.16, 1, 0.3, 1] }}
+          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.72, ease: [0.16, 1, 0.3, 1] }}
         >
           {sections.map((section) => (
             <CellarSection
@@ -82,10 +72,10 @@ export default function CellarScene({
           {activeSection ? (
             <motion.div
               className="interactive-cellar-wall__scrim"
-              initial={{ opacity: 0 }}
+              initial={prefersReducedMotion ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.32 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.32 }}
               aria-hidden="true"
             />
           ) : null}

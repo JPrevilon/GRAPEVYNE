@@ -1,5 +1,5 @@
 import { Heart, Star } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 function getBottleClass(labelColor) {
   return `interactive-bottle-marker__bottle interactive-bottle-marker__bottle--${
@@ -15,6 +15,8 @@ export default function BottleMarker({
   onHover,
   onSelect,
 }) {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <motion.button
       aria-label={`${bottle.name}, ${bottle.producer}, ${bottle.vintage}, ${bottle.rating || "unrated"} stars`}
@@ -25,10 +27,10 @@ export default function BottleMarker({
       ]
         .filter(Boolean)
         .join(" ")}
-      initial={{ opacity: 0, y: 18, scale: 0.96 }}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 18, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: index * 0.055, duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
-      whileHover={{ y: -10, scale: 1.04 }}
+      transition={prefersReducedMotion ? { duration: 0 } : { delay: index * 0.055, duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+      whileHover={prefersReducedMotion ? undefined : { y: -10, scale: 1.04 }}
       onBlur={() => onHover(null)}
       onClick={(event) => onSelect(bottle, event.currentTarget)}
       onFocus={() => onHover(bottle.cellarEntryId)}

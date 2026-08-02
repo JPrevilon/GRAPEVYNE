@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 
-import PageHeader from "../components/ui/PageHeader.jsx";
+import PageHeader from "../components/ui/PageHeader";
 import { useToast } from "../components/ui/useToast.js";
-import { getAuthErrorMessage } from "../features/auth/authErrors.js";
-import { useAuth } from "../features/auth/useAuth.js";
+import { getAuthErrorMessage } from "../features/auth/authErrors";
+import { useAuth } from "../features/auth/useAuth";
+import { getReturnTo } from "../lib/returnTo";
 import { validateSignupForm } from "../utils/formValidation.js";
 
 export default function SignupPage() {
@@ -12,7 +13,7 @@ export default function SignupPage() {
   const { showToast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
-  const from = location.state?.from?.pathname || "/cellar";
+  const from = getReturnTo(location.state);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -119,7 +120,8 @@ export default function SignupPage() {
           {isSubmitting ? "Creating account..." : "Create account"}
         </button>
         <p className="auth-switch">
-          Already have a cellar? <Link to="/login">Sign in</Link>
+          Already have a cellar?{" "}
+          <Link state={location.state} to="/login">Sign in</Link>
         </p>
       </form>
     </div>

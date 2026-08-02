@@ -11,6 +11,7 @@ export default function HomePage() {
           alt="GrapeVyne Discover Save Savor"
         />
         <p className="eyebrow">Premium wine discovery</p>
+        <h1>Find the bottle that fits the moment.</h1>
         <p>
           GrapeVyne brings elegant wine search and a personal digital cellar
           into one calm, cinematic product experience.

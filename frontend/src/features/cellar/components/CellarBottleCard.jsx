@@ -19,6 +19,8 @@ function getBottleTone(varietal) {
 export default function CellarBottleCard({ entry, isSelected, onSelect }) {
   return (
     <button
+      aria-controls="live-cellar-detail"
+      aria-pressed={isSelected}
       className={isSelected ? "open-cellar-bottle is-selected" : "open-cellar-bottle"}
       onClick={() => onSelect(entry)}
       type="button"
@@ -51,4 +53,3 @@ export default function CellarBottleCard({ entry, isSelected, onSelect }) {
     </button>
   );
 }
-

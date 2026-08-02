@@ -1,4 +1,4 @@
-import { apiRequest } from "../../api/client.js";
+import { apiRequest } from "../../api/client";
 
 export function searchWines(query) {
   const params = new URLSearchParams({ query });

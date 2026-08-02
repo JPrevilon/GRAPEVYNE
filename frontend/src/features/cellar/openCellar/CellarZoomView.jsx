@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import BottleMarker from "./BottleMarker.jsx";
 
@@ -9,6 +9,8 @@ export default function CellarZoomView({
   section,
   selectedBottleId,
 }) {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <AnimatePresence mode="wait">
       {section ? (
@@ -16,10 +18,10 @@ export default function CellarZoomView({
           className="interactive-cellar-zoom"
           key={section.sectionId}
           aria-labelledby={`cellar-zoom-${section.sectionId}`}
-          initial={{ opacity: 0, scale: 0.96, y: 28 }}
+          initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.96, y: 28 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.98, y: 16 }}
-          transition={{ duration: 0.52, ease: [0.16, 1, 0.3, 1] }}
+          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: 16 }}
+          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.52, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className="interactive-cellar-zoom__header">
             <p className="eyebrow">{section.theme}</p>

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Search, Sparkles } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
-import PageHeader from "../components/ui/PageHeader.jsx";
+import PageHeader from "../components/ui/PageHeader";
 import WineResultsGrid from "../features/wines/components/WineResultsGrid.jsx";
 import { searchWines } from "../features/wines/wineApi.js";
 
@@ -128,7 +128,7 @@ export default function DiscoverPage() {
       {status === "idle" ? (
         <section className="state-panel state-panel--compact">
           <p className="eyebrow">Start with a clue</p>
-          <h1>Tell GrapeVyne what the bottle is for.</h1>
+          <h2>Tell GrapeVyne what the bottle is for.</h2>
           <p>
             Search for a dish, a place, a grape, or a moment. The result should
             feel useful before the cellar tools arrive.
@@ -139,7 +139,7 @@ export default function DiscoverPage() {
       {status === "loading" ? (
         <section className="state-panel state-panel--compact">
           <p className="eyebrow">Searching</p>
-          <h1>Finding bottles with the right shape and mood.</h1>
+          <h2>Finding bottles with the right shape and mood.</h2>
           <p>Pairings, regions, and tasting notes are coming into focus.</p>
         </section>
       ) : null}
@@ -147,7 +147,7 @@ export default function DiscoverPage() {
       {status === "error" ? (
         <section className="state-panel state-panel--compact">
           <p className="eyebrow">Search error</p>
-          <h1>The wine service did not respond cleanly.</h1>
+          <h2>The wine service did not respond cleanly.</h2>
           <p>{errorMessage}</p>
         </section>
       ) : null}
