@@ -1,4 +1,6 @@
 import { ButtonLink } from "@/components/ui/Button";
+import DirectoryHeading from "@/components/typography/DirectoryHeading";
+import { DIRECTORY_PAGE_HEADINGS } from "@/components/typography/directoryHeadingPresets";
 import { PageShell, SectionHeading } from "@/components/ui/PageShell";
 import {
   ErrorPanel,
@@ -45,7 +47,7 @@ export default function ProfilePage() {
       className="profile-page"
       description="A private account surface grounded in your authenticated GrapeVyne identity."
       eyebrow="03 / PRIVATE DIRECTORY"
-      title="TASTE PROFILE"
+      heading={<DirectoryHeading {...DIRECTORY_PAGE_HEADINGS.profile} />}
     >
       {isLoading ? (
         <LoadingPanel

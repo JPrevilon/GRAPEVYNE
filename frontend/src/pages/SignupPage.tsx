@@ -1,6 +1,8 @@
 import { Navigate, useLocation } from "react-router-dom";
 
 import AuthForm from "@/components/auth/AuthForm";
+import DirectoryHeading from "@/components/typography/DirectoryHeading";
+import { DIRECTORY_PAGE_HEADINGS } from "@/components/typography/directoryHeadingPresets";
 import { PageShell } from "@/components/ui/PageShell";
 import { useAuth } from "@/features/auth/useAuth";
 import { getReturnTo } from "@/lib/returnTo";
@@ -19,7 +21,7 @@ export default function SignupPage() {
       className="gv-auth-page gv-auth-page--signup"
       description="Save bottles, rate them, and build a cellar that remembers what you love."
       eyebrow="05 / NEW DIRECTORY ENTRY"
-      title="CREATE YOUR CELLAR"
+      heading={<DirectoryHeading {...DIRECTORY_PAGE_HEADINGS.signup} />}
     >
       <AuthForm
         mode="signup"

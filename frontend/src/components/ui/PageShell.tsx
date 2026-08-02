@@ -6,6 +6,7 @@ interface PageShellProps {
   className?: string;
   description?: string;
   eyebrow?: string;
+  heading?: ReactNode;
   title?: ReactNode;
 }
 
@@ -15,15 +16,17 @@ export function PageShell({
   className = "",
   description,
   eyebrow,
+  heading,
   title,
 }: PageShellProps) {
   return (
     <div className={`gv-page-shell ${className}`.trim()}>
-      {title ? (
+      {heading || title ? (
         <PageHero
           actions={actions}
           description={description}
           eyebrow={eyebrow}
+          heading={heading}
           title={title}
         />
       ) : null}
@@ -37,7 +40,8 @@ interface PageHeroProps {
   aside?: ReactNode;
   description?: string;
   eyebrow?: string;
-  title: ReactNode;
+  heading?: ReactNode;
+  title?: ReactNode;
 }
 
 export function PageHero({
@@ -45,13 +49,14 @@ export function PageHero({
   aside,
   description,
   eyebrow,
+  heading,
   title,
 }: PageHeroProps) {
   return (
     <header className="gv-page-hero">
       <div className="gv-page-hero__copy">
         {eyebrow ? <p className="gv-eyebrow">{eyebrow}</p> : null}
-        <h1>{title}</h1>
+        {heading ?? <h1>{title}</h1>}
         {description ? <p className="gv-page-hero__lede">{description}</p> : null}
         {actions ? <div className="gv-page-hero__actions">{actions}</div> : null}
       </div>

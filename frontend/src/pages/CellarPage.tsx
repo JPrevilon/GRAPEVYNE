@@ -12,6 +12,8 @@ import {
   updateCellarEntry,
 } from "@/api/cellar";
 import { isAbortError, isAuthenticationRequired } from "@/api/client";
+import DirectoryHeading from "@/components/typography/DirectoryHeading";
+import { DIRECTORY_PAGE_HEADINGS } from "@/components/typography/directoryHeadingPresets";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { TextInput } from "@/components/ui/FormControls";
 import { PageShell } from "@/components/ui/PageShell";
@@ -64,6 +66,10 @@ function repeatedWineCount(entries: CellarEntry[]) {
     seenWineIds.add(entry.wineId);
     return count;
   }, 0);
+}
+
+function CellarHeading() {
+  return <DirectoryHeading {...DIRECTORY_PAGE_HEADINGS.cellar} />;
 }
 
 export default function CellarPage() {
@@ -312,7 +318,7 @@ export default function CellarPage() {
         className="gv-cellar-page"
         description="Loading only the cellar entries owned by this signed-in session."
         eyebrow="02 / PRIVATE DIRECTORY"
-        title="YOUR CELLAR"
+        heading={<CellarHeading />}
       >
         <div data-cellar-source="authenticated-api">
           <LoadingPanel
@@ -331,7 +337,7 @@ export default function CellarPage() {
         className="gv-cellar-page"
         description="The private cellar service did not return this account’s saved entries."
         eyebrow="02 / PRIVATE DIRECTORY"
-        title="YOUR CELLAR"
+        heading={<CellarHeading />}
       >
         <div data-cellar-source="authenticated-api">
           <ErrorPanel
@@ -363,7 +369,7 @@ export default function CellarPage() {
         className="gv-cellar-page"
         description="Build a private archive from bottles confirmed by the authenticated cellar API."
         eyebrow="02 / PRIVATE DIRECTORY"
-        title="YOUR CELLAR"
+        heading={<CellarHeading />}
       >
         <div data-cellar-source="authenticated-api">
           <EmptyState
@@ -386,7 +392,7 @@ export default function CellarPage() {
       className="gv-cellar-page"
       description="Review the bottles returned by your authenticated cellar, then edit only the private fields you choose."
       eyebrow="02 / PRIVATE DIRECTORY / LIVE ACCOUNT DATA"
-      title="YOUR CELLAR"
+      heading={<CellarHeading />}
     >
       <div data-cellar-source="authenticated-api">
         {cellarQuery.isFetching ? (

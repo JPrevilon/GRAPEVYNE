@@ -2,6 +2,8 @@ import { ArrowRight, LockKeyhole, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Button, ButtonLink } from "@/components/ui/Button";
+import DirectoryHeading from "@/components/typography/DirectoryHeading";
+import { DIRECTORY_PAGE_HEADINGS } from "@/components/typography/directoryHeadingPresets";
 import { TextInput } from "@/components/ui/FormControls";
 import { PageShell, SectionHeading } from "@/components/ui/PageShell";
 import { SidePanel } from "@/components/ui/SidePanel";
@@ -34,7 +36,7 @@ export default function DemoCellarPage() {
       className="gv-demo-page gv-demo-cellar"
       description="Browse eleven illustrative bottles without signing in. Nothing on this page reads or changes a visitor’s cellar."
       eyebrow="Public demonstration · Read-only"
-      title="DEMO CELLAR"
+      heading={<DirectoryHeading {...DIRECTORY_PAGE_HEADINGS.demoCellar} />}
     >
       <NoticePanel
         action={

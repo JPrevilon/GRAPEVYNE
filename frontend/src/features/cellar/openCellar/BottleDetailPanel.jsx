@@ -77,15 +77,15 @@ export default function BottleDetailPanel({ bottle, isOpen, onClose }) {
           </div>
 
           <section className="interactive-detail-section">
-            <h3>Tasting Notes</h3>
+            <h3>TASTING NOTES</h3>
             <p>{bottle.notes}</p>
           </section>
           <section className="interactive-detail-section">
-            <h3>Occasion</h3>
+            <h3>OCCASION</h3>
             <p>{bottle.occasion}</p>
           </section>
           <section className="interactive-detail-section">
-            <h3>Pairings</h3>
+            <h3>PAIRINGS</h3>
             <div className="tag-list">
               {bottle.pairings.map((pairing) => <span key={pairing}>{pairing}</span>)}
             </div>

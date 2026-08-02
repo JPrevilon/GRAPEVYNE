@@ -14,7 +14,7 @@
   --radius-sm: 8px;
   --radius-md: 14px;
   --space-page: clamp(1rem, 4vw, 4rem);
-  font-family: var(--font-body, "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif);
+  font-family: var(--font-body, "Jost Variable", "Jost", "Helvetica Neue", Arial, sans-serif);
   background: var(--color-ink);
   color: var(--color-ivory);
 }
@@ -107,7 +107,7 @@ textarea:focus-visible {
 
 .brand-mark {
   gap: 0.65rem;
-  font-family: var(--font-display, "Archivo Black", "Arial Black", "Helvetica Neue", sans-serif);
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-size: 1.2rem;
   letter-spacing: 0;
 }
@@ -242,7 +242,7 @@ textarea:focus-visible {
   margin: 0 0 0.9rem;
   color: var(--color-champagne);
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -250,7 +250,7 @@ textarea:focus-visible {
 h1 {
   margin: 0;
   max-width: 58rem;
-  font-family: var(--font-display, "Archivo Black", "Arial Black", "Helvetica Neue", sans-serif);
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-size: clamp(3rem, 7vw, 6.8rem);
   font-weight: 500;
   line-height: 0.95;
@@ -259,7 +259,7 @@ h1 {
 
 h2 {
   margin: 0;
-  font-family: var(--font-display, "Archivo Black", "Arial Black", "Helvetica Neue", sans-serif);
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-size: 1.25rem;
   font-weight: 500;
 }
@@ -306,11 +306,12 @@ h2 {
 .hero-image-caption {
   margin: 0;
   max-width: 36rem;
-  font-family: var(--font-body, "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif);
+  font-family: var(--font-body, "Jost Variable", "Jost", "Helvetica Neue", Arial, sans-serif);
   color: var(--color-ink);
   font-size: clamp(1.25rem, 2vw, 2rem);
-  font-weight: 700;
-  line-height: 1.16;
+  font-weight: 350;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
 }
 
 .bottle-stage {
@@ -591,7 +592,7 @@ textarea {
 }
 
 .profile-summary strong {
-  font-family: var(--font-display, "Archivo Black", "Arial Black", "Helvetica Neue", sans-serif);
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-size: 1.8rem;
   font-weight: 500;
 }
@@ -663,7 +664,7 @@ textarea {
 .wine-card__varietal {
   margin: 0 0 0.35rem;
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -795,7 +796,7 @@ textarea {
 
 .wine-detail__winery {
   margin: -0.45rem 0 0;
-  font-family: var(--font-display, "Archivo Black", "Arial Black", "Helvetica Neue", sans-serif);
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-size: 1.55rem;
 }
 
@@ -882,7 +883,7 @@ textarea {
 .structure-list dd {
   color: var(--color-ivory);
   text-align: right;
-  text-transform: capitalize;
+  text-transform: none;
 }
 
 .cellar-grid {
@@ -1083,7 +1084,7 @@ textarea {
 }
 
 .open-cellar-bottle__copy strong {
-  font-family: var(--font-display, "Archivo Black", "Arial Black", "Helvetica Neue", sans-serif);
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-size: 1.08rem;
   font-weight: 500;
 }
@@ -1545,12 +1546,12 @@ textarea {
 .oc-hero__label span {
   color: var(--color-champagne);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 500;
   text-transform: uppercase;
 }
 
 .oc-hero__label strong {
-  font-family: var(--font-display, "Archivo Black", "Arial Black", "Helvetica Neue", sans-serif);
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-weight: 500;
 }
 
@@ -1943,7 +1944,7 @@ textarea {
   background: rgba(8, 6, 5, 0.64);
   color: var(--color-champagne);
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .oc-bottle-card__visual {
@@ -1983,13 +1984,13 @@ textarea {
 .oc-bottle-card__style {
   color: var(--color-champagne);
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .oc-bottle-card__copy strong {
-  font-family: var(--font-display, "Archivo Black", "Arial Black", "Helvetica Neue", sans-serif);
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-size: 1.08rem;
   font-weight: 500;
   line-height: 1.16;
@@ -2135,7 +2136,7 @@ textarea {
   background: rgba(245, 239, 228, 0.055);
   color: var(--color-champagne);
   font-size: 0.82rem;
-  text-transform: capitalize;
+  text-transform: none;
 }
 
 .oc-detail-actions {
@@ -3040,13 +3041,13 @@ textarea {
   color: var(--color-champagne);
   font-size: 0.72rem;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .interactive-cellar-section__label strong {
-  font-family: var(--font-display, "Archivo Black", "Arial Black", "Helvetica Neue", sans-serif);
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-size: clamp(1rem, 1.7vw, 1.5rem);
   font-weight: 500;
 }
@@ -3181,7 +3182,7 @@ textarea {
 }
 
 .interactive-bottle-marker__preview strong {
-  font-family: var(--font-display, "Archivo Black", "Arial Black", "Helvetica Neue", sans-serif);
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-weight: 500;
   line-height: 1.18;
 }
@@ -3774,7 +3775,7 @@ textarea:focus {
 .text-link {
   justify-self: start;
   color: var(--color-merlot);
-  font-weight: 700;
+  font-weight: 500;
   text-decoration: underline;
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.22em;

@@ -68,7 +68,7 @@
   margin-bottom: 1rem;
   color: var(--color-champagne);
   font-size: var(--text-xs);
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
@@ -135,7 +135,7 @@
   margin-bottom: 0.8rem;
   color: var(--color-champagne);
   font-size: var(--text-xs);
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.2em;
   text-transform: uppercase;
 }
@@ -533,7 +533,7 @@
   padding: 1rem 1.2rem;
   color: var(--color-champagne);
   cursor: pointer;
-  font-weight: 650;
+  font-weight: 500;
   letter-spacing: 0.04em;
 }
 
@@ -863,8 +863,8 @@ html.has-scroll-smoothing body {
   margin-bottom: clamp(1.5rem, 3vw, 2.75rem);
   font-family: var(--font-directory);
   font-size: var(--size-directory-label);
-  font-weight: 700;
-  letter-spacing: 0.09em;
+  font-weight: 500;
+  letter-spacing: 0.12em;
 }
 
 .gv-story-heading__number > span:first-child {
@@ -875,37 +875,18 @@ html.has-scroll-smoothing body {
   border-radius: 0;
 }
 
-.gv-story-heading h1,
-.gv-story-heading h2 {
+.gv-story-heading .gv-directory-heading {
   max-width: none;
   font-family: var(--font-display);
   font-style: normal;
   font-weight: 400;
-  letter-spacing: -0.05em;
-}
-
-.gv-story-heading h1 {
-  font-size: var(--size-display-hero);
-  line-height: 0.9;
-}
-
-.gv-story-heading h1 span {
-  display: block;
-  white-space: nowrap;
-}
-
-.gv-story-heading h1 span:last-child {
-  color: var(--color-champagne);
+  letter-spacing: 0.02em;
+  line-height: 1;
 }
 
 .gv-story-chapter--hero .gv-story-heading {
-  grid-column: 1 / -1;
+  grid-column: 1 / span 10;
   max-width: none;
-}
-
-.gv-story-heading h2 {
-  font-size: var(--size-display-chapter);
-  line-height: 0.94;
 }
 
 .gv-story-copy {
@@ -937,9 +918,9 @@ html.has-scroll-smoothing body {
   color: var(--color-aged-ivory);
   font-family: var(--font-body);
   font-size: var(--size-copy-narrative);
-  font-weight: 650;
-  letter-spacing: -0.02em;
-  line-height: 1.16;
+  font-weight: 350;
+  letter-spacing: 0.025em;
+  line-height: 1.52;
 }
 
 .gv-story-kicker {
@@ -968,7 +949,8 @@ html.has-scroll-smoothing body {
   border-radius: var(--radius-sm);
   font-family: var(--font-directory);
   font-size: 0.96rem;
-  font-weight: 650;
+  font-weight: 400;
+  letter-spacing: 0.035em;
 }
 
 .gv-match-signals {
@@ -982,7 +964,9 @@ html.has-scroll-smoothing body {
   border-radius: 0;
   background: transparent;
   font-family: var(--font-body);
-  font-weight: 600;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1.58;
 }
 
 .gv-story-copy--portal,
@@ -1002,6 +986,11 @@ html.has-scroll-smoothing body {
   margin: 0;
 }
 
+.gv-story-chapter--portal .gv-story-heading,
+.gv-story-chapter--atlas .gv-story-heading {
+  grid-column: 6 / -1;
+}
+
 .gv-story-copy--memory {
   grid-column: 1 / span 6;
 }
@@ -1017,28 +1006,29 @@ html.has-scroll-smoothing body {
   background: transparent;
   font-family: var(--font-directory);
   font-size: 1rem;
-  font-weight: 650;
-  letter-spacing: 0.025em;
+  font-weight: 400;
+  letter-spacing: 0.055em;
+  line-height: 1.5;
 }
 
 .gv-memory-card h3 {
   font-family: var(--font-display);
   font-weight: 400;
-  letter-spacing: -0.045em;
-  line-height: 0.92;
+  letter-spacing: 0.035em;
+  line-height: 0.98;
   text-transform: uppercase;
 }
 
 .gv-memory-card dt {
   font-family: var(--font-directory);
   font-size: var(--size-metadata);
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 500;
+  letter-spacing: 0.1em;
 }
 
 .gv-memory-card dd {
   font-family: var(--font-body);
-  font-weight: 650;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1073,8 +1063,8 @@ html.has-scroll-smoothing body {
 .gv-under-cork summary {
   font-family: var(--font-directory);
   font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.055em;
+  font-weight: 500;
+  letter-spacing: 0.095em;
   text-transform: uppercase;
 }
 
@@ -1083,8 +1073,8 @@ html.has-scroll-smoothing body {
   grid-template-columns: 1.35rem 0.35rem 1fr;
   font-family: var(--font-directory);
   font-size: 0.76rem;
-  font-weight: 650;
-  letter-spacing: 0.045em;
+  font-weight: 500;
+  letter-spacing: 0.075em;
 }
 
 @media (max-width: 64rem) {
@@ -1105,6 +1095,11 @@ html.has-scroll-smoothing body {
   .gv-story-chapter--portal .gv-story-copy,
   .gv-story-chapter--atlas .gv-story-copy {
     grid-column: 6 / -1;
+  }
+
+  .gv-story-chapter--portal .gv-story-heading,
+  .gv-story-chapter--atlas .gv-story-heading {
+    grid-column: 5 / -1;
   }
 
   .gv-story-chapter--hero .gv-story-heading,
@@ -1139,6 +1134,11 @@ html.has-scroll-smoothing body {
   .gv-story-chapter--atlas .gv-story-copy,
   .gv-story-copy--memory,
   .gv-story-copy--finale {
+    grid-column: 1;
+  }
+
+  .gv-story-chapter--portal .gv-story-heading,
+  .gv-story-chapter--atlas .gv-story-heading {
     grid-column: 1;
   }
 

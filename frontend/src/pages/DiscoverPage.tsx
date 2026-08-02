@@ -12,6 +12,8 @@ import {
   SelectControl,
 } from "@/components/ui/FormControls";
 import { PageShell, SectionHeading } from "@/components/ui/PageShell";
+import DirectoryHeading from "@/components/typography/DirectoryHeading";
+import { DIRECTORY_PAGE_HEADINGS } from "@/components/typography/directoryHeadingPresets";
 import {
   EmptyState,
   ErrorPanel,
@@ -144,7 +146,7 @@ export default function DiscoverPage() {
       className="discover-page"
       description="Search the current GrapeVyne wine service by meal, mood, grape, place, or occasion."
       eyebrow="01 / LIVE WINE DIRECTORY"
-      title="DISCOVER WINES"
+      heading={<DirectoryHeading {...DIRECTORY_PAGE_HEADINGS.discover} />}
     >
       <section className="discover-search-panel" aria-labelledby="discover-search-title">
         <div className="discover-search-panel__intro">

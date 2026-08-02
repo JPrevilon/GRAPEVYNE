@@ -139,6 +139,9 @@ describe("protected live cellar", () => {
     renderCellar();
 
     expect(
+      screen.getByRole("heading", { level: 1, name: "YOUR CELLAR" }),
+    ).toBeInTheDocument();
+    expect(
       screen.getByRole("heading", { name: "OPENING YOUR SAVED BOTTLES" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(

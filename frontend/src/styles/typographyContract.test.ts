@@ -4,6 +4,10 @@ import { describe, expect, it } from "vitest";
 
 const projectRoot = process.cwd();
 const mainSource = readFileSync(path.resolve(projectRoot, "src/main.tsx"), "utf8");
+const globalCss = readFileSync(
+  path.resolve(projectRoot, "src/styles/global.css"),
+  "utf8",
+);
 const designSystemCss = readFileSync(
   path.resolve(projectRoot, "src/styles/design-system.css"),
   "utf8",
@@ -19,45 +23,80 @@ const scrollStoryCss = readFileSync(
 const packageJson = JSON.parse(
   readFileSync(path.resolve(projectRoot, "package.json"), "utf8"),
 ) as { dependencies: Record<string, string> };
+const packageLock = JSON.parse(
+  readFileSync(path.resolve(projectRoot, "package-lock.json"), "utf8"),
+) as {
+  packages: Record<string, { dependencies?: Record<string, string>; version?: string }>;
+};
 
-describe("Prompt 04B / 05A typography contract", () => {
-  it("pins and imports only the approved self-hosted Fontsource families", () => {
+const authoredTypography = [
+  mainSource,
+  globalCss,
+  designSystemCss,
+  productRoutesCss,
+  scrollStoryCss,
+].join("\n");
+
+describe("Prompt 06A typography contract", () => {
+  it("pins and imports only the approved local variable-weight families", () => {
     expect(packageJson.dependencies).toMatchObject({
-      "@fontsource/archivo-black": "5.3.0",
-      "@fontsource-variable/archivo": "5.3.0",
-      "@fontsource/barlow-condensed": "5.3.0",
+      "@fontsource-variable/jost": "5.3.0",
+      "@fontsource-variable/raleway": "5.3.0",
     });
-    expect(packageJson.dependencies).not.toHaveProperty("@fontsource/eb-garamond");
-    expect(packageJson.dependencies).not.toHaveProperty("@fontsource/inter");
+    expect(packageJson.dependencies).not.toHaveProperty("@fontsource/archivo-black");
+    expect(packageJson.dependencies).not.toHaveProperty(
+      "@fontsource-variable/archivo",
+    );
+    expect(packageJson.dependencies).not.toHaveProperty(
+      "@fontsource/barlow-condensed",
+    );
+    expect(packageLock.packages["node_modules/@fontsource-variable/jost"]?.version).toBe(
+      "5.3.0",
+    );
+    expect(
+      packageLock.packages["node_modules/@fontsource-variable/raleway"]?.version,
+    ).toBe("5.3.0");
 
-    expect(mainSource).toContain('@fontsource/archivo-black/latin-400.css');
-    expect(mainSource).toContain('@fontsource-variable/archivo/wght.css');
-    expect(mainSource).toContain('@fontsource/barlow-condensed/latin-600.css');
-    expect(mainSource).toContain('@fontsource/barlow-condensed/latin-700.css');
-    expect(mainSource).toContain('@fontsource/barlow-condensed/latin-800.css');
-    expect(mainSource).not.toMatch(/@fontsource\/(?:eb-garamond|inter)/i);
+    expect(mainSource).toContain('@fontsource-variable/raleway/wght.css');
+    expect(mainSource).toContain('@fontsource-variable/jost/wght.css');
+    expect(mainSource.match(/@fontsource[^"']+/g)).toHaveLength(2);
+    expect(authoredTypography).not.toMatch(/Archivo|Barlow Condensed/i);
   });
 
-  it("centralizes display, body, and directory roles without a remote font CDN", () => {
+  it("centralizes the light precision-index scale without a remote font source", () => {
     expect(designSystemCss).toContain(
-      '--font-display: "Archivo Black", "Arial Black", "Helvetica Neue", sans-serif',
+      '--font-display: "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif',
     );
     expect(designSystemCss).toContain(
-      '--font-body: "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif',
+      '--font-body: "Jost Variable", "Jost", "Helvetica Neue", Arial, sans-serif',
     );
     expect(designSystemCss).toContain(
-      '--font-directory: "Barlow Condensed", "Arial Narrow", sans-serif',
+      '--font-directory: "Jost Variable", "Jost", "Helvetica Neue", Arial, sans-serif',
     );
     expect(designSystemCss).toContain(
-      "--size-display-hero: clamp(3.15rem, 6.6vw, 6.9rem)",
+      "--size-directory-hero-large: clamp(3.35rem, 6.1vw, 6.15rem)",
     );
     expect(designSystemCss).toContain(
-      "--size-display-chapter: clamp(2.25rem, 4.9vw, 4.85rem)",
+      "--size-directory-chapter-large: clamp(2.4rem, 4.3vw, 4.35rem)",
     );
     expect(designSystemCss).toContain(
-      "--size-display-page: clamp(2.5rem, 4.8vw, 5.2rem)",
+      "--size-directory-product-large: clamp(2.7rem, 4.8vw, 5rem)",
+    );
+    expect(designSystemCss).toContain(
+      "--directory-large: clamp(2.5rem, 12vw, 3.9rem)",
+    );
+    expect(designSystemCss).toContain(
+      "--directory-large: clamp(2rem, 9.5vw, 3.25rem)",
     );
     expect(designSystemCss).toMatch(/font-synthesis:\s*none/);
+    expect(designSystemCss).toMatch(/font-optical-sizing:\s*auto/);
+    expect(designSystemCss).toMatch(/text-rendering:\s*optimizeLegibility/);
+    expect(designSystemCss).toMatch(
+      /\.gv-directory-heading__segment--weight-light\s*{\s*font-weight:\s*300;/,
+    );
+    expect(designSystemCss).toMatch(
+      /\.gv-directory-heading__segment--accent\s*{\s*color:\s*var\(--color-champagne\);/,
+    );
     expect(designSystemCss).toMatch(
       /\.gv-eyebrow--data\s*{[^}]*text-transform:\s*none/s,
     );
@@ -66,29 +105,11 @@ describe("Prompt 04B / 05A typography contract", () => {
     );
     expect(scrollStoryCss).toContain("font-family: var(--font-body)");
     expect(productRoutesCss).toContain("font-family: var(--font-directory)");
-    expect(scrollStoryCss).toMatch(
-      /\.gv-story-heading h1\s*{[^}]*font-size:\s*var\(--size-display-hero\);[^}]*line-height:\s*0\.9;/s,
-    );
-    expect(scrollStoryCss).toMatch(
-      /\.gv-story-heading h2\s*{[^}]*font-size:\s*var\(--size-display-chapter\);[^}]*line-height:\s*0\.94;/s,
-    );
-    expect(scrollStoryCss).toContain(
-      "font-size: clamp(1.95rem, 8.8vw, 3.15rem)",
-    );
-    expect(scrollStoryCss).not.toContain(
-      "font-size: clamp(2.8rem, 12.8vw, 4.9rem)",
-    );
-    expect(designSystemCss).toContain(
-      ".gv-page-hero h1 { font-size: var(--size-display-page); }",
-    );
-    expect(productRoutesCss).toContain(
-      ".gv-wine-detail__copy h1 { font-size: var(--size-display-page); }",
-    );
 
-    const authoredTypography = `${mainSource}\n${designSystemCss}\n${productRoutesCss}\n${scrollStoryCss}`;
     expect(authoredTypography).not.toMatch(/fonts\.(?:googleapis|gstatic)\.com/i);
     expect(authoredTypography).not.toMatch(/@import\s+url\(/i);
-    expect(authoredTypography).not.toMatch(/EB Garamond/i);
-    expect(authoredTypography).not.toMatch(/font-family:\s*Inter\b/i);
+    expect(authoredTypography).not.toMatch(/font-weight:\s*(?:6[5-9]0|[789]00)/);
+    expect(authoredTypography).not.toMatch(/letter-spacing:\s*-/);
+    expect(authoredTypography).not.toMatch(/font-variation-settings/i);
   });
 });

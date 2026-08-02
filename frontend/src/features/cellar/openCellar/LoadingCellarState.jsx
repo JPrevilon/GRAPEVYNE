@@ -3,7 +3,7 @@ export default function LoadingCellarState() {
     <section className="oc-loading-state" aria-live="polite" aria-busy="true">
       <div>
         <p className="eyebrow">Opening cellar</p>
-        <h1>Gathering your saved bottles.</h1>
+        <h1>GATHERING YOUR SAVED BOTTLES</h1>
         <p>Your private shelves are being arranged by mood, memory, and occasion.</p>
       </div>
 

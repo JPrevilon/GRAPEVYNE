@@ -129,16 +129,13 @@ describe("HomePage scroll story", () => {
     expect(fallback).toBeInTheDocument();
   });
 
-  it("renders the locked punctuation-free display copy and directory labels", () => {
+  it("renders the locked accessible title compositions and directory labels", () => {
     const { container } = renderHome();
     const chapters = Array.from(
       container.querySelectorAll<HTMLElement>("section[data-story-chapter]"),
     );
-    const headings = chapters.map((chapter) =>
-      chapter.querySelector<HTMLHeadingElement>("h1, h2"),
-    );
     const expectedHeadings = [
-      /FIND THE BOTTLE\s*KEEP THE MEMORY/,
+      "FIND THE BOTTLE KEEP THE MEMORY",
       "DESCRIBE THE MOMENT",
       "WHY IT FITS",
       "TASTE TAKES SHAPE",
@@ -159,18 +156,62 @@ describe("HomePage scroll story", () => {
       "08 / TASTE ATLAS",
       "09 / GRAPEVYNE",
     ];
+    const expectedCompositions = [
+      ["FIND THE|small|light|base", "BOTTLE|large|regular|base", "KEEP THE|micro|light|base", "MEMORY|medium|regular|accent"],
+      ["DESCRIBE|small|light|base", "THE MOMENT|large|regular|base"],
+      ["WHY|micro|light|base", "IT FITS|large|regular|base"],
+      ["TASTE|small|light|base", "TAKES SHAPE|large|regular|base"],
+      ["OPEN|small|light|base", "THE CELLAR|large|regular|base"],
+      ["BUILD|small|light|base", "THE COLLECTION|large|regular|base"],
+      ["REMEMBER|small|light|base", "THE POUR|large|regular|base"],
+      ["YOUR|micro|light|base", "TASTE ATLAS|large|regular|base"],
+      ["KEEP|small|light|base", "THE STORY|large|regular|base"],
+    ];
 
-    headings.forEach((heading, index) => {
-      expect(heading).not.toBeNull();
-      const text = heading?.textContent?.replace(/\s+/g, " ").trim() ?? "";
-      const expected = expectedHeadings[index];
+    expect(container.querySelectorAll("h1")).toHaveLength(1);
+    expect(container.querySelectorAll("h2")).toHaveLength(8);
+    expect(
+      STORY_CHAPTERS.map(({ headingSegments }) =>
+        headingSegments.map((segment) =>
+          [
+            segment.text,
+            segment.size,
+            segment.weight,
+            "accent" in segment && segment.accent ? "accent" : "base",
+          ].join("|"),
+        ),
+      ),
+    ).toEqual(expectedCompositions);
 
-      if (expected instanceof RegExp) {
-        expect(text).toMatch(expected);
-      } else {
-        expect(text).toBe(expected);
-      }
-      expect(text).not.toMatch(/[.!?]$/);
+    chapters.forEach((chapter, index) => {
+      const definition = STORY_CHAPTERS[index]!;
+      const heading = within(chapter).getByRole("heading", {
+        level: index === 0 ? 1 : 2,
+        name: expectedHeadings[index],
+      });
+      const segments = Array.from(
+        heading.querySelectorAll<HTMLElement>(".gv-directory-heading__segment"),
+      );
+
+      expect(heading.getAttribute("aria-label")).not.toMatch(/[.!?]$/);
+      expect(heading.querySelector(".gv-directory-heading__visual")).toHaveAttribute(
+        "aria-hidden",
+        "true",
+      );
+      expect(segments.map((segment) => segment.textContent?.trim())).toEqual(
+        definition.headingSegments.map(({ text }) => text),
+      );
+      definition.headingSegments.forEach((segment, segmentIndex) => {
+        expect(segments[segmentIndex]).toHaveClass(
+          `gv-directory-heading__segment--size-${segment.size}`,
+          `gv-directory-heading__segment--weight-${segment.weight}`,
+        );
+        if ("accent" in segment && segment.accent) {
+          expect(segments[segmentIndex]).toHaveClass(
+            "gv-directory-heading__segment--accent",
+          );
+        }
+      });
     });
 
     expect(

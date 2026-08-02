@@ -27,7 +27,7 @@ export default function CellarScene({
 
       <div className="interactive-cellar-scene__copy">
         <p className="eyebrow">The wine wall</p>
-        <h2>Choose a section.</h2>
+        <h2>CHOOSE A SECTION</h2>
         <p>
           Move through the room by section, then step closer to inspect the
           bottles inside.

@@ -1,6 +1,8 @@
 import { ArrowRight, Compass, Grape, Map as MapIcon, Sparkles } from "lucide-react";
 
 import { ButtonLink } from "@/components/ui/Button";
+import DirectoryHeading from "@/components/typography/DirectoryHeading";
+import { DIRECTORY_PAGE_HEADINGS } from "@/components/typography/directoryHeadingPresets";
 import { PageShell, SectionHeading } from "@/components/ui/PageShell";
 import { NoticePanel } from "@/components/ui/StatePanels";
 import { demoCellarBottles, demoCellarSections } from "@/data/demoCellar";
@@ -30,7 +32,7 @@ export default function DemoTasteAtlasPage() {
       className="gv-demo-page gv-demo-atlas"
       description="A transparent summary derived only from the eleven fictional bottles in the public demonstration cellar."
       eyebrow="Public demonstration · Read-only"
-      title="DEMO TASTE ATLAS"
+      heading={<DirectoryHeading {...DIRECTORY_PAGE_HEADINGS.demoTasteAtlas} />}
     >
       <NoticePanel
         action={

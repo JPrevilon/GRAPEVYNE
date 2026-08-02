@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -48,5 +48,20 @@ describe("HomePage experience boundaries", () => {
     );
     expect(webglExperienceSource).toMatch(/inspectBrowserWebGLCapability/);
     expect(webglExperienceSource).not.toMatch(/\.(?:glb|gltf)(?:[?"']|$)/i);
+  });
+
+  it("keeps title typography in the DOM instead of rendering WebGL text", () => {
+    const webglRoot = path.resolve(process.cwd(), "src/experience/webgl");
+    const webglSource = readdirSync(webglRoot, { recursive: true })
+      .filter((entry): entry is string => typeof entry === "string")
+      .filter((entry) => /\.(?:ts|tsx)$/.test(entry))
+      .map((entry) => readFileSync(path.resolve(webglRoot, entry), "utf8"))
+      .join("\n");
+
+    expect(webglSource).not.toMatch(
+      /import\s*{[^}]*\bText(?:3D)?\b[^}]*}\s*from\s*["']@react-three\/drei["']/s,
+    );
+    expect(webglSource).not.toMatch(/<Text(?:3D)?\b/);
+    expect(webglSource).not.toMatch(/troika-three-text/i);
   });
 });

@@ -4,11 +4,8 @@ import { BrowserRouter } from "react-router-dom";
 
 import App from "@/App";
 import AppProviders from "@/app/AppProviders";
-import "@fontsource/archivo-black/latin-400.css";
-import "@fontsource-variable/archivo/wght.css";
-import "@fontsource/barlow-condensed/latin-600.css";
-import "@fontsource/barlow-condensed/latin-700.css";
-import "@fontsource/barlow-condensed/latin-800.css";
+import "@fontsource-variable/raleway/wght.css";
+import "@fontsource-variable/jost/wght.css";
 import "@/styles/global.css";
 import "@/styles/design-system.css";
 import "@/styles/product-routes.css";

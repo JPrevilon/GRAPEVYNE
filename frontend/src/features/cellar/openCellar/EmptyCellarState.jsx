@@ -8,7 +8,7 @@ export default function EmptyCellarState() {
         <Wine size={64} strokeWidth={1.2} />
       </div>
       <p className="eyebrow">Empty cellar</p>
-      <h1>Your private cellar is waiting.</h1>
+      <h1>YOUR PRIVATE CELLAR IS WAITING</h1>
       <p>
         Save a bottle from Discover to begin building shelves around favorites,
         pairings, rare finds, and celebrations.

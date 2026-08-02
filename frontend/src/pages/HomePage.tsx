@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 
 import BrandLockup from "@/components/brand/BrandLockup";
 import ChapterProgress from "@/components/navigation/ChapterProgress";
+import DirectoryHeading from "@/components/typography/DirectoryHeading";
 import { ButtonLink } from "@/components/ui/Button";
 import { NaturalLanguageSearch } from "@/components/ui/FormControls";
 import { WineBottleFallback } from "@/components/wine/WineBottleFallback";
@@ -69,14 +70,13 @@ function ChapterHeading({ chapter }: { chapter: StoryChapterDefinition }) {
         <span aria-hidden="true"> / </span>
         <span>{chapter.navLabel}</span>
       </p>
-      {chapter.key === "hero" ? (
-        <h1 id={headingId}>
-          <span>FIND THE BOTTLE</span>{" "}
-          <span>KEEP THE MEMORY</span>
-        </h1>
-      ) : (
-        <h2 id={headingId}>{chapter.title}</h2>
-      )}
+      <DirectoryHeading
+        ariaLabel={chapter.title}
+        as={chapter.key === "hero" ? "h1" : "h2"}
+        id={headingId}
+        scale={chapter.key === "hero" ? "hero" : "chapter"}
+        segments={chapter.headingSegments}
+      />
     </header>
   );
 }

@@ -9,7 +9,7 @@ export default function CellarHero({ featuredBottle, onOpenCellar }) {
       <div className="oc-hero__light" aria-hidden="true" />
       <div className="oc-hero__copy">
         <p className="eyebrow">Signature cellar experience</p>
-        <h1 id="open-cellar-title">Open Cellar</h1>
+        <h1 id="open-cellar-title">OPEN CELLAR</h1>
         <p>
           Step through your saved wines by mood, memory, pairing, and occasion.
         </p>

@@ -25,18 +25,18 @@
   --surface-warm: rgba(113, 28, 53, 0.14);
   --surface-demo: rgba(102, 112, 86, 0.14);
 
-  --font-display: "Archivo Black", "Arial Black", "Helvetica Neue", sans-serif;
-  --font-body: "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif;
-  --font-directory: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-display: "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Jost Variable", "Jost", "Helvetica Neue", Arial, sans-serif;
+  --font-directory: "Jost Variable", "Jost", "Helvetica Neue", Arial, sans-serif;
   --font-interface: var(--font-body);
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
-  --size-display-hero: clamp(3.15rem, 6.6vw, 6.9rem);
-  --size-display-chapter: clamp(2.25rem, 4.9vw, 4.85rem);
-  --size-display-page: clamp(2.5rem, 4.8vw, 5.2rem);
-  --size-copy-narrative: clamp(1.3rem, 2.2vw, 2.35rem);
+  --size-display-hero: clamp(3.35rem, 6.1vw, 6.15rem);
+  --size-display-chapter: clamp(2.4rem, 4.3vw, 4.35rem);
+  --size-display-page: clamp(2.7rem, 4.8vw, 5rem);
+  --size-copy-narrative: clamp(1.2rem, 1.85vw, 1.85rem);
   --size-copy-body: 1rem;
   --size-metadata: clamp(0.78rem, 0.9vw, 0.9rem);
   --size-directory-label: clamp(0.86rem, 1.1vw, 1rem);
@@ -45,6 +45,18 @@
   --size-numerical: clamp(1rem, 1.5vw, 1.3rem);
   --display-sm: var(--size-display-page);
   --display-lg: var(--size-display-hero);
+  --size-directory-hero-large: clamp(3.35rem, 6.1vw, 6.15rem);
+  --size-directory-hero-medium: clamp(2.35rem, 4.1vw, 4.15rem);
+  --size-directory-hero-small: clamp(1.25rem, 2.1vw, 2.1rem);
+  --size-directory-hero-micro: clamp(0.95rem, 1.3vw, 1.3rem);
+  --size-directory-chapter-large: clamp(2.4rem, 4.3vw, 4.35rem);
+  --size-directory-chapter-medium: clamp(1.9rem, 3.25vw, 3.3rem);
+  --size-directory-chapter-small: clamp(1.05rem, 1.8vw, 1.75rem);
+  --size-directory-chapter-micro: clamp(0.88rem, 1.15vw, 1.1rem);
+  --size-directory-product-large: clamp(2.7rem, 4.8vw, 5rem);
+  --size-directory-product-medium: clamp(2rem, 3.4vw, 3.55rem);
+  --size-directory-product-small: clamp(1.05rem, 1.75vw, 1.7rem);
+  --size-directory-product-micro: clamp(0.86rem, 1.1vw, 1.08rem);
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -99,6 +111,7 @@ html {
   min-width: 320px;
   background: var(--color-obsidian);
   scroll-behavior: smooth;
+  font-optical-sizing: auto;
   font-synthesis: none;
 }
 
@@ -114,6 +127,8 @@ body {
   color: var(--color-text);
   font-family: var(--font-body);
   font-size: var(--size-copy-body);
+  font-weight: 350;
+  letter-spacing: 0.02em;
   line-height: 1.6;
   text-rendering: optimizeLegibility;
 }
@@ -162,8 +177,8 @@ h4 {
   font-family: var(--font-display);
   font-style: normal;
   font-weight: 400;
-  letter-spacing: -0.045em;
-  line-height: 0.9;
+  letter-spacing: 0.025em;
+  line-height: 0.96;
   text-wrap: balance;
 }
 
@@ -173,6 +188,88 @@ h2 em {
   font-weight: 400;
   font-style: normal;
 }
+
+.gv-directory-heading {
+  --directory-large: var(--size-directory-product-large);
+  --directory-medium: var(--size-directory-product-medium);
+  --directory-small: var(--size-directory-product-small);
+  --directory-micro: var(--size-directory-product-micro);
+  max-width: none;
+  margin: 0;
+  overflow-wrap: normal;
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1;
+  text-wrap: balance;
+}
+
+.gv-directory-heading--hero {
+  --directory-large: var(--size-directory-hero-large);
+  --directory-medium: var(--size-directory-hero-medium);
+  --directory-small: var(--size-directory-hero-small);
+  --directory-micro: var(--size-directory-hero-micro);
+}
+
+.gv-directory-heading--chapter {
+  --directory-large: var(--size-directory-chapter-large);
+  --directory-medium: var(--size-directory-chapter-medium);
+  --directory-small: var(--size-directory-chapter-small);
+  --directory-micro: var(--size-directory-chapter-micro);
+}
+
+.gv-directory-heading__visual {
+  display: grid;
+  gap: clamp(0.2rem, 0.75vw, 0.65rem);
+}
+
+.gv-directory-heading__line {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.08em 0.28em;
+}
+
+.gv-directory-heading__line[data-row="2"] {
+  padding-inline-start: clamp(0.75rem, 4.2vw, 4.5rem);
+}
+
+.gv-directory-heading__segment {
+  display: inline-block;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.gv-directory-heading__segment--size-micro {
+  font-size: var(--directory-micro);
+  letter-spacing: 0.15em;
+  line-height: 1.05;
+}
+
+.gv-directory-heading__segment--size-small {
+  font-size: var(--directory-small);
+  letter-spacing: 0.09em;
+  line-height: 1.04;
+}
+
+.gv-directory-heading__segment--size-medium {
+  font-size: var(--directory-medium);
+  letter-spacing: 0.045em;
+  line-height: 0.98;
+}
+
+.gv-directory-heading__segment--size-large {
+  font-size: var(--directory-large);
+  letter-spacing: 0.022em;
+  line-height: 0.94;
+}
+
+.gv-directory-heading__segment--weight-light { font-weight: 300; }
+.gv-directory-heading__segment--weight-regular { font-weight: 400; }
+.gv-directory-heading__segment--weight-medium { font-weight: 500; }
+.gv-directory-heading__segment--accent { color: var(--color-champagne); }
+.gv-directory-heading__segment--placement-inset { margin-inline-start: clamp(1rem, 4vw, 4rem); }
+.gv-directory-heading__segment--placement-end { margin-inline-start: auto; }
 
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--color-champagne);
@@ -210,7 +307,7 @@ h2 em {
   border-radius: var(--radius-sm);
   background: var(--color-aged-ivory);
   color: var(--color-obsidian);
-  font-weight: 700;
+  font-weight: 500;
   transform: translateY(-180%);
   transition: transform var(--duration-fast) var(--ease-standard);
 }
@@ -251,9 +348,9 @@ h2 em {
   margin: 0;
   color: var(--color-text-muted);
   font-size: clamp(1.08rem, 1.6vw, 1.35rem);
-  font-weight: 600;
-  letter-spacing: -0.012em;
-  line-height: 1.35;
+  font-weight: 350;
+  letter-spacing: 0.025em;
+  line-height: 1.52;
 }
 
 .gv-page-hero__actions,
@@ -269,9 +366,9 @@ h2 em {
   color: var(--color-champagne);
   font-family: var(--font-directory);
   font-size: var(--size-directory-label);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  line-height: 1.5;
   text-transform: uppercase;
 }
 
@@ -297,6 +394,9 @@ h2 em {
   max-width: 42rem;
   margin-bottom: 0;
   color: var(--color-text-muted);
+  font-weight: 350;
+  letter-spacing: 0.02em;
+  line-height: 1.62;
 }
 
 .gv-button {
@@ -310,8 +410,8 @@ h2 em {
   border-radius: var(--radius-sm);
   font-family: var(--font-body);
   font-size: var(--size-button);
-  font-weight: 750;
-  letter-spacing: 0.015em;
+  font-weight: 500;
+  letter-spacing: 0.07em;
   line-height: 1.2;
   text-align: center;
   text-transform: uppercase;
@@ -336,7 +436,7 @@ h2 em {
 
 .gv-button--primary {
   border-color: var(--color-aged-ivory);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: var(--color-aged-ivory);
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.3);
   color: var(--color-obsidian);
@@ -437,8 +537,8 @@ h2 em {
   color: var(--color-aged-ivory);
   font-family: var(--font-directory);
   font-size: var(--size-directory-label);
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-weight: 500;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -447,6 +547,8 @@ h2 em {
   margin: -0.2rem 0 0;
   color: var(--color-smoke);
   font-size: var(--text-xs);
+  font-weight: 350;
+  line-height: 1.5;
 }
 
 .gv-field input,
@@ -517,7 +619,7 @@ h2 em {
   padding: 0.4rem;
   padding-left: 1rem;
   border: 1px solid rgba(201, 168, 106, 0.34);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: rgba(16, 14, 12, 0.88);
   box-shadow: var(--shadow-low);
 }
@@ -592,12 +694,16 @@ h2 em {
   margin-bottom: var(--space-3);
   font-size: clamp(1.7rem, 3vw, 2.5rem);
   line-height: 1.04;
+  letter-spacing: 0.025em;
 }
 
 .gv-state-panel__content > p:not(.gv-eyebrow) {
   max-width: 52rem;
   margin-bottom: 0;
   color: var(--color-text-muted);
+  font-weight: 350;
+  letter-spacing: 0.02em;
+  line-height: 1.62;
 }
 
 .gv-state-panel__action {
@@ -678,16 +784,16 @@ h2 em {
   font-family: var(--font-display);
   font-size: clamp(1.1rem, 1.8vw, 1.55rem);
   font-weight: 400;
-  letter-spacing: -0.045em;
-  line-height: 0.92;
+  letter-spacing: 0.12em;
+  line-height: 0.96;
 }
 
 .gv-brand-lockup__descriptor {
   font-family: var(--font-directory);
   font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  line-height: 1;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
 }
 
 .gv-brand-lockup--compact {
@@ -746,8 +852,8 @@ h2 em {
   color: var(--color-text-muted);
   font-family: var(--font-directory);
   font-size: var(--size-navigation);
-  font-weight: 700;
-  letter-spacing: 0.055em;
+  font-weight: 500;
+  letter-spacing: 0.095em;
   text-transform: uppercase;
 }
 
@@ -792,8 +898,8 @@ h2 em {
   color: var(--color-text-muted);
   font-family: var(--font-directory);
   font-size: var(--size-navigation);
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-weight: 500;
+  letter-spacing: 0.075em;
 }
 
 .gv-nav__search:hover,
@@ -808,13 +914,13 @@ h2 em {
   justify-content: center;
   padding: 0.55rem 1rem;
   border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: var(--color-aged-ivory);
   color: var(--color-obsidian);
   font-family: var(--font-directory);
   font-size: var(--size-navigation);
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  font-weight: 500;
+  letter-spacing: 0.075em;
 }
 
 .gv-nav__user,
@@ -873,8 +979,8 @@ h2 em {
   margin: 0;
   font-family: var(--font-directory);
   font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-weight: 500;
+  letter-spacing: 0.12em;
   line-height: 1;
 }
 .gv-nav__drawer-close { border-color: var(--color-border); }
@@ -889,9 +995,9 @@ h2 em {
   gap: var(--space-3);
   font-family: var(--font-directory);
   font-size: clamp(1.75rem, 8vw, 2.55rem);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  line-height: 0.95;
+  font-weight: 400;
+  letter-spacing: 0.065em;
+  line-height: 1;
   text-transform: uppercase;
 }
 
@@ -916,8 +1022,8 @@ h2 em {
   color: var(--color-champagne);
   font-family: var(--font-directory);
   font-size: var(--size-directory-label);
-  font-weight: 700;
-  letter-spacing: 0.09em;
+  font-weight: 500;
+  letter-spacing: 0.11em;
 }
 
 .gv-nav__drawer-user { display: grid; color: var(--color-text-muted); font-size: var(--text-sm); }
@@ -1028,7 +1134,7 @@ h2 em {
   max-width: 100%;
   overflow: hidden;
   font-size: clamp(0.34rem, 0.7vw, 0.56rem);
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.08em;
   line-height: 1.2;
   text-transform: none;
@@ -1102,8 +1208,8 @@ h2 em {
   display: flex;
   gap: var(--space-4);
   font-family: var(--font-directory);
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-weight: 500;
+  letter-spacing: 0.095em;
   text-transform: uppercase;
 }
 .gv-footer a:hover { color: var(--color-champagne); }
@@ -1121,6 +1227,26 @@ h2 em {
     --nav-height: 4.25rem;
     --page-gutter: clamp(1.25rem, 5.5vw, 1.5rem);
   }
+  .gv-directory-heading--hero {
+    --directory-large: clamp(2.5rem, 12vw, 3.9rem);
+    --directory-medium: clamp(2.05rem, 9.4vw, 3.2rem);
+    --directory-small: clamp(1rem, 5.2vw, 1.5rem);
+    --directory-micro: clamp(0.82rem, 3.8vw, 1.05rem);
+  }
+  .gv-directory-heading--chapter {
+    --directory-large: clamp(2rem, 9.5vw, 3.25rem);
+    --directory-medium: clamp(1.7rem, 7.8vw, 2.7rem);
+    --directory-small: clamp(0.98rem, 4.8vw, 1.42rem);
+    --directory-micro: clamp(0.82rem, 3.7vw, 1rem);
+  }
+  .gv-directory-heading--product {
+    --directory-large: clamp(2.2rem, 10.5vw, 3.55rem);
+    --directory-medium: clamp(1.8rem, 8.2vw, 2.8rem);
+    --directory-small: clamp(1rem, 4.8vw, 1.45rem);
+    --directory-micro: clamp(0.82rem, 3.7vw, 1rem);
+  }
+  .gv-directory-heading__line[data-row="2"] { padding-inline-start: clamp(0.4rem, 4vw, 1.15rem); }
+  .gv-directory-heading--hero .gv-directory-heading__line { flex-wrap: nowrap; }
   .gv-page-shell { padding-block: 2.5rem 4rem; }
   .gv-page-hero,
   .gv-section-heading { display: grid; align-items: start; gap: var(--space-4); }

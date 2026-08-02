@@ -102,15 +102,25 @@ beforeEach(() => {
 
 describe("major route composition", () => {
   it.each([
-    ["/", /FIND THE BOTTLE.*KEEP THE MEMORY/i],
+    ["/", "FIND THE BOTTLE KEEP THE MEMORY"],
     ["/discover", "DISCOVER WINES"],
     ["/login", "RETURN TO YOUR CELLAR"],
     ["/signup", "CREATE YOUR CELLAR"],
     ["/demo/cellar", "DEMO CELLAR"],
     ["/demo/taste-atlas", "DEMO TASTE ATLAS"],
   ])("renders a direct load of %s", async (path, heading) => {
-    renderRoute(path);
-    expect(await screen.findByRole("heading", { name: heading })).toBeInTheDocument();
+    const view = renderRoute(path);
+    const routeHeading = await screen.findByRole("heading", {
+      level: 1,
+      name: heading,
+    });
+
+    expect(routeHeading).toBeInTheDocument();
+    expect(routeHeading).toHaveAccessibleName(heading);
+    expect(routeHeading.getAttribute("aria-label") ?? routeHeading.textContent).not.toMatch(
+      /[.!?]$/,
+    );
+    expect(view.container.querySelectorAll("h1")).toHaveLength(1);
   });
 
   it("renders a direct wine-detail route from the real envelope shape", async () => {
