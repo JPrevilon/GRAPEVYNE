@@ -115,16 +115,32 @@ export default function CinematicVideo({
     let onceCompleted = false;
     let playPending = false;
     let playbackFailed = false;
+    let playAttemptToken = 0;
 
-    const handlePlaybackFailure = () => {
-      if (!active || playbackFailed) {
+    const handlePlaybackFailure = (attemptToken: number, error: unknown) => {
+      if (
+        !active ||
+        playbackFailed ||
+        attemptToken !== playAttemptToken
+      ) {
+        return;
+      }
+
+      playPending = false;
+
+      if (error instanceof DOMException && error.name === "AbortError") {
         return;
       }
 
       playbackFailed = true;
-      playPending = false;
       video.pause();
       setBlockedAsset(asset.mp4);
+    };
+
+    const pausePlayback = () => {
+      playAttemptToken += 1;
+      playPending = false;
+      video.pause();
     };
 
     const attemptPlayback = () => {
@@ -140,18 +156,22 @@ export default function CinematicVideo({
         return;
       }
 
+      const attemptToken = ++playAttemptToken;
+      playPending = true;
+
       try {
         const playResult = video.play();
-        playPending = true;
 
         void playResult.then(
           () => {
-            playPending = false;
+            if (active && attemptToken === playAttemptToken) {
+              playPending = false;
+            }
           },
-          () => handlePlaybackFailure(),
+          (error: unknown) => handlePlaybackFailure(attemptToken, error),
         );
-      } catch {
-        handlePlaybackFailure();
+      } catch (error) {
+        handlePlaybackFailure(attemptToken, error);
       }
     };
 
@@ -184,7 +204,7 @@ export default function CinematicVideo({
         return;
       }
 
-      video.pause();
+      pausePlayback();
 
       if (fullyOutside && media.playback === "once") {
         resetOncePlayback();
@@ -199,7 +219,7 @@ export default function CinematicVideo({
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
-        video.pause();
+        pausePlayback();
         return;
       }
 
@@ -219,12 +239,16 @@ export default function CinematicVideo({
         rootMargin: "0px",
         threshold: [0, MEANINGFUL_VISIBILITY],
       });
-      observer.observe(video);
+      observer.observe(
+        video.closest<HTMLElement>("[data-story-chapter]") ?? video,
+      );
     }
 
     return () => {
       active = false;
       meaningfullyVisible = false;
+      playAttemptToken += 1;
+      playPending = false;
       observer?.disconnect();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       video.removeEventListener("ended", handleEnded);

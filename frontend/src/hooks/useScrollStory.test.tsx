@@ -172,6 +172,7 @@ function createDesktopRuntimeMock() {
     tickerAdd: vi.fn(),
     tickerCallback: undefined as ((time: number) => void) | undefined,
     tickerRemove: vi.fn(),
+    tickerSleep: vi.fn(),
     triggers: [] as Array<{
       kill: ReturnType<typeof vi.fn>;
       options: Record<string, unknown>;
@@ -256,18 +257,21 @@ function createDesktopRuntimeMock() {
         },
       ),
       remove: state.tickerRemove,
+      sleep: state.tickerSleep,
     },
   };
 
-  const loadRuntimeMock = vi.fn(async () => ({
+  const runtime = {
     gsap,
     Lenis: LenisMock,
     ScrollTrigger,
-  }));
+  };
+  const loadRuntimeMock = vi.fn(async () => runtime);
 
   return {
     loadRuntime: loadRuntimeMock as unknown as ScrollRuntimeLoader,
     loadRuntimeMock,
+    runtime,
     state,
   };
 }
@@ -373,6 +377,31 @@ describe("useScrollStory native runtime", () => {
 });
 
 describe("useScrollStory desktop runtime", () => {
+  it("sleeps an imported GSAP ticker when unmounted before runtime setup", async () => {
+    installMediaQueries(() => false);
+    const { runtime, state } = createDesktopRuntimeMock();
+    type RuntimeDependencies = Awaited<ReturnType<ScrollRuntimeLoader>>;
+    let resolveRuntime: (dependencies: RuntimeDependencies) => void = () =>
+      undefined;
+    const deferredRuntime = new Promise<RuntimeDependencies>((resolve) => {
+      resolveRuntime = resolve;
+    });
+    const loadRuntime = vi.fn(() => deferredRuntime) as unknown as ScrollRuntimeLoader;
+    const view = render(<StoryHarness loadRuntime={loadRuntime} />);
+
+    expect(loadRuntime).toHaveBeenCalledOnce();
+    view.unmount();
+
+    await act(async () => {
+      resolveRuntime(runtime as unknown as RuntimeDependencies);
+      await deferredRuntime;
+      await Promise.resolve();
+    });
+
+    expect(state.lenisStarts).toBe(0);
+    expect(state.tickerSleep).toHaveBeenCalledOnce();
+  });
+
   it("synchronizes Lenis and tears down only its owned work in StrictMode", async () => {
     installMediaQueries(() => false);
     const { loadRuntime, loadRuntimeMock, state } =
@@ -430,6 +459,9 @@ describe("useScrollStory desktop runtime", () => {
     view.unmount();
 
     expect(state.tickerRemove).toHaveBeenCalledOnce();
+    // Strict Mode abandons its first async setup, then the live setup sleeps
+    // the ticker during the explicit unmount.
+    expect(state.tickerSleep).toHaveBeenCalledTimes(2);
     expect(state.lenisOff).toHaveBeenCalledOnce();
     expect(state.lenisDestroy).toHaveBeenCalledOnce();
     state.triggers.forEach(({ kill }) => {

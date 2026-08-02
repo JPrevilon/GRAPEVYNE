@@ -16,6 +16,7 @@ const STORY_PROGRESS_PROPERTY = "--story-progress";
 const CHAPTER_PROGRESS_PROPERTY = "--chapter-progress";
 
 const STORY_CHAPTER_SET = new Set<string>(STORY_CHAPTER_KEYS);
+let activeStoryTickerOwners = 0;
 
 type Cleanup = () => void;
 
@@ -309,7 +310,16 @@ export function useScrollStory(
       try {
         const { gsap, Lenis, ScrollTrigger } = await loadRuntime();
 
-        if (disposed || generation !== runtimeGeneration) return;
+        if (disposed || generation !== runtimeGeneration) {
+          // Importing GSAP starts its singleton ticker even when this effect
+          // unmounts before the async runtime is ready. Stop that orphaned
+          // frame loop only when a newer story runtime does not own it. A
+          // later `ticker.add` wakes it on the next Home mount.
+          if (activeStoryTickerOwners === 0) {
+            gsap.ticker.sleep();
+          }
+          return;
+        }
         let matchedRuntimeCleanup: Cleanup = noop;
         let gsapMedia: ReturnType<typeof gsap.matchMedia> | undefined;
         let gsapContext: ReturnType<typeof gsap.context> | undefined;
@@ -320,12 +330,21 @@ export function useScrollStory(
           const ownedTriggers = new Set<OwnedTrigger>();
           let lenis: InstanceType<typeof Lenis> | undefined;
           let tickerCallback: ((time: number) => void) | undefined;
+          let ownsTicker = false;
           let lenisScrollCallback: (() => void) | undefined;
 
           const cleanup = once(() => {
             if (tickerCallback) {
               gsap.ticker.remove(tickerCallback);
               tickerCallback = undefined;
+            }
+
+            if (ownsTicker) {
+              activeStoryTickerOwners = Math.max(
+                0,
+                activeStoryTickerOwners - 1,
+              );
+              ownsTicker = false;
             }
 
             if (lenis && lenisScrollCallback) {
@@ -338,6 +357,13 @@ export function useScrollStory(
 
             ownedTriggers.forEach((trigger) => trigger.kill(true));
             ownedTriggers.clear();
+            // GSAP owns the requestAnimationFrame loop behind its singleton
+            // ticker. This story is the application's only GSAP consumer, so
+            // explicitly sleep it after removing our callback and triggers.
+            // Adding the callback on a later Home visit wakes it again.
+            if (activeStoryTickerOwners === 0) {
+              gsap.ticker.sleep();
+            }
             setSmoothingActive(false);
           });
 
@@ -359,6 +385,8 @@ export function useScrollStory(
 
             lenis.on("scroll", lenisScrollCallback);
             gsap.ticker.add(tickerCallback);
+            activeStoryTickerOwners += 1;
+            ownsTicker = true;
             setSmoothingActive(true);
 
             own(

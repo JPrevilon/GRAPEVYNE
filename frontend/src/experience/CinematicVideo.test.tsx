@@ -9,12 +9,55 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import CinematicVideo, { type CinematicVideoProps } from "./CinematicVideo";
-import { CINEMATIC_MEDIA } from "./media";
+import { CINEMATIC_MEDIA, type MediaKey } from "./media";
 
 const MOBILE_QUERY = "(max-width: 720px)";
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 const LOAD_ROOT_MARGIN = "320px 0px";
 const PLAY_ROOT_MARGIN = "0px";
+
+const expectedRegistryPaths: Record<MediaKey, readonly string[]> = {
+  hero: [
+    "/assets/video/desktop/hero-bottle-macro.desktop.webm",
+    "/assets/video/desktop/hero-bottle-macro.desktop.mp4",
+    "/assets/video/posters/desktop/hero-bottle-macro.desktop.jpg",
+    "/assets/video/mobile/hero-bottle-macro.mobile.webm",
+    "/assets/video/mobile/hero-bottle-macro.mobile.mp4",
+    "/assets/video/posters/mobile/hero-bottle-macro.mobile.jpg",
+  ],
+  liquid: [
+    "/assets/video/desktop/taste-liquid-transition.desktop.webm",
+    "/assets/video/desktop/taste-liquid-transition.desktop.mp4",
+    "/assets/video/posters/desktop/taste-liquid-transition.desktop.jpg",
+    "/assets/video/mobile/taste-liquid-transition.mobile.webm",
+    "/assets/video/mobile/taste-liquid-transition.mobile.mp4",
+    "/assets/video/posters/mobile/taste-liquid-transition.mobile.jpg",
+  ],
+  cellar: [
+    "/assets/video/desktop/cellar-corridor-push.desktop.webm",
+    "/assets/video/desktop/cellar-corridor-push.desktop.mp4",
+    "/assets/video/posters/desktop/cellar-corridor-push.desktop.jpg",
+    "/assets/video/mobile/cellar-corridor-push.mobile.webm",
+    "/assets/video/mobile/cellar-corridor-push.mobile.mp4",
+    "/assets/video/posters/mobile/cellar-corridor-push.mobile.jpg",
+  ],
+  memory: [
+    "/assets/video/desktop/memory-table-ambience.desktop.webm",
+    "/assets/video/desktop/memory-table-ambience.desktop.mp4",
+    "/assets/video/posters/desktop/memory-table-ambience.desktop.jpg",
+    "/assets/video/mobile/memory-table-ambience.mobile.webm",
+    "/assets/video/mobile/memory-table-ambience.mobile.mp4",
+    "/assets/video/posters/mobile/memory-table-ambience.mobile.jpg",
+  ],
+  atlas: [
+    "/assets/video/desktop/taste-atlas-finale.desktop.webm",
+    "/assets/video/desktop/taste-atlas-finale.desktop.mp4",
+    "/assets/video/posters/desktop/taste-atlas-finale.desktop.jpg",
+    "/assets/video/mobile/taste-atlas-finale.mobile.webm",
+    "/assets/video/mobile/taste-atlas-finale.mobile.mp4",
+    "/assets/video/posters/mobile/taste-atlas-finale.mobile.jpg",
+  ],
+};
 
 interface ControlledMediaQuery {
   listeners: Set<(event: MediaQueryListEvent) => void>;
@@ -203,24 +246,14 @@ describe("CINEMATIC_MEDIA", () => {
     });
 
     for (const [key, media] of Object.entries(CINEMATIC_MEDIA)) {
-      for (const [viewport, asset] of Object.entries({
-        desktop: media.desktop,
-        mobile: media.mobile,
-      })) {
-        expect(asset.webm).toMatch(
-          new RegExp(`^/assets/video/${viewport}/.+\\.${viewport}\\.webm$`),
-        );
-        expect(asset.mp4).toMatch(
-          new RegExp(`^/assets/video/${viewport}/.+\\.${viewport}\\.mp4$`),
-        );
-        expect(asset.poster).toMatch(
-          new RegExp(
-            `^/assets/video/posters/${viewport}/.+\\.${viewport}\\.jpg$`,
-          ),
-        );
-      }
-
-      expect(key).not.toContain("prototype");
+      expect([
+        media.desktop.webm,
+        media.desktop.mp4,
+        media.desktop.poster,
+        media.mobile.webm,
+        media.mobile.mp4,
+        media.mobile.poster,
+      ]).toEqual(expectedRegistryPaths[key as MediaKey]);
     }
 
     expect(CINEMATIC_MEDIA.atlas).toMatchObject({
@@ -319,6 +352,21 @@ describe("CinematicVideo", () => {
     });
   });
 
+  it.each(["hero", "liquid", "memory"] as const)(
+    "renders %s with the native loop attribute",
+    (mediaKey) => {
+      const { container } = render(
+        mediaKey === "hero" ? (
+          <CinematicVideo mediaKey="hero" priority />
+        ) : (
+          <CinematicVideo mediaKey={mediaKey} />
+        ),
+      );
+
+      expect(container.querySelector("video")?.loop).toBe(true);
+    },
+  );
+
   it("keeps later media source-free until near the viewport and plays only when meaningfully visible", async () => {
     const { container } = render(<CinematicVideo mediaKey="memory" />);
     const video = container.querySelector("video");
@@ -372,73 +420,86 @@ describe("CinematicVideo", () => {
     expect(pauseMock).toHaveBeenCalled();
   });
 
-  it("holds a play-once ending frame until fully outside, then resets and replays", async () => {
-    const { container } = render(<CinematicVideo mediaKey="cellar" />);
+  it.each(["cellar", "atlas"] as const)(
+    "holds the %s ending frame until its whole chapter exits, then resets and replays",
+    async (mediaKey) => {
+      const { container } = render(
+        <section data-story-chapter={mediaKey}>
+          <CinematicVideo mediaKey={mediaKey} />
+        </section>,
+      );
 
-    act(() => {
-      getActiveObserver(LOAD_ROOT_MARGIN).emit({
-        intersectionRatio: 0.01,
-        isIntersecting: true,
+      act(() => {
+        getActiveObserver(LOAD_ROOT_MARGIN).emit({
+          intersectionRatio: 0.01,
+          isIntersecting: true,
+        });
       });
-    });
 
-    const video = container.querySelector("video");
-    expect(video?.loop).toBe(false);
+      const video = container.querySelector("video");
+      const chapter = container.querySelector("section");
+      if (!video || !chapter) throw new Error("Expected chapter media.");
 
-    await act(async () => {
-      getActiveObserver(PLAY_ROOT_MARGIN).emit({
-        intersectionRatio: 0.7,
-        isIntersecting: true,
+      expect(video.loop).toBe(false);
+      expect(getActiveObserver(PLAY_ROOT_MARGIN).targets.has(chapter)).toBe(true);
+      expect(getActiveObserver(PLAY_ROOT_MARGIN).targets.has(video)).toBe(false);
+
+      await act(async () => {
+        getActiveObserver(PLAY_ROOT_MARGIN).emit({
+          intersectionRatio: 0.7,
+          isIntersecting: true,
+        });
+        await Promise.resolve();
       });
-      await Promise.resolve();
-    });
-    expect(playMock).toHaveBeenCalledOnce();
+      expect(playMock).toHaveBeenCalledOnce();
 
-    if (!video) throw new Error("Expected a video element.");
-    Object.defineProperty(video, "duration", { configurable: true, value: 5 });
-    Object.defineProperty(video, "currentTime", {
-      configurable: true,
-      value: 5,
-      writable: true,
-    });
-    fireEvent.ended(video);
-
-    act(() => {
-      getActiveObserver(PLAY_ROOT_MARGIN).emit({
-        intersectionRatio: 0.6,
-        isIntersecting: true,
+      Object.defineProperty(video, "duration", { configurable: true, value: 5 });
+      Object.defineProperty(video, "currentTime", {
+        configurable: true,
+        value: 5,
+        writable: true,
       });
-    });
-    expect(playMock).toHaveBeenCalledOnce();
+      fireEvent.ended(video);
 
-    act(() => {
-      getActiveObserver(PLAY_ROOT_MARGIN).emit({
-        intersectionRatio: 0.12,
-        isIntersecting: true,
+      act(() => {
+        getActiveObserver(PLAY_ROOT_MARGIN).emit({
+          intersectionRatio: 0.6,
+          isIntersecting: true,
+        });
       });
-    });
-    expect(video.currentTime).toBe(5);
+      expect(playMock).toHaveBeenCalledOnce();
 
-    act(() => {
-      getActiveObserver(PLAY_ROOT_MARGIN).emit({
-        intersectionRatio: 0,
-        isIntersecting: false,
+      act(() => {
+        getActiveObserver(PLAY_ROOT_MARGIN).emit({
+          intersectionRatio: 0.12,
+          isIntersecting: true,
+        });
       });
-    });
-    expect(video.currentTime).toBe(0);
+      expect(video.currentTime).toBe(5);
 
-    await act(async () => {
-      getActiveObserver(PLAY_ROOT_MARGIN).emit({
-        intersectionRatio: 0.7,
-        isIntersecting: true,
+      act(() => {
+        getActiveObserver(PLAY_ROOT_MARGIN).emit({
+          intersectionRatio: 0,
+          isIntersecting: false,
+        });
       });
-      await Promise.resolve();
-    });
-    expect(playMock).toHaveBeenCalledTimes(2);
-  });
+      expect(video.currentTime).toBe(0);
+
+      await act(async () => {
+        getActiveObserver(PLAY_ROOT_MARGIN).emit({
+          intersectionRatio: 0.7,
+          isIntersecting: true,
+        });
+        await Promise.resolve();
+      });
+      expect(playMock).toHaveBeenCalledTimes(2);
+    },
+  );
 
   it("replaces a rejected autoplay attempt with its poster without retrying", async () => {
-    playMock.mockRejectedValueOnce(new DOMException("Autoplay blocked"));
+    playMock.mockRejectedValueOnce(
+      new DOMException("Autoplay blocked", "NotAllowedError"),
+    );
     const { container } = render(
       <CinematicVideo mediaKey="hero" priority />,
     );
@@ -467,6 +528,86 @@ describe("CinematicVideo", () => {
     expect(playMock).toHaveBeenCalledOnce();
   });
 
+  it("does not treat an intentionally aborted pending play as autoplay failure", async () => {
+    let rejectPendingPlay: ((reason?: unknown) => void) | undefined;
+    playMock.mockImplementationOnce(
+      () =>
+        new Promise<void>((_resolve, reject) => {
+          rejectPendingPlay = reject;
+        }),
+    );
+    const { container } = render(
+      <section data-story-chapter="hero">
+        <CinematicVideo mediaKey="hero" priority />
+      </section>,
+    );
+    const playbackObserver = getActiveObserver(PLAY_ROOT_MARGIN);
+
+    act(() => {
+      playbackObserver.emit({
+        intersectionRatio: 0.8,
+        isIntersecting: true,
+      });
+    });
+    expect(playMock).toHaveBeenCalledOnce();
+
+    act(() => {
+      playbackObserver.emit({
+        intersectionRatio: 0.2,
+        isIntersecting: true,
+      });
+    });
+
+    await act(async () => {
+      rejectPendingPlay?.(new DOMException("Interrupted", "AbortError"));
+      await Promise.resolve();
+    });
+    expect(container.querySelector("video")).toBeInTheDocument();
+    expect(container.querySelector("img")).not.toBeInTheDocument();
+
+    await act(async () => {
+      playbackObserver.emit({
+        intersectionRatio: 0.8,
+        isIntersecting: true,
+      });
+      await Promise.resolve();
+    });
+    expect(playMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("preserves the atlas treatment on media-error poster fallback", () => {
+    const { container } = render(
+      <CinematicVideo className="atlas-media" mediaKey="atlas" />,
+    );
+    const video = container.querySelector("video");
+    if (!video) throw new Error("Expected atlas video.");
+
+    expect(video).toHaveStyle({
+      filter: "brightness(0.68) saturate(0.78)",
+      opacity: "0.9",
+    });
+
+    act(() => {
+      getActiveObserver(LOAD_ROOT_MARGIN).emit({
+        intersectionRatio: 0.01,
+        isIntersecting: true,
+      });
+    });
+    fireEvent.error(video);
+
+    const poster = container.querySelector("img");
+    expect(poster).toHaveAttribute(
+      "src",
+      CINEMATIC_MEDIA.atlas.desktop.poster,
+    );
+    expect(poster).toHaveClass("atlas-media");
+    expect(poster).toHaveAttribute("aria-hidden", "true");
+    expect(poster).toHaveStyle({
+      filter: "brightness(0.68) saturate(0.78)",
+      opacity: "0.9",
+    });
+  });
+
   it("renders only the selected poster and mounts no video for reduced motion", () => {
     mediaQueries = createMatchMediaController({
       [MOBILE_QUERY]: true,
@@ -482,6 +623,7 @@ describe("CinematicVideo", () => {
     expect(poster).toHaveAttribute("src", CINEMATIC_MEDIA.hero.mobile.poster);
     expect(poster).toHaveAttribute("loading", "eager");
     expect(container.querySelector("video")).not.toBeInTheDocument();
+    expect(container.innerHTML).not.toMatch(/\.(?:mp4|webm)/);
     expect(IntersectionObserverMock.instances).toHaveLength(0);
     expect(loadMock).not.toHaveBeenCalled();
     expect(playMock).not.toHaveBeenCalled();
@@ -547,6 +689,60 @@ describe("CinematicVideo", () => {
     expect(pauseMock).toHaveBeenCalled();
     expect(mediaQueries.get(MOBILE_QUERY).listeners.size).toBe(1);
     expect(mediaQueries.get(REDUCED_MOTION_QUERY).listeners.size).toBe(1);
+  });
+
+  it("drops stale lazy sources and reloads only the new non-hero viewport variant", () => {
+    const { container } = render(<CinematicVideo mediaKey="memory" />);
+
+    act(() => {
+      getActiveObserver(LOAD_ROOT_MARGIN).emit({
+        intersectionRatio: 0.01,
+        isIntersecting: true,
+      });
+    });
+    const desktopVideo = container.querySelector("video");
+    expect(getSourcePaths(container)).toEqual([
+      CINEMATIC_MEDIA.memory.desktop.webm,
+      CINEMATIC_MEDIA.memory.desktop.mp4,
+    ]);
+
+    pauseMock.mockClear();
+    act(() => mediaQueries.get(MOBILE_QUERY).setMatches(true));
+
+    const mobileVideo = container.querySelector("video");
+    expect(mobileVideo).not.toBe(desktopVideo);
+    expect(getSourcePaths(container)).toEqual([]);
+    expect(container.innerHTML).not.toContain("/desktop/");
+    expect(pauseMock.mock.instances).toContain(desktopVideo);
+
+    act(() => {
+      getActiveObserver(LOAD_ROOT_MARGIN).emit({
+        intersectionRatio: 0.01,
+        isIntersecting: true,
+      });
+    });
+    expect(getSourcePaths(container)).toEqual([
+      CINEMATIC_MEDIA.memory.mobile.webm,
+      CINEMATIC_MEDIA.memory.mobile.mp4,
+    ]);
+    expect(container.innerHTML).not.toContain("/desktop/");
+  });
+
+  it("pauses the captured media element and disconnects observers on route unmount", () => {
+    const { container, unmount } = render(
+      <CinematicVideo mediaKey="hero" priority />,
+    );
+    const video = container.querySelector("video");
+    pauseMock.mockClear();
+
+    unmount();
+
+    expect(pauseMock.mock.instances).toContain(video);
+    expect(
+      IntersectionObserverMock.instances.every(
+        (observer) => observer.disconnected,
+      ),
+    ).toBe(true);
   });
 
   it("ignores an invalid non-hero priority request at runtime", () => {
