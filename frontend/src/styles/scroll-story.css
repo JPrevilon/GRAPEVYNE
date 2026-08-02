@@ -881,12 +881,12 @@ html.has-scroll-smoothing body {
   font-family: var(--font-display);
   font-style: normal;
   font-weight: 400;
-  letter-spacing: -0.055em;
+  letter-spacing: -0.05em;
 }
 
 .gv-story-heading h1 {
   font-size: var(--size-display-hero);
-  line-height: 0.84;
+  line-height: 0.9;
 }
 
 .gv-story-heading h1 span {
@@ -905,7 +905,7 @@ html.has-scroll-smoothing body {
 
 .gv-story-heading h2 {
   font-size: var(--size-display-chapter);
-  line-height: 0.88;
+  line-height: 0.94;
 }
 
 .gv-story-copy {
@@ -1143,13 +1143,13 @@ html.has-scroll-smoothing body {
   }
 
   .gv-story-heading h1 {
-    font-size: clamp(1.95rem, 8.8vw, 4.4rem);
-    line-height: 0.86;
+    font-size: clamp(1.95rem, 8.8vw, 3.15rem);
+    line-height: 0.9;
   }
 
   .gv-story-heading h2 {
-    font-size: clamp(2.8rem, 12.8vw, 4.9rem);
-    line-height: 0.9;
+    font-size: var(--size-display-chapter);
+    line-height: 0.94;
   }
 
   .gv-story-lede {
@@ -1195,10 +1195,6 @@ html.has-scroll-smoothing body {
 }
 
 @media (max-width: 30rem) {
-  .gv-story-heading h1 {
-    font-size: clamp(1.95rem, 8.8vw, 3.05rem);
-  }
-
   .gv-cellar-capabilities {
     grid-template-columns: 1fr;
   }

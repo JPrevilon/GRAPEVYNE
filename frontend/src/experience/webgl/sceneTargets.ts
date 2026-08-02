@@ -52,7 +52,7 @@ const desktopTargets = {
   hero: {
     decoration: 1,
     keyLight: 3.7,
-    position: [1.65, -1.72, 0],
+    position: [1.82, -1.72, 0],
     rotation: [0, 0.1, -0.015],
     scale: 1.12,
     visible: true,

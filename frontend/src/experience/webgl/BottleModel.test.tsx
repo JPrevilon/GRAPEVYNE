@@ -2,11 +2,14 @@ import { cleanup, render } from "@testing-library/react";
 import {
   BufferGeometry,
   Float32BufferAttribute,
+  FrontSide,
   Group,
   Material,
   Mesh,
+  MeshPhysicalMaterial,
   MeshStandardMaterial,
   Texture,
+  TorusGeometry,
   type Object3D,
 } from "three";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -41,8 +44,35 @@ const canvasContext = {
   imageSmoothingQuality: "low",
 };
 
-function createGeometry() {
+function createGeometry(nodeName: string) {
   const geometry = new BufferGeometry();
+
+  if (nodeName === "Label_Front" || nodeName === "Label_Back") {
+    const y = nodeName === "Label_Front" ? -0.372 : 0.372;
+    geometry.setAttribute(
+      "position",
+      new Float32BufferAttribute(
+        [
+          -0.285, y, 0.705,
+          0.285, y, 0.705,
+          0.285, y, 1.495,
+          -0.285, y, 1.495,
+        ],
+        3,
+      ),
+    );
+    geometry.setAttribute(
+      "uv",
+      new Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1], 2),
+    );
+    geometry.setIndex(
+      nodeName === "Label_Front"
+        ? [0, 1, 2, 0, 2, 3]
+        : [0, 2, 1, 0, 3, 2],
+    );
+    return geometry;
+  }
+
   geometry.setAttribute(
     "position",
     new Float32BufferAttribute([0, 0, 0, 1, 0, 0, 0, 1, 0], 3),
@@ -60,7 +90,7 @@ function createModelFixture(
   REQUIRED_BOTTLE_NODES.forEach((nodeName) => {
     if (omittedNodes.includes(nodeName)) return;
 
-    const geometry = createGeometry();
+    const geometry = createGeometry(nodeName);
     const material = new MeshStandardMaterial({ color: 0x675548 });
     geometry.name = `${nodeName}-cached-geometry`;
     material.name = `${nodeName}-cached-material`;
@@ -174,6 +204,10 @@ describe("BottleModel runtime ownership", () => {
     expect(model.clone).toHaveBeenCalledOnce();
     expect(model.clone).toHaveBeenCalledWith(true);
     expect(canvasContext.drawImage).toHaveBeenCalledTimes(2);
+    model.sourceGeometries.forEach((geometry) => {
+      expect(geometry.boundingBox).toBeNull();
+      expect(geometry.boundingSphere).toBeNull();
+    });
 
     const runtimeMeshes = collectMeshes(model.runtimeScene);
     expect(runtimeMeshes.map(({ name }) => name)).toEqual(
@@ -190,6 +224,96 @@ describe("BottleModel runtime ownership", () => {
     const backMaterial = getSingleMaterial(backLabel) as MeshStandardMaterial;
     const runtimeFrontTexture = frontMaterial.map;
     const runtimeBackTexture = backMaterial.map;
+    const glass = model.runtimeScene.getObjectByName("Bottle_Glass") as Mesh;
+    const liquid = model.runtimeScene.getObjectByName("Wine_Liquid") as Mesh;
+    const capsule = model.runtimeScene.getObjectByName("Capsule") as Mesh;
+    const cork = model.runtimeScene.getObjectByName("Cork") as Mesh;
+    const glassMaterial = getSingleMaterial(glass) as MeshPhysicalMaterial;
+    const liquidMaterial = getSingleMaterial(liquid) as MeshPhysicalMaterial;
+    const capsuleMaterial = getSingleMaterial(capsule) as MeshPhysicalMaterial;
+    const frontPositions = frontLabel.geometry.getAttribute("position");
+    const frontNormals = frontLabel.geometry.getAttribute("normal");
+    const frontUvs = frontLabel.geometry.getAttribute("uv");
+    const backNormals = backLabel.geometry.getAttribute("normal");
+
+    expect(frontPositions.count).toBe(50);
+    expect(frontLabel.geometry.index?.count).toBe(144);
+    expect(backLabel.geometry.getAttribute("position").count).toBe(50);
+    expect(backLabel.geometry.index?.count).toBe(144);
+    expect(frontUvs.count).toBe(50);
+    expect(Math.min(...Array.from(frontUvs.array))).toBe(0);
+    expect(Math.max(...Array.from(frontUvs.array))).toBe(1);
+
+    frontLabel.geometry.computeBoundingBox();
+    expect(frontLabel.geometry.boundingBox?.min.z).toBeCloseTo(0.565, 3);
+    expect(frontLabel.geometry.boundingBox?.max.z).toBeCloseTo(1.355, 3);
+
+    for (let index = 0; index < frontPositions.count; index += 1) {
+      expect(
+        Math.hypot(frontPositions.getX(index), frontPositions.getY(index)),
+      ).toBeCloseTo(0.373, 3);
+    }
+    expect(
+      Array.from({ length: frontNormals.count }, (_, index) =>
+        frontNormals.getY(index),
+      ).reduce((total, value) => total + value, 0),
+    ).toBeLessThan(0);
+    expect(
+      Array.from({ length: backNormals.count }, (_, index) =>
+        backNormals.getY(index),
+      ).reduce((total, value) => total + value, 0),
+    ).toBeGreaterThan(0);
+
+    liquid.geometry.computeBoundingBox();
+    const liquidPositions = liquid.geometry.getAttribute("position");
+    const liquidNormals = liquid.geometry.getAttribute("normal");
+    const maxLiquidRadius = Array.from(
+      { length: liquidPositions.count },
+      (_, index) =>
+        Math.hypot(liquidPositions.getX(index), liquidPositions.getY(index)),
+    ).reduce((maximum, radius) => Math.max(maximum, radius), 0);
+    expect(liquid.geometry.boundingBox?.min.z).toBeCloseTo(0.06, 3);
+    expect(liquid.geometry.boundingBox?.max.z).toBeCloseTo(1.86, 3);
+    expect(maxLiquidRadius).toBeCloseTo(0.318, 3);
+    expect(liquidMaterial.side).toBe(FrontSide);
+    for (let point = 1; point < 8; point += 1) {
+      const firstMeridian = point;
+      const lastMeridian = 48 * 9 + point;
+      expect(liquidNormals.getX(firstMeridian)).toBeCloseTo(
+        liquidNormals.getX(lastMeridian),
+        5,
+      );
+      expect(liquidNormals.getY(firstMeridian)).toBeCloseTo(
+        liquidNormals.getY(lastMeridian),
+        5,
+      );
+      expect(liquidNormals.getZ(firstMeridian)).toBeCloseTo(
+        liquidNormals.getZ(lastMeridian),
+        5,
+      );
+    }
+    expect(glassMaterial).toBeInstanceOf(MeshPhysicalMaterial);
+    expect(glassMaterial.opacity).toBe(0.55);
+    expect(glassMaterial.roughness).toBe(0.18);
+    expect(glassMaterial.side).toBe(FrontSide);
+    expect(capsuleMaterial).toBeInstanceOf(MeshPhysicalMaterial);
+    expect(capsuleMaterial.metalness).toBe(0.12);
+    expect(capsuleMaterial.roughness).toBe(0.46);
+    expect(cork.visible).toBe(false);
+    const foilRings = collectMeshes(model.runtimeScene).filter(({ name }) =>
+      name.startsWith("Capsule_Foil_Ring_"),
+    );
+    expect(foilRings).toHaveLength(2);
+    expect(foilRings.map(({ position }) => position.z)).toEqual([2.555, 2.605]);
+    foilRings.forEach(({ geometry }) => {
+      expect(geometry).toBeInstanceOf(TorusGeometry);
+      expect((geometry as TorusGeometry).parameters).toMatchObject({
+        radialSegments: 6,
+        radius: 0.165,
+        tube: 0.006,
+        tubularSegments: 48,
+      });
+    });
 
     expect(runtimeFrontTexture).toBeInstanceOf(Texture);
     expect(runtimeBackTexture).toBeInstanceOf(Texture);
@@ -209,9 +333,9 @@ describe("BottleModel runtime ownership", () => {
     const runtimeGeometryDisposals = runtimeMeshes.map((mesh) =>
       vi.spyOn(mesh.geometry, "dispose"),
     );
-    const runtimeMaterialDisposals = runtimeMeshes.map((mesh) =>
-      vi.spyOn(getSingleMaterial(mesh), "dispose"),
-    );
+    const runtimeMaterialDisposals = [
+      ...new Set(runtimeMeshes.map((mesh) => getSingleMaterial(mesh))),
+    ].map((material) => vi.spyOn(material, "dispose"));
     const runtimeFrontTextureDisposal = vi.spyOn(
       runtimeFrontTexture!,
       "dispose",
@@ -268,8 +392,14 @@ describe("BottleModel runtime ownership", () => {
     const condensation = model.runtimeScene.getObjectByName(
       "Condensation",
     ) as Mesh;
+    const standardFoilRing = model.runtimeScene.getObjectByName(
+      "Capsule_Foil_Ring_1",
+    ) as Mesh<TorusGeometry>;
 
     expect(frontTexture?.anisotropy).toBe(2);
+    expect(frontLabel.geometry.getAttribute("position").count).toBe(26);
+    expect(frontLabel.geometry.index?.count).toBe(72);
+    expect(standardFoilRing.geometry.parameters.tubularSegments).toBe(24);
     expect(condensation.visible).toBe(false);
     view.unmount();
   });

@@ -20,7 +20,7 @@ const packageJson = JSON.parse(
   readFileSync(path.resolve(projectRoot, "package.json"), "utf8"),
 ) as { dependencies: Record<string, string> };
 
-describe("Prompt 04B typography contract", () => {
+describe("Prompt 04B / 05A typography contract", () => {
   it("pins and imports only the approved self-hosted Fontsource families", () => {
     expect(packageJson.dependencies).toMatchObject({
       "@fontsource/archivo-black": "5.3.0",
@@ -48,9 +48,15 @@ describe("Prompt 04B typography contract", () => {
     expect(designSystemCss).toContain(
       '--font-directory: "Barlow Condensed", "Arial Narrow", sans-serif',
     );
-    expect(designSystemCss).toMatch(/--size-display-hero:/);
-    expect(designSystemCss).toMatch(/--size-display-chapter:/);
-    expect(designSystemCss).toMatch(/--size-display-page:/);
+    expect(designSystemCss).toContain(
+      "--size-display-hero: clamp(3.15rem, 6.6vw, 6.9rem)",
+    );
+    expect(designSystemCss).toContain(
+      "--size-display-chapter: clamp(2.25rem, 4.9vw, 4.85rem)",
+    );
+    expect(designSystemCss).toContain(
+      "--size-display-page: clamp(2.5rem, 4.8vw, 5.2rem)",
+    );
     expect(designSystemCss).toMatch(/font-synthesis:\s*none/);
     expect(designSystemCss).toMatch(
       /\.gv-eyebrow--data\s*{[^}]*text-transform:\s*none/s,
@@ -60,6 +66,24 @@ describe("Prompt 04B typography contract", () => {
     );
     expect(scrollStoryCss).toContain("font-family: var(--font-body)");
     expect(productRoutesCss).toContain("font-family: var(--font-directory)");
+    expect(scrollStoryCss).toMatch(
+      /\.gv-story-heading h1\s*{[^}]*font-size:\s*var\(--size-display-hero\);[^}]*line-height:\s*0\.9;/s,
+    );
+    expect(scrollStoryCss).toMatch(
+      /\.gv-story-heading h2\s*{[^}]*font-size:\s*var\(--size-display-chapter\);[^}]*line-height:\s*0\.94;/s,
+    );
+    expect(scrollStoryCss).toContain(
+      "font-size: clamp(1.95rem, 8.8vw, 3.15rem)",
+    );
+    expect(scrollStoryCss).not.toContain(
+      "font-size: clamp(2.8rem, 12.8vw, 4.9rem)",
+    );
+    expect(designSystemCss).toContain(
+      ".gv-page-hero h1 { font-size: var(--size-display-page); }",
+    );
+    expect(productRoutesCss).toContain(
+      ".gv-wine-detail__copy h1 { font-size: var(--size-display-page); }",
+    );
 
     const authoredTypography = `${mainSource}\n${designSystemCss}\n${productRoutesCss}\n${scrollStoryCss}`;
     expect(authoredTypography).not.toMatch(/fonts\.(?:googleapis|gstatic)\.com/i);

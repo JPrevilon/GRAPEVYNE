@@ -22,6 +22,12 @@ import type { SceneProgress } from "@/experience/sceneContextValue";
 
 interface MockCanvasProps {
   "aria-hidden"?: boolean | "true";
+  camera?: {
+    far: number;
+    fov: number;
+    near: number;
+    position: [number, number, number];
+  };
   children?: ReactNode;
   dpr?: number | [number, number];
   frameloop?: string;
@@ -185,6 +191,12 @@ describe("ExperienceCanvas renderer lifecycle", () => {
     expect(canvas).toHaveAttribute("tabindex", "-1");
     expect(canvas).toHaveStyle({ background: "transparent", pointerEvents: "none" });
     expect(fiberMock.canvasProps?.dpr).toEqual([1, 1.5]);
+    expect(fiberMock.canvasProps?.camera).toEqual({
+      far: 30,
+      fov: 30,
+      near: 0.1,
+      position: [0, 0, 8],
+    });
     expect(fiberMock.canvasProps?.frameloop).toBe("always");
     expect(fiberMock.canvasProps?.gl).toMatchObject({
       alpha: true,
@@ -196,7 +208,7 @@ describe("ExperienceCanvas renderer lifecycle", () => {
     });
     expect(fiberMock.gl.outputColorSpace).toBe(SRGBColorSpace);
     expect(fiberMock.gl.toneMapping).toBe(ACESFilmicToneMapping);
-    expect(fiberMock.gl.toneMappingExposure).toBe(1.08);
+    expect(fiberMock.gl.toneMappingExposure).toBe(1);
     expect(onReady).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button", { name: "complete model frame" }));
@@ -225,9 +237,15 @@ describe("ExperienceCanvas renderer lifecycle", () => {
 
     await waitFor(() => expect(fiberMock.gl.setClearColor).toHaveBeenCalled());
     expect(fiberMock.canvasProps?.dpr).toEqual([1, 1.1]);
+    expect(fiberMock.canvasProps?.camera).toEqual({
+      far: 30,
+      fov: 34,
+      near: 0.1,
+      position: [0, 0, 7.9],
+    });
     expect(fiberMock.canvasProps?.gl).toMatchObject({ antialias: false });
     expect(fiberMock.gl.toneMapping).toBe(ACESFilmicToneMapping);
-    expect(fiberMock.gl.toneMappingExposure).toBe(1);
+    expect(fiberMock.gl.toneMappingExposure).toBe(0.98);
   });
 
   it("keeps a connected renderer through Strict Effects and releases it on DOM unmount", async () => {

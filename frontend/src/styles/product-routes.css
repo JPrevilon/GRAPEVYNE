@@ -1113,7 +1113,7 @@
   font-size: var(--size-display-page);
   font-weight: 400;
   letter-spacing: -0.05em;
-  line-height: 0.87;
+  line-height: 0.9;
   text-transform: none;
 }
 
@@ -1430,7 +1430,7 @@
   .gv-wine-detail__layout { grid-template-columns: 1fr; }
   .gv-wine-detail__stage,
   .gv-wine-detail__copy { grid-column: 1; }
-  .gv-wine-detail__copy h1 { font-size: clamp(3rem, 14vw, 5.25rem); }
+  .gv-wine-detail__copy h1 { font-size: var(--size-display-page); }
 
   .gv-auth-page {
     grid-template-columns: 1fr;

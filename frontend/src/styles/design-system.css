@@ -33,9 +33,9 @@
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
-  --size-display-hero: clamp(4.5rem, 8vw, 9rem);
-  --size-display-chapter: clamp(3.4rem, 7.5vw, 8rem);
-  --size-display-page: clamp(3.2rem, 6.5vw, 7rem);
+  --size-display-hero: clamp(3.15rem, 6.6vw, 6.9rem);
+  --size-display-chapter: clamp(2.25rem, 4.9vw, 4.85rem);
+  --size-display-page: clamp(2.5rem, 4.8vw, 5.2rem);
   --size-copy-narrative: clamp(1.3rem, 2.2vw, 2.35rem);
   --size-copy-body: 1rem;
   --size-metadata: clamp(0.78rem, 0.9vw, 0.9rem);
@@ -243,7 +243,7 @@ h2 em {
   max-width: 15ch;
   margin-bottom: var(--space-5);
   font-size: var(--size-display-page);
-  line-height: 0.88;
+  line-height: 0.9;
 }
 
 .gv-page-hero__lede {
@@ -1124,7 +1124,7 @@ h2 em {
   .gv-page-shell { padding-block: 2.5rem 4rem; }
   .gv-page-hero,
   .gv-section-heading { display: grid; align-items: start; gap: var(--space-4); }
-  .gv-page-hero h1 { font-size: clamp(3rem, 13.5vw, 5rem); }
+  .gv-page-hero h1 { font-size: var(--size-display-page); }
   .gv-natural-search__control { grid-template-columns: auto minmax(0, 1fr); border-radius: var(--radius-md); }
   .gv-natural-search__control .gv-button { grid-column: 1 / -1; width: 100%; }
   .gv-nav__search,

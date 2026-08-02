@@ -22,6 +22,16 @@ interface SceneRigProps {
   tier: WebGLQualityTier;
 }
 
+const KEY_LIGHT_SCALE: Record<WebGLQualityTier, number> = {
+  high: 0.8,
+  standard: 0.76,
+};
+
+const FRONT_FILL_INTENSITY: Record<WebGLQualityTier, number> = {
+  high: 1.2,
+  standard: 0.8,
+};
+
 function smoothChapterBlend(progress: number) {
   const normalized = MathUtils.clamp((progress - 0.62) / 0.38, 0, 1);
   return normalized * normalized * (3 - 2 * normalized);
@@ -36,7 +46,7 @@ export default function SceneRig({
   const interactionGroup = useRef<Group>(null);
   const chapterGroup = useRef<Group>(null);
   const keyLight = useRef<SpotLight>(null);
-  const accentLight = useRef<PointLight>(null);
+  const fillLight = useRef<PointLight>(null);
   const shadow = useRef<Mesh>(null);
   const pointerYaw = useRef(0);
   const pointerPitch = useRef(0);
@@ -47,6 +57,8 @@ export default function SceneRig({
       Math.min(chapterIndex + 1, STORY_CHAPTER_KEYS.length - 1)
     ] ?? chapter;
   const nextTarget = targets[nextChapter];
+  const keyLightScale = KEY_LIGHT_SCALE[tier];
+  const frontFillIntensity = FRONT_FILL_INTENSITY[tier];
 
   useEffect(() => {
     if (tier !== "high") return undefined;
@@ -184,16 +196,17 @@ export default function SceneRig({
     if (keyLight.current) {
       keyLight.current.intensity = MathUtils.damp(
         keyLight.current.intensity,
-        MathUtils.lerp(currentTarget.keyLight, nextTarget.keyLight, blend),
+        MathUtils.lerp(currentTarget.keyLight, nextTarget.keyLight, blend) *
+          keyLightScale,
         3.5,
         delta,
       );
     }
 
-    if (accentLight.current) {
-      accentLight.current.intensity = MathUtils.damp(
-        accentLight.current.intensity,
-        tier === "high" ? 1.75 : 1.2,
+    if (fillLight.current) {
+      fillLight.current.intensity = MathUtils.damp(
+        fillLight.current.intensity,
+        frontFillIntensity,
         3.5,
         delta,
       );
@@ -219,30 +232,32 @@ export default function SceneRig({
 
   return (
     <>
-      <hemisphereLight args={[0xefe5d1, 0x140b0e, tier === "high" ? 1.3 : 1]} />
+      <hemisphereLight
+        args={[0xefe5d1, 0x140b0e, tier === "high" ? 0.85 : 0.68]}
+      />
       <spotLight
-        angle={0.42}
+        angle={0.38}
         color={0xf0d2a0}
-        decay={1.6}
+        decay={2}
         distance={12}
-        intensity={currentTarget.keyLight}
-        penumbra={0.86}
-        position={[3.4, 4.8, 5.2]}
+        intensity={currentTarget.keyLight * keyLightScale}
+        penumbra={0.95}
+        position={[3.1, 4.4, 4.8]}
         ref={keyLight}
       />
       <pointLight
-        color={0x8e1738}
-        decay={1.8}
-        distance={9}
-        intensity={tier === "high" ? 1.75 : 1.2}
-        position={[-3.2, 0.4, 2.8]}
-        ref={accentLight}
+        color={0xffe7c2}
+        decay={2}
+        distance={7}
+        intensity={frontFillIntensity}
+        position={[0.4, 0.5, 4.2]}
+        ref={fillLight}
       />
       {tier === "high" ? (
         <directionalLight
-          color={0xd8e1cb}
-          intensity={0.78}
-          position={[-2.4, 2.8, 3.6]}
+          color={0xe2ccb0}
+          intensity={0.7}
+          position={[-2.8, 2.2, -2.4]}
         />
       ) : null}
 

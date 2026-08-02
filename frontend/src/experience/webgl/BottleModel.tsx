@@ -1,17 +1,19 @@
 import { useGLTF, useTexture } from "@react-three/drei";
 import { type MutableRefObject, useEffect, useMemo } from "react";
 import {
+  BufferGeometry,
   CanvasTexture,
-  Color,
-  DoubleSide,
+  Float32BufferAttribute,
   FrontSide,
+  LatheGeometry,
   Material,
   Mesh,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
   SRGBColorSpace,
   Texture,
-  type BufferGeometry,
+  TorusGeometry,
+  Vector2,
   type Object3D,
 } from "three";
 
@@ -36,6 +38,14 @@ const LABEL_MAX_EDGE: Record<WebGLQualityTier, number> = {
   high: 2048,
   standard: 1024,
 };
+
+const LABEL_CURVE_SEGMENTS: Record<WebGLQualityTier, number> = {
+  high: 24,
+  standard: 12,
+};
+
+const LABEL_SURFACE_LIFT = 0.001;
+const LABEL_VERTICAL_OFFSET = -0.14;
 
 function getTextureDimensions(texture: Texture) {
   const image = texture.image as
@@ -102,10 +112,139 @@ function cloneGeometry(source: BufferGeometry) {
   return geometry;
 }
 
-function getSourceColor(material: Material, fallback: number) {
-  return material instanceof MeshStandardMaterial
-    ? material.color
-    : new Color(fallback);
+function createCurvedLabelGeometry(
+  source: BufferGeometry,
+  nodeName: "Label_Back" | "Label_Front",
+  tier: WebGLQualityTier,
+) {
+  const sourcePositions = source.getAttribute("position");
+
+  if (!sourcePositions) return cloneGeometry(source);
+
+  let minX = Number.POSITIVE_INFINITY;
+  let maxX = Number.NEGATIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
+  let maxY = Number.NEGATIVE_INFINITY;
+  let minZ = Number.POSITIVE_INFINITY;
+  let maxZ = Number.NEGATIVE_INFINITY;
+
+  for (let index = 0; index < sourcePositions.count; index += 1) {
+    const x = sourcePositions.getX(index);
+    const y = sourcePositions.getY(index);
+    const z = sourcePositions.getZ(index);
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minY = Math.min(minY, y);
+    maxY = Math.max(maxY, y);
+    minZ = Math.min(minZ, z);
+    maxZ = Math.max(maxZ, z);
+  }
+
+  const halfWidth = (maxX - minX) / 2;
+  const height = maxZ - minZ;
+  const sourceRadius = Math.max(Math.abs(minY), Math.abs(maxY));
+
+  if (halfWidth <= 0 || height <= 0 || sourceRadius <= halfWidth) {
+    return cloneGeometry(source);
+  }
+
+  const centerX = (minX + maxX) / 2;
+  const radius = sourceRadius + LABEL_SURFACE_LIFT;
+  const halfAngle = Math.asin(Math.min(0.99, halfWidth / radius));
+  const segments = LABEL_CURVE_SEGMENTS[tier];
+  const positions: number[] = [];
+  const uvs: number[] = [];
+  const indices: number[] = [];
+  const side = nodeName === "Label_Front" ? -1 : 1;
+
+  for (let row = 0; row < 2; row += 1) {
+    const z =
+      (row === 0 ? minZ : maxZ) + LABEL_VERTICAL_OFFSET;
+
+    for (let segment = 0; segment <= segments; segment += 1) {
+      const u = segment / segments;
+      const theta = -halfAngle + u * halfAngle * 2;
+      positions.push(
+        centerX + radius * Math.sin(theta),
+        side * radius * Math.cos(theta),
+        z,
+      );
+      uvs.push(u, row);
+    }
+  }
+
+  for (let segment = 0; segment < segments; segment += 1) {
+    const bottomLeft = segment;
+    const bottomRight = segment + 1;
+    const topLeft = segments + 1 + segment;
+    const topRight = topLeft + 1;
+
+    if (nodeName === "Label_Front") {
+      indices.push(
+        bottomLeft,
+        bottomRight,
+        topRight,
+        bottomLeft,
+        topRight,
+        topLeft,
+      );
+    } else {
+      indices.push(
+        bottomLeft,
+        topRight,
+        bottomRight,
+        bottomLeft,
+        topLeft,
+        topRight,
+      );
+    }
+  }
+
+  const geometry = new BufferGeometry();
+  geometry.name = `${source.name || nodeName}-runtime-curved`;
+  geometry.setAttribute("position", new Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("uv", new Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  return geometry;
+}
+
+function createLiquidGeometry(tier: WebGLQualityTier) {
+  const profile = [
+    new Vector2(0, 0.06),
+    new Vector2(0.305, 0.06),
+    new Vector2(0.318, 0.1),
+    new Vector2(0.318, 1.42),
+    new Vector2(0.305, 1.54),
+    new Vector2(0.275, 1.66),
+    new Vector2(0.235, 1.76),
+    new Vector2(0.19, 1.86),
+    new Vector2(0, 1.86),
+  ];
+  const geometry = new LatheGeometry(profile, tier === "high" ? 48 : 24);
+  geometry.name = `Wine_Liquid-runtime-${tier}`;
+  geometry.rotateX(Math.PI / 2);
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  return geometry;
+}
+
+function createRuntimeGeometry(
+  source: BufferGeometry,
+  nodeName: string,
+  tier: WebGLQualityTier,
+) {
+  if (nodeName === "Label_Front" || nodeName === "Label_Back") {
+    return createCurvedLabelGeometry(source, nodeName, tier);
+  }
+
+  if (nodeName === "Wine_Liquid") {
+    return createLiquidGeometry(tier);
+  }
+
+  return cloneGeometry(source);
 }
 
 function makeBottleMaterial(
@@ -120,30 +259,41 @@ function makeBottleMaterial(
   switch (nodeName) {
     case "Bottle_Glass": {
       material = new MeshPhysicalMaterial({
-        clearcoat: 0.72,
-        clearcoatRoughness: 0.12,
-        color: getSourceColor(source, 0x23402f),
+        clearcoat: 0.85,
+        clearcoatRoughness: 0.16,
+        color: 0x2a1117,
         depthWrite: false,
-        ior: 1.46,
-        metalness: 0.02,
-        opacity: tier === "high" ? 0.42 : 0.48,
-        roughness: 0.09,
-        side: DoubleSide,
-        specularIntensity: 0.9,
-        thickness: 0.16,
+        ior: 1.5,
+        metalness: 0,
+        opacity: tier === "high" ? 0.55 : 0.64,
+        roughness: 0.18,
+        side: FrontSide,
+        specularColor: 0xf1dcc0,
+        specularIntensity: 0.7,
         transparent: true,
       });
       break;
     }
     case "Wine_Liquid": {
       material = new MeshPhysicalMaterial({
-        clearcoat: 0.28,
-        clearcoatRoughness: 0.2,
-        color: 0x4c0c20,
+        clearcoat: 0.12,
+        clearcoatRoughness: 0.3,
+        color: 0x4a0615,
         metalness: 0,
-        opacity: 0.94,
-        roughness: 0.24,
+        opacity: 0.96,
+        roughness: 0.3,
+        side: FrontSide,
         transparent: true,
+      });
+      break;
+    }
+    case "Capsule": {
+      material = new MeshPhysicalMaterial({
+        clearcoat: 0.25,
+        clearcoatRoughness: 0.34,
+        color: 0x741727,
+        metalness: 0.12,
+        roughness: 0.46,
       });
       break;
     }
@@ -152,9 +302,11 @@ function makeBottleMaterial(
       material = new MeshStandardMaterial({
         alphaTest: 0.025,
         color: 0xffffff,
+        emissive: 0x4a3e2c,
+        emissiveIntensity: 0.32,
         map: nodeName === "Label_Front" ? frontTexture : backTexture,
         metalness: 0,
-        roughness: 0.82,
+        roughness: 0.9,
         side: FrontSide,
         transparent: true,
       });
@@ -166,8 +318,8 @@ function makeBottleMaterial(
         color: 0xf5eee2,
         depthWrite: false,
         metalness: 0,
-        opacity: tier === "high" ? 0.22 : 0,
-        roughness: 0.08,
+        opacity: tier === "high" ? 0.07 : 0,
+        roughness: 0.2,
         transparent: true,
       });
       break;
@@ -176,7 +328,7 @@ function makeBottleMaterial(
       material = source.clone();
 
       if (material instanceof MeshStandardMaterial) {
-        material.metalness = nodeName === "Capsule" ? 0.42 : 0;
+        material.metalness = 0;
         material.roughness = nodeName === "Cork" ? 0.88 : 0.38;
       }
     }
@@ -201,6 +353,10 @@ function setMeshRenderContract(mesh: Mesh, tier: WebGLQualityTier) {
     case "Condensation":
       mesh.renderOrder = 3;
       mesh.visible = tier === "high";
+      break;
+    case "Cork":
+      mesh.renderOrder = 2;
+      mesh.visible = false;
       break;
     case "Label_Front":
     case "Label_Back":
@@ -251,7 +407,7 @@ export default function BottleModel({
       if (!(object instanceof Mesh)) return;
 
       const mesh = object;
-      const geometry = cloneGeometry(mesh.geometry);
+      const geometry = createRuntimeGeometry(mesh.geometry, mesh.name, tier);
       const sourceMaterials = Array.isArray(mesh.material)
         ? mesh.material
         : [mesh.material];
@@ -281,6 +437,24 @@ export default function BottleModel({
         };
       }
     });
+
+    const capsule = clonedScene.getObjectByName("Capsule");
+    const modelRoot = clonedScene.getObjectByName("world") ?? clonedScene;
+
+    if (capsule instanceof Mesh && !Array.isArray(capsule.material)) {
+      const ringSegments = tier === "high" ? 48 : 24;
+
+      [2.555, 2.605].forEach((z, index) => {
+        const geometry = new TorusGeometry(0.165, 0.006, 6, ringSegments);
+        geometry.name = `Capsule_Foil_Ring_${index + 1}-runtime`;
+        const ring = new Mesh(geometry, capsule.material);
+        ring.name = `Capsule_Foil_Ring_${index + 1}`;
+        ring.position.z = z;
+        ring.renderOrder = 2;
+        modelRoot.add(ring);
+        geometries.push(geometry);
+      });
+    }
 
     return {
       geometries,

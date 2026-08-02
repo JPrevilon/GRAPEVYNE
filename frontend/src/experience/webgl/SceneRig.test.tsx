@@ -84,8 +84,8 @@ vi.mock("./BottleModel", () => ({
 import SceneRig from "./SceneRig";
 
 interface RigObjects {
-  accentLight: PointLight;
   chapter: Group;
+  fillLight: PointLight;
   interaction: Group;
   keyLight: SpotLight;
   shadow: Mesh;
@@ -93,8 +93,8 @@ interface RigObjects {
 
 function createRigObjects(): RigObjects {
   const objects = {
-    accentLight: new PointLight(),
     chapter: new Group(),
+    fillLight: new PointLight(),
     interaction: new Group(),
     keyLight: new SpotLight(),
     shadow: new Mesh(),
@@ -104,7 +104,7 @@ function createRigObjects(): RigObjects {
     objects.interaction,
     objects.chapter,
     objects.keyLight,
-    objects.accentLight,
+    objects.fillLight,
     objects.shadow,
   ];
   return objects;
@@ -222,6 +222,11 @@ describe("SceneRig persistent motion", () => {
     expect(objects.interaction.rotation.x).toBeLessThanOrEqual(
       MAX_POINTER_PITCH,
     );
+    expect(objects.keyLight.intensity).toBeCloseTo(
+      BOTTLE_SCENE_TARGETS.high.hero.keyLight * 0.8,
+      3,
+    );
+    expect(objects.fillLight.intensity).toBeCloseTo(1.2, 3);
     expect(rigMock.bottleRenders).toBe(1);
   });
 
@@ -253,6 +258,11 @@ describe("SceneRig persistent motion", () => {
       discoveryTarget.rotation[1],
       3,
     );
+    expect(objects.keyLight.intensity).toBeCloseTo(
+      discoveryTarget.keyLight * 0.76,
+      3,
+    );
+    expect(objects.fillLight.intensity).toBeCloseTo(0.8, 3);
 
     sceneMock.chapter = "discovery";
     sceneMock.chapterIndex = 1;

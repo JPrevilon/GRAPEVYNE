@@ -36,7 +36,7 @@ function configureRenderer(renderer: WebGLRenderer, tier: WebGLQualityTier) {
   renderer.setClearColor(0x000000, 0);
   renderer.outputColorSpace = SRGBColorSpace;
   renderer.toneMapping = ACESFilmicToneMapping;
-  renderer.toneMappingExposure = tier === "high" ? 1.08 : 1;
+  renderer.toneMappingExposure = tier === "high" ? 1 : 0.98;
 }
 
 function RendererLifecycle({
@@ -177,9 +177,9 @@ export default function ExperienceCanvas({
       aria-hidden="true"
       camera={{
         far: 30,
-        fov: tier === "high" ? 34 : 38,
+        fov: tier === "high" ? 30 : 34,
         near: 0.1,
-        position: [0, 0, 7],
+        position: [0, 0, tier === "high" ? 8 : 7.9],
       }}
       dpr={tier === "high" ? [1, 1.5] : [1, 1.1]}
       frameloop="always"
