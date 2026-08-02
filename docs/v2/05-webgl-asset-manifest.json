@@ -1,0 +1,190 @@
+{
+  "schemaVersion": 1,
+  "approvedAssetCount": 10,
+  "requiredNodeNames": [
+    "Bottle_Glass",
+    "Wine_Liquid",
+    "Cork",
+    "Capsule",
+    "Label_Front",
+    "Label_Back",
+    "Condensation"
+  ],
+  "requiredGeometryNames": [
+    "Bottle_Glass",
+    "Wine_Liquid",
+    "Cork",
+    "Capsule",
+    "Label_Front",
+    "Label_Back",
+    "Condensation"
+  ],
+  "modelBudgetsBytes": {
+    "high": 2500000,
+    "standard": 1200000
+  },
+  "assets": [
+    {
+      "assetPath": "frontend/public/assets/models/grapevyne-master-bottle.glb",
+      "sha256": "2304b4b89cc7a249527746c6b1f7ceb02759f6395a709b129e539941c885c05a",
+      "byteSize": 1182548,
+      "assetKind": "model",
+      "modelTier": "high",
+      "maxByteSize": 2500000,
+      "nodeNames": [
+        "Bottle_Glass",
+        "Wine_Liquid",
+        "Cork",
+        "Capsule",
+        "Label_Front",
+        "Label_Back",
+        "Condensation"
+      ],
+      "geometryNames": [
+        "Bottle_Glass",
+        "Wine_Liquid",
+        "Cork",
+        "Capsule",
+        "Label_Front",
+        "Label_Back",
+        "Condensation"
+      ],
+      "labelVariant": null,
+      "sourceLocation": ".grapevyne-v2-reference/frontend/public/assets/models/grapevyne-master-bottle.glb",
+      "copyStatus": "copied"
+    },
+    {
+      "assetPath": "frontend/public/assets/models/grapevyne-master-bottle-mobile.glb",
+      "sha256": "1caa5eb4786326199f0f2b1fd4066590aaccda02a54da03e14bfba9bee10e3f8",
+      "byteSize": 1115844,
+      "assetKind": "model",
+      "modelTier": "standard",
+      "maxByteSize": 1200000,
+      "nodeNames": [
+        "Bottle_Glass",
+        "Wine_Liquid",
+        "Cork",
+        "Capsule",
+        "Label_Front",
+        "Label_Back",
+        "Condensation"
+      ],
+      "geometryNames": [
+        "Bottle_Glass",
+        "Wine_Liquid",
+        "Cork",
+        "Capsule",
+        "Label_Front",
+        "Label_Back",
+        "Condensation"
+      ],
+      "labelVariant": null,
+      "sourceLocation": ".grapevyne-v2-reference/frontend/public/assets/models/grapevyne-master-bottle-mobile.glb",
+      "copyStatus": "copied"
+    },
+    {
+      "assetPath": "frontend/public/assets/models/bottle-spec.json",
+      "sha256": "94573f075540f23594070997db39391a2eae992a8638378e2a491e99afe5ddaf",
+      "byteSize": 868,
+      "assetKind": "contract",
+      "modelTier": "all",
+      "maxByteSize": null,
+      "nodeNames": [],
+      "geometryNames": [],
+      "labelVariant": null,
+      "sourceLocation": ".grapevyne-v2-reference/frontend/public/assets/models/bottle-spec.json",
+      "copyStatus": "copied"
+    },
+    {
+      "assetPath": "frontend/public/assets/models/model-validation.json",
+      "sha256": "deb4d10988c743bdf0a6b3cba8c06e9001e5f99d1a55d13491e2b283ea4c3bfd",
+      "byteSize": 835,
+      "assetKind": "contract",
+      "modelTier": "all",
+      "maxByteSize": null,
+      "nodeNames": [],
+      "geometryNames": [],
+      "labelVariant": null,
+      "sourceLocation": ".grapevyne-v2-reference/frontend/public/assets/models/model-validation.json",
+      "copyStatus": "copied"
+    },
+    {
+      "assetPath": "frontend/public/assets/labels/grapevyne-label-front-red.png",
+      "sha256": "fc1e798888c59d1dc335a964309de8ddf570be68b509f47b0be396be244f4281",
+      "byteSize": 788087,
+      "assetKind": "label",
+      "modelTier": "all",
+      "maxByteSize": null,
+      "nodeNames": [],
+      "geometryNames": [],
+      "labelVariant": "red",
+      "sourceLocation": ".grapevyne-v2-reference/frontend/public/assets/labels/grapevyne-label-front-red.png",
+      "copyStatus": "copied"
+    },
+    {
+      "assetPath": "frontend/public/assets/labels/grapevyne-label-front-white.png",
+      "sha256": "543107978d3e46f5b60846c326079f4cae8481ebaa91994c051a77450ecfa4c3",
+      "byteSize": 789205,
+      "assetKind": "label",
+      "modelTier": "all",
+      "maxByteSize": null,
+      "nodeNames": [],
+      "geometryNames": [],
+      "labelVariant": "white",
+      "sourceLocation": ".grapevyne-v2-reference/frontend/public/assets/labels/grapevyne-label-front-white.png",
+      "copyStatus": "copied"
+    },
+    {
+      "assetPath": "frontend/public/assets/labels/grapevyne-label-front-sparkling.png",
+      "sha256": "79a159d2399734f60f6602dde705cfc279d31aa70cfc607538244f29b0eed3ce",
+      "byteSize": 830486,
+      "assetKind": "label",
+      "modelTier": "all",
+      "maxByteSize": null,
+      "nodeNames": [],
+      "geometryNames": [],
+      "labelVariant": "sparkling",
+      "sourceLocation": ".grapevyne-v2-reference/frontend/public/assets/labels/grapevyne-label-front-sparkling.png",
+      "copyStatus": "copied"
+    },
+    {
+      "assetPath": "frontend/public/assets/labels/grapevyne-label-front-rose.png",
+      "sha256": "6f4b8d61ec65a22d50c391ebe2fd1846b2651ad5f30e08f40dcb953e3a074e50",
+      "byteSize": 842237,
+      "assetKind": "label",
+      "modelTier": "all",
+      "maxByteSize": null,
+      "nodeNames": [],
+      "geometryNames": [],
+      "labelVariant": "rose",
+      "sourceLocation": ".grapevyne-v2-reference/frontend/public/assets/labels/grapevyne-label-front-rose.png",
+      "copyStatus": "copied"
+    },
+    {
+      "assetPath": "frontend/public/assets/labels/grapevyne-label-back.png",
+      "sha256": "d33586e7beeec7ef60d203a5bf74bbb8a39b9d30f21471549a6b2e7d32f791d3",
+      "byteSize": 290856,
+      "assetKind": "label",
+      "modelTier": "all",
+      "maxByteSize": null,
+      "nodeNames": [],
+      "geometryNames": [],
+      "labelVariant": "back",
+      "sourceLocation": ".grapevyne-v2-reference/frontend/public/assets/labels/grapevyne-label-back.png",
+      "copyStatus": "copied"
+    },
+    {
+      "assetPath": "frontend/public/assets/labels/grapevyne-label-neck-capsule.png",
+      "sha256": "63e056294a30643153444a8f33df805f715ba4a09cfeb39fe4156377cef5992e",
+      "byteSize": 98787,
+      "assetKind": "label",
+      "modelTier": "all",
+      "maxByteSize": null,
+      "nodeNames": [],
+      "geometryNames": [],
+      "labelVariant": "capsule",
+      "sourceLocation": ".grapevyne-v2-reference/frontend/public/assets/labels/grapevyne-label-neck-capsule.png",
+      "copyStatus": "copied"
+    }
+  ]
+}

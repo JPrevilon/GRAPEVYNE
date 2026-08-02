@@ -14,11 +14,13 @@ import { ButtonLink } from "@/components/ui/Button";
 import { NaturalLanguageSearch } from "@/components/ui/FormControls";
 import { WineBottleFallback } from "@/components/wine/WineBottleFallback";
 import CinematicVideo from "@/experience/CinematicVideo";
+import type { MediaKey } from "@/experience/media";
 import {
   STORY_CHAPTERS,
   type StoryChapter,
   type StoryChapterDefinition,
 } from "@/experience/storyChapters";
+import WebGLExperience from "@/experience/webgl/WebGLExperience";
 import { useAuth } from "@/features/auth/useAuth";
 import { useScrollStory } from "@/hooks/useScrollStory";
 import "@/styles/scroll-story.css";
@@ -62,10 +64,10 @@ function ChapterHeading({ chapter }: { chapter: StoryChapterDefinition }) {
 
   return (
     <header className="gv-story-heading" data-story-reveal>
-        <p className="gv-story-heading__number">
-          <span>{chapter.number}</span>
-          <span aria-hidden="true"> / </span>
-          <span>{chapter.navLabel}</span>
+      <p className="gv-story-heading__number">
+        <span>{chapter.number}</span>
+        <span aria-hidden="true"> / </span>
+        <span>{chapter.navLabel}</span>
       </p>
       {chapter.key === "hero" ? (
         <h1 id={headingId}>
@@ -138,12 +140,28 @@ function AuthCellarAction({ finale = false }: { finale?: boolean }) {
   );
 }
 
+function ChapterMedia({ mediaKey }: { mediaKey: MediaKey }) {
+  return (
+    <div className="gv-story-media" aria-hidden="true">
+      {mediaKey === "hero" ? (
+        <CinematicVideo
+          className="gv-story-media__visual"
+          mediaKey="hero"
+          priority
+        />
+      ) : (
+        <CinematicVideo
+          className="gv-story-media__visual"
+          mediaKey={mediaKey}
+        />
+      )}
+    </div>
+  );
+}
+
 function HeroChapter() {
   return (
     <>
-      <div className="gv-story-media" aria-hidden="true">
-        <CinematicVideo className="gv-story-media__visual" mediaKey="hero" priority />
-      </div>
       <div className="gv-hero-bottle" aria-hidden="true">
         <WineBottleFallback label="From Vine to Memory" tone="red" />
       </div>
@@ -225,51 +243,41 @@ function MatchChapter() {
 
 function TasteChapter() {
   return (
-    <>
-      <div className="gv-story-media" aria-hidden="true">
-        <CinematicVideo className="gv-story-media__visual" mediaKey="liquid" />
+    <div className="gv-story-copy gv-story-copy--taste">
+      <p className="gv-story-lede">
+        Your Taste Atlas begins with bottles you actually save and rate. Over time,
+        patterns can make a growing collection easier to understand.
+      </p>
+      <div aria-label="Illustrative taste vocabulary" className="gv-taste-orbit">
+        {tasteSignals.map((signal) => (
+          <span key={signal}>{signal}</span>
+        ))}
       </div>
-      <div className="gv-story-copy gv-story-copy--taste">
-        <p className="gv-story-lede">
-          Your Taste Atlas begins with bottles you actually save and rate. Over time,
-          patterns can make a growing collection easier to understand.
-        </p>
-        <div aria-label="Illustrative taste vocabulary" className="gv-taste-orbit">
-          {tasteSignals.map((signal) => (
-            <span key={signal}>{signal}</span>
-          ))}
-        </div>
-        <p className="gv-story-disclosure">
-          Illustrative vocabulary only—not a personal profile or calculated result.
-        </p>
-      </div>
-    </>
+      <p className="gv-story-disclosure">
+        Illustrative vocabulary only—not a personal profile or calculated result.
+      </p>
+    </div>
   );
 }
 
 function PortalChapter() {
   return (
-    <>
-      <div className="gv-story-media" aria-hidden="true">
-        <CinematicVideo className="gv-story-media__visual" mediaKey="cellar" />
+    <div className="gv-story-copy gv-story-copy--portal">
+      <p className="gv-story-lede">
+        Keep saved bottles, ratings, occasions, favorites, and private notes tied to
+        your account—not to this marketing page.
+      </p>
+      <div className="gv-story-actions">
+        <AuthCellarAction />
+        <ButtonLink to="/demo/cellar" variant="ghost">
+          Explore the demo cellar
+        </ButtonLink>
       </div>
-      <div className="gv-story-copy gv-story-copy--portal">
-        <p className="gv-story-lede">
-          Keep saved bottles, ratings, occasions, favorites, and private notes tied to
-          your account—not to this marketing page.
-        </p>
-        <div className="gv-story-actions">
-          <AuthCellarAction />
-          <ButtonLink to="/demo/cellar" variant="ghost">
-            Explore the demo cellar
-          </ButtonLink>
-        </div>
-        <p className="gv-story-privacy">
-          <LockKeyhole aria-hidden="true" size={17} />
-          The real cellar remains a protected route.
-        </p>
-      </div>
-    </>
+      <p className="gv-story-privacy">
+        <LockKeyhole aria-hidden="true" size={17} />
+        The real cellar remains a protected route.
+      </p>
+    </div>
   );
 }
 
@@ -304,35 +312,30 @@ function CellarChapter() {
 
 function MemoryChapter() {
   return (
-    <>
-      <div className="gv-story-media" aria-hidden="true">
-        <CinematicVideo className="gv-story-media__visual" mediaKey="memory" />
-      </div>
-      <div className="gv-story-copy gv-story-copy--memory">
-        <article className="gv-memory-card" aria-labelledby="demo-memory-title">
-          <p className="gv-story-kicker">Demonstration tasting memory</p>
-          <h3 id="demo-memory-title">CELEBRATION DINNER</h3>
-          <p>Blackberry and cedar opened after twenty minutes.</p>
-          <dl>
-            <div>
-              <dt>Rating</dt>
-              <dd>4 out of 5</dd>
-            </div>
-            <div>
-              <dt>Favorite</dt>
-              <dd>Yes</dd>
-            </div>
-            <div>
-              <dt>Status</dt>
-              <dd>Tasted</dd>
-            </div>
-          </dl>
-          <p className="gv-story-disclosure">
-            Fictional example—not connected to the current visitor or an account.
-          </p>
-        </article>
-      </div>
-    </>
+    <div className="gv-story-copy gv-story-copy--memory">
+      <article className="gv-memory-card" aria-labelledby="demo-memory-title">
+        <p className="gv-story-kicker">Demonstration tasting memory</p>
+        <h3 id="demo-memory-title">CELEBRATION DINNER</h3>
+        <p>Blackberry and cedar opened after twenty minutes.</p>
+        <dl>
+          <div>
+            <dt>Rating</dt>
+            <dd>4 out of 5</dd>
+          </div>
+          <div>
+            <dt>Favorite</dt>
+            <dd>Yes</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd>Tasted</dd>
+          </div>
+        </dl>
+        <p className="gv-story-disclosure">
+          Fictional example—not connected to the current visitor or an account.
+        </p>
+      </article>
+    </div>
   );
 }
 
@@ -340,41 +343,36 @@ function AtlasChapter() {
   const { isAuthenticated, isLoading } = useAuth();
 
   return (
-    <>
-      <div className="gv-story-media" aria-hidden="true">
-        <CinematicVideo className="gv-story-media__visual" mediaKey="atlas" />
+    <div className="gv-story-copy gv-story-copy--atlas">
+      <p className="gv-story-lede">
+        Your taste is not a score. It is a story that becomes clearer with every
+        bottle.
+      </p>
+      <div
+        aria-label="Demonstration of future taste preference clusters"
+        className="gv-atlas-demo"
+        role="group"
+      >
+        <span>Fresh &amp; mineral</span>
+        <span>Silky reds</span>
+        <span>Curious pours</span>
       </div>
-      <div className="gv-story-copy gv-story-copy--atlas">
-        <p className="gv-story-lede">
-          Your taste is not a score. It is a story that becomes clearer with every
-          bottle.
-        </p>
-        <div
-          aria-label="Demonstration of future taste preference clusters"
-          className="gv-atlas-demo"
-          role="group"
-        >
-          <span>Fresh &amp; mineral</span>
-          <span>Silky reds</span>
-          <span>Curious pours</span>
-        </div>
-        <p className="gv-story-disclosure">
-          Demonstration only. These clusters show how an early profile may appear
-          after enough real cellar activity exists. The personalized engine is not
-          implemented yet.
-        </p>
-        <div className="gv-story-actions">
-          <ButtonLink to="/demo/taste-atlas" variant="secondary">
-            Explore the demo Taste Atlas
+      <p className="gv-story-disclosure">
+        Demonstration only. These clusters show how an early profile may appear after
+        enough real cellar activity exists. The personalized engine is not implemented
+        yet.
+      </p>
+      <div className="gv-story-actions">
+        <ButtonLink to="/demo/taste-atlas" variant="secondary">
+          Explore the demo Taste Atlas
+        </ButtonLink>
+        {!isLoading && isAuthenticated ? (
+          <ButtonLink to="/profile" variant="ghost">
+            View my profile
           </ButtonLink>
-          {!isLoading && isAuthenticated ? (
-            <ButtonLink to="/profile" variant="ghost">
-              View my profile
-            </ButtonLink>
-          ) : null}
-        </div>
+        ) : null}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -447,15 +445,29 @@ const pinnedChapters = new Set<StoryChapter>([
   "atlas",
 ]);
 
+const chapterMedia: Partial<Record<StoryChapter, MediaKey>> = {
+  atlas: "atlas",
+  hero: "hero",
+  memory: "memory",
+  portal: "cellar",
+  taste: "liquid",
+};
+
 export default function HomePage() {
   const storyRef = useRef<HTMLDivElement>(null);
+  const [webglReady, setWebglReady] = useState(false);
   useScrollStory(storyRef);
 
   return (
-    <div className="gv-story" ref={storyRef}>
+    <div
+      className={`gv-story${webglReady ? " gv-story--webgl-ready" : ""}`}
+      ref={storyRef}
+    >
       <ChapterProgress />
+      <WebGLExperience onReadyChange={setWebglReady} />
       {STORY_CHAPTERS.map((chapter) => {
         const ChapterBody = chapterBodies[chapter.key];
+        const mediaKey = chapterMedia[chapter.key];
 
         return (
           <section
@@ -466,6 +478,7 @@ export default function HomePage() {
             id={chapter.anchorId}
             key={chapter.key}
           >
+            {mediaKey ? <ChapterMedia mediaKey={mediaKey} /> : null}
             <div className="gv-story-chapter__inner">
               <ChapterHeading chapter={chapter} />
               <ChapterBody />

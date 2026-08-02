@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { useRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SceneProvider } from "./SceneProvider";
@@ -6,12 +7,32 @@ import { STORY_CHAPTERS, STORY_CHAPTER_KEYS } from "./storyChapters";
 import { useScene } from "./useScene";
 
 function SceneProbe() {
-  const { chapter, homepageActive, prefersReducedMotion, setChapter } = useScene();
+  const {
+    chapter,
+    homepageActive,
+    prefersReducedMotion,
+    progressRef,
+    setChapter,
+    setHomepageActive,
+  } = useScene();
+  const initialProgressRef = useRef(progressRef);
 
   return (
-    <button onClick={() => setChapter("atlas")} type="button">
+    <button
+      data-progress-ref-stable={initialProgressRef.current === progressRef}
+      onClick={() => {
+        progressRef.current.chapter = 0.75;
+        progressRef.current.story = 0.5;
+        progressRef.current.storyVisible = true;
+        setChapter("atlas");
+        setHomepageActive(true);
+      }}
+      type="button"
+    >
       {chapter}:{homepageActive ? "home" : "route"}:
-      {prefersReducedMotion ? "reduced" : "motion"}
+      {prefersReducedMotion ? "reduced" : "motion"}:
+      {progressRef.current.chapter}:{progressRef.current.story}:
+      {progressRef.current.storyVisible ? "visible" : "hidden"}
     </button>
   );
 }
@@ -54,9 +75,17 @@ describe("SceneProvider", () => {
       </SceneProvider>
     );
 
-    expect(screen.getByRole("button")).toHaveTextContent("hero:route:motion");
+    expect(screen.getByRole("button")).toHaveTextContent(
+      "hero:route:motion:0:0:hidden",
+    );
     fireEvent.click(screen.getByRole("button"));
-    expect(screen.getByRole("button")).toHaveTextContent("atlas:route:motion");
+    expect(screen.getByRole("button")).toHaveTextContent(
+      "atlas:home:motion:0.75:0.5:visible",
+    );
+    expect(screen.getByRole("button")).toHaveAttribute(
+      "data-progress-ref-stable",
+      "true",
+    );
     expect(container.querySelector("canvas")).not.toBeInTheDocument();
     expect(container.querySelector("video")).not.toBeInTheDocument();
   });
@@ -79,6 +108,8 @@ describe("SceneProvider", () => {
       </SceneProvider>,
     );
 
-    expect(screen.getByRole("button")).toHaveTextContent("hero:route:reduced");
+    expect(screen.getByRole("button")).toHaveTextContent(
+      "hero:route:reduced:0:0:hidden",
+    );
   });
 });

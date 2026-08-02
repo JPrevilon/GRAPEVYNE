@@ -1,4 +1,4 @@
-import { type PropsWithChildren, useMemo, useState } from "react";
+import { type PropsWithChildren, useMemo, useRef, useState } from "react";
 
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
@@ -8,6 +8,7 @@ import { STORY_CHAPTER_KEYS, type StoryChapter } from "./storyChapters";
 export function SceneProvider({ children }: PropsWithChildren) {
   const [chapter, setChapter] = useState<StoryChapter>("hero");
   const [homepageActive, setHomepageActive] = useState(false);
+  const progressRef = useRef({ chapter: 0, story: 0, storyVisible: false });
   const prefersReducedMotion = useReducedMotion();
 
   const value = useMemo(
@@ -17,6 +18,7 @@ export function SceneProvider({ children }: PropsWithChildren) {
       currentChapterId: chapter,
       homepageActive,
       prefersReducedMotion,
+      progressRef,
       setChapter,
       setCurrentChapterId: setChapter,
       setHomepageActive,

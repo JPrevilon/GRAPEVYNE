@@ -10,6 +10,10 @@ const mediaSource = readFileSync(
   path.resolve(process.cwd(), "src/experience/media.ts"),
   "utf8",
 );
+const webglExperienceSource = readFileSync(
+  path.resolve(process.cwd(), "src/experience/webgl/WebGLExperience.tsx"),
+  "utf8",
+);
 
 function importedModules(source: string) {
   return Array.from(
@@ -30,11 +34,19 @@ describe("HomePage experience boundaries", () => {
     expect(homeSource).not.toMatch(/use(?:Cellar|CellarEntry|TasteProfile)Query/);
   });
 
-  it("contains no model source capable of initiating a GLB or GLTF request", () => {
+  it("keeps model loading behind the lightweight Home-only lazy boundary", () => {
     const experienceSources = `${homeSource}\n${mediaSource}`;
 
+    expect(homeSource).toMatch(
+      /from\s+["']@\/experience\/webgl\/WebGLExperience["']/,
+    );
     expect(experienceSources).not.toMatch(/\.(?:glb|gltf)(?:[?"']|$)/i);
     expect(experienceSources).not.toMatch(/<model-viewer\b/i);
     expect(experienceSources).not.toMatch(/(?:useGLTF|GLTFLoader|Canvas)\b/);
+    expect(webglExperienceSource).toMatch(
+      /lazy\(\(\)\s*=>\s*import\(["']\.\/ExperienceCanvas["']\)\)/,
+    );
+    expect(webglExperienceSource).toMatch(/inspectBrowserWebGLCapability/);
+    expect(webglExperienceSource).not.toMatch(/\.(?:glb|gltf)(?:[?"']|$)/i);
   });
 });

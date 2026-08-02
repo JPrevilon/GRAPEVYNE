@@ -144,6 +144,7 @@ export function useScrollStory(
 ) {
   const {
     prefersReducedMotion,
+    progressRef,
     setCurrentChapterId,
     setHomepageActive,
   } = useScene();
@@ -154,6 +155,7 @@ export function useScrollStory(
     if (!root) return undefined;
 
     const sections = getStorySections(root);
+    const sceneProgress = progressRef.current;
     const documentElement = document.documentElement;
     const hadStoryClass = documentElement.classList.contains(STORY_CLASS);
     const hadSmoothingClass =
@@ -181,17 +183,25 @@ export function useScrollStory(
     let stopRuntime: Cleanup = noop;
 
     const setStoryProgress = (progress: number) => {
+      sceneProgress.story = clampProgress(progress);
       root.style.setProperty(
         STORY_PROGRESS_PROPERTY,
-        formatProgress(progress),
+        formatProgress(sceneProgress.story),
       );
     };
 
     const setChapterProgress = (progress: number) => {
+      sceneProgress.chapter = clampProgress(progress);
       root.style.setProperty(
         CHAPTER_PROGRESS_PROPERTY,
-        formatProgress(progress),
+        formatProgress(sceneProgress.chapter),
       );
+    };
+
+    const setStoryVisible = (visible: boolean) => {
+      if (sceneProgress.storyVisible === visible) return;
+      sceneProgress.storyVisible = visible;
+      sceneProgress.setRenderActivity?.(visible);
     };
 
     const setSmoothingActive = (active: boolean) => {
@@ -214,6 +224,7 @@ export function useScrollStory(
       const rootBounds = root.getBoundingClientRect();
       const storyDistance = Math.max(rootBounds.height - viewportHeight, 1);
 
+      setStoryVisible(rootBounds.bottom > 0 && rootBounds.top < viewportHeight);
       setStoryProgress(-rootBounds.top / storyDistance);
 
       if (!activeSection) {
@@ -393,6 +404,18 @@ export function useScrollStory(
               ScrollTrigger.create({
                 end: "bottom bottom",
                 id: "grapevyne-story-progress",
+                onEnter: () => {
+                  setStoryVisible(true);
+                },
+                onEnterBack: () => {
+                  setStoryVisible(true);
+                },
+                onLeave: () => {
+                  setStoryVisible(false);
+                },
+                onLeaveBack: () => {
+                  setStoryVisible(false);
+                },
                 onRefresh: ({ progress }) => setStoryProgress(progress),
                 onUpdate: ({ progress }) => setStoryProgress(progress),
                 start: "top top",
@@ -460,21 +483,6 @@ export function useScrollStory(
                 });
               }
 
-              if (!element.hasAttribute("data-story-pin")) return;
-
-              own(
-                ScrollTrigger.create({
-                  anticipatePin: 1,
-                  end: () =>
-                    `+=${Math.min(window.innerHeight * 0.35, 320)}`,
-                  id: `grapevyne-story-pin-${chapter}`,
-                  invalidateOnRefresh: true,
-                  pin: true,
-                  pinSpacing: true,
-                  start: "top top",
-                  trigger: element,
-                }),
-              );
             });
           } catch (error) {
             cleanup();
@@ -564,6 +572,7 @@ export function useScrollStory(
 
     documentElement.classList.add(STORY_CLASS);
     setHomepageActive(true);
+    setStoryVisible(true);
     setStoryProgress(0);
     setChapterProgress(0);
 
@@ -598,11 +607,15 @@ export function useScrollStory(
         CHAPTER_PROGRESS_PROPERTY,
         chapterProgressSnapshot,
       );
+      sceneProgress.chapter = 0;
+      sceneProgress.story = 0;
+      setStoryVisible(false);
       setHomepageActive(false);
     };
   }, [
     prefersReducedMotion,
     loadRuntime,
+    progressRef,
     rootRef,
     setCurrentChapterId,
     setHomepageActive,

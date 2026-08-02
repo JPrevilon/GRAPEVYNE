@@ -63,6 +63,13 @@ export default [
     settings: { react: { version: "18.3" } },
   },
   {
+    files: ["src/experience/webgl/**/*.tsx"],
+    rules: {
+      // React Three Fiber intentionally extends JSX with Three.js primitives.
+      "react/no-unknown-property": "off",
+    },
+  },
+  {
     files: ["*.{js,mjs,ts}", "scripts/**/*.{js,mjs,ts}"],
     languageOptions: {
       ecmaVersion: "latest",

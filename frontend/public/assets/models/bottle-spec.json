@@ -1,0 +1,42 @@
+{
+  "units": "normalized",
+  "up_axis": "Z",
+  "origin": "centered at bottle base",
+  "height": 2.62,
+  "required_nodes": [
+    "Bottle_Glass",
+    "Wine_Liquid",
+    "Cork",
+    "Capsule",
+    "Label_Front",
+    "Label_Back",
+    "Condensation"
+  ],
+  "desktop": {
+    "triangle_target_max": 80000,
+    "compressed_glb_max_mb": 2.5,
+    "runtime_label_max": "2K"
+  },
+  "mobile": {
+    "triangle_target_max": 35000,
+    "compressed_glb_max_mb": 1.2,
+    "runtime_label_max": "1K"
+  },
+  "materials": {
+    "glass": {
+      "roughness": "0.04-0.09",
+      "intent": "dark transmission glass"
+    },
+    "liquid": {
+      "color": "deep burgundy",
+      "intent": "controlled absorption"
+    },
+    "label": {
+      "roughness": "0.78-0.88",
+      "intent": "aged ivory paper"
+    },
+    "capsule": {
+      "intent": "near-black metal with champagne detail"
+    }
+  }
+}

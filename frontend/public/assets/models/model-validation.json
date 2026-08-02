@@ -1,0 +1,44 @@
+{
+  "grapevyne-master-bottle-placeholder.glb": {
+    "geometry_names": [
+      "Bottle_Glass",
+      "Capsule",
+      "Condensation",
+      "Cork",
+      "Label_Back",
+      "Label_Front",
+      "Wine_Liquid"
+    ],
+    "node_names": [
+      "Bottle_Glass",
+      "Capsule",
+      "Condensation",
+      "Cork",
+      "Label_Back",
+      "Label_Front",
+      "Wine_Liquid"
+    ],
+    "file_size_bytes": 1182548
+  },
+  "grapevyne-master-bottle-mobile-placeholder.glb": {
+    "geometry_names": [
+      "Bottle_Glass",
+      "Capsule",
+      "Condensation",
+      "Cork",
+      "Label_Back",
+      "Label_Front",
+      "Wine_Liquid"
+    ],
+    "node_names": [
+      "Bottle_Glass",
+      "Capsule",
+      "Condensation",
+      "Cork",
+      "Label_Back",
+      "Label_Front",
+      "Wine_Liquid"
+    ],
+    "file_size_bytes": 1115844
+  }
+}

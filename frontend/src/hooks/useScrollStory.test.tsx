@@ -2,11 +2,24 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { StrictMode, type CSSProperties, useRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const sceneMock = vi.hoisted(() => ({
-  prefersReducedMotion: false,
-  setCurrentChapterId: vi.fn(),
-  setHomepageActive: vi.fn(),
-}));
+const sceneMock = vi.hoisted(() => {
+  const setRenderActivity = vi.fn();
+
+  return {
+    prefersReducedMotion: false,
+    progressRef: {
+      current: {
+        chapter: 0,
+        setRenderActivity,
+        story: 0,
+        storyVisible: false,
+      },
+    },
+    setCurrentChapterId: vi.fn(),
+    setHomepageActive: vi.fn(),
+    setRenderActivity,
+  };
+});
 
 vi.mock("@/experience/storyChapters", () => ({
   STORY_CHAPTER_KEYS: [
@@ -122,12 +135,14 @@ function StoryHarness({
           data-story-pin={PINNED_CHAPTERS.has(chapter) ? "" : undefined}
           key={chapter}
         >
-          <h2 data-story-reveal>{chapter}</h2>
-          {["hero", "taste", "portal", "memory", "atlas"].includes(
-            chapter,
-          ) ? (
-            <div className="gv-story-media" />
-          ) : null}
+          <div className="gv-story-chapter__inner">
+            <h2 data-story-reveal>{chapter}</h2>
+            {["hero", "taste", "portal", "memory", "atlas"].includes(
+              chapter,
+            ) ? (
+              <div className="gv-story-media" />
+            ) : null}
+          </div>
         </section>
       ))}
     </main>
@@ -281,6 +296,13 @@ function createDesktopRuntimeMock() {
 
 beforeEach(() => {
   sceneMock.prefersReducedMotion = false;
+  sceneMock.progressRef.current = {
+    chapter: 0,
+    setRenderActivity: sceneMock.setRenderActivity,
+    story: 0,
+    storyVisible: false,
+  };
+  sceneMock.setRenderActivity.mockClear();
   sceneMock.setCurrentChapterId.mockClear();
   sceneMock.setHomepageActive.mockClear();
   mediaQueries = [];
@@ -342,8 +364,28 @@ describe("useScrollStory native runtime", () => {
 
     expect(discovery).not.toBeNull();
     expect(activeObserver).toBeDefined();
+    vi.spyOn(root, "getBoundingClientRect").mockReturnValue({
+      ...getEntry(root).boundingClientRect,
+      bottom: 900,
+      height: 1000,
+      top: -100,
+      y: -100,
+    });
+    vi.spyOn(discovery!, "getBoundingClientRect").mockReturnValue(
+      getEntry(discovery!).boundingClientRect,
+    );
+    sceneMock.setRenderActivity.mockClear();
     activeObserver?.callback([getEntry(discovery!)], activeObserver);
     expect(sceneMock.setCurrentChapterId).toHaveBeenLastCalledWith("discovery");
+    expect(sceneMock.progressRef.current.chapter).toBeCloseTo(
+      (window.innerHeight / 2 - 300) / 400,
+    );
+    expect(sceneMock.progressRef.current.story).toBeCloseTo(
+      100 / Math.max(1000 - window.innerHeight, 1),
+    );
+    expect(sceneMock.progressRef.current.storyVisible).toBe(true);
+    expect(sceneMock.setRenderActivity).toHaveBeenCalledOnce();
+    expect(sceneMock.setRenderActivity).toHaveBeenLastCalledWith(true);
 
     fireEvent.scroll(window);
     expect(requestAnimationFrameMock).toHaveBeenCalledOnce();
@@ -355,6 +397,12 @@ describe("useScrollStory native runtime", () => {
     expect(document.documentElement).not.toHaveClass("has-scroll-story");
     expect(root.style.getPropertyValue("--story-progress")).toBe("0.25");
     expect(root.style.getPropertyValue("--chapter-progress")).toBe("");
+    expect(sceneMock.progressRef.current).toMatchObject({
+      chapter: 0,
+      story: 0,
+      storyVisible: false,
+    });
+    expect(sceneMock.setRenderActivity).toHaveBeenLastCalledWith(false);
     expect(sceneMock.setHomepageActive).toHaveBeenLastCalledWith(false);
     mediaQueries.forEach(({ removeEventListener }) => {
       expect(removeEventListener).toHaveBeenCalledOnce();
@@ -483,10 +531,15 @@ describe("useScrollStory desktop runtime", () => {
 
     expect(loadRuntimeMock).toHaveBeenCalledTimes(2);
     expect(state.registerPlugin).toHaveBeenCalledOnce();
-    expect(state.triggers).toHaveLength(27);
+    expect(state.triggers).toHaveLength(22);
     expect(
       state.triggers.some(
         ({ options }) => options.id === "grapevyne-story-reveal-hero-0",
+      ),
+    ).toBe(false);
+    expect(
+      state.triggers.some(({ options }) =>
+        String(options.id).startsWith("grapevyne-story-pin-"),
       ),
     ).toBe(false);
     expect(document.documentElement).toHaveClass(
@@ -513,12 +566,28 @@ describe("useScrollStory desktop runtime", () => {
     const enterDiscovery = discoveryTrigger?.options.onEnter as
       | ((self: { progress: number }) => void)
       | undefined;
+    const enterStoryBack = overallTrigger?.options.onEnterBack as
+      | (() => void)
+      | undefined;
+    const leaveStory = overallTrigger?.options.onLeave as
+      | (() => void)
+      | undefined;
+
+    sceneMock.setRenderActivity.mockClear();
+    leaveStory?.();
+    enterStoryBack?.();
+    expect(sceneMock.setRenderActivity.mock.calls).toEqual([[false], [true]]);
 
     updateOverall?.({ progress: 0.4 });
     enterDiscovery?.({ progress: 0.3 });
 
     expect(root.style.getPropertyValue("--story-progress")).toBe("0.4");
     expect(root.style.getPropertyValue("--chapter-progress")).toBe("0.3");
+    expect(sceneMock.progressRef.current).toMatchObject({
+      chapter: 0.3,
+      story: 0.4,
+      storyVisible: true,
+    });
     expect(sceneMock.setCurrentChapterId).toHaveBeenLastCalledWith("discovery");
 
     view.unmount();
@@ -541,6 +610,12 @@ describe("useScrollStory desktop runtime", () => {
     );
     expect(root.style.getPropertyValue("--story-progress")).toBe("0.25");
     expect(root.style.getPropertyValue("--chapter-progress")).toBe("");
+    expect(sceneMock.progressRef.current).toMatchObject({
+      chapter: 0,
+      story: 0,
+      storyVisible: false,
+    });
+    expect(sceneMock.setRenderActivity).toHaveBeenLastCalledWith(false);
     expect(sceneMock.setHomepageActive).toHaveBeenLastCalledWith(false);
   });
 });

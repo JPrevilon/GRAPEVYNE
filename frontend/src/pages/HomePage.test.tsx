@@ -1,4 +1,11 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, useLocation } from "react-router-dom";
 
@@ -9,6 +16,10 @@ import HomePage from "./HomePage";
 const auth = vi.hoisted(() => ({
   isAuthenticated: false,
   isLoading: false,
+}));
+
+const webgl = vi.hoisted(() => ({
+  onReadyChange: null as ((ready: boolean) => void) | null,
 }));
 
 vi.mock("@/features/auth/useAuth", () => ({
@@ -31,6 +42,13 @@ vi.mock("@/experience/CinematicVideo", () => ({
   default: ({ mediaKey }: { mediaKey: string }) => (
     <span aria-hidden="true" data-media-key={mediaKey} />
   ),
+}));
+
+vi.mock("@/experience/webgl/WebGLExperience", () => ({
+  default: ({ onReadyChange }: { onReadyChange: (ready: boolean) => void }) => {
+    webgl.onReadyChange = onReadyChange;
+    return <div aria-hidden="true" data-testid="webgl-lazy-shell" />;
+  },
 }));
 
 function LocationProbe() {
@@ -58,6 +76,7 @@ describe("HomePage scroll story", () => {
   beforeEach(() => {
     auth.isAuthenticated = false;
     auth.isLoading = false;
+    webgl.onReadyChange = null;
   });
 
   it("renders all nine semantic chapters from the shared ordered configuration", () => {
@@ -82,6 +101,32 @@ describe("HomePage scroll story", () => {
     expect(container.querySelector("main")).not.toBeInTheDocument();
     expect(container.querySelector("canvas")).not.toBeInTheDocument();
     expect(container.querySelector("model-viewer")).not.toBeInTheDocument();
+  });
+
+  it("keeps the CSS bottle mounted until and after the WebGL frame handshake", () => {
+    const { container } = renderHome();
+    const story = container.querySelector(".gv-story");
+    const fallback = container.querySelector(".gv-hero-bottle");
+
+    expect(screen.getByTestId("webgl-lazy-shell")).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
+    expect(story).not.toHaveClass("gv-story--webgl-ready");
+    expect(fallback).toBeInTheDocument();
+    expect(container.querySelector("canvas")).not.toBeInTheDocument();
+
+    act(() => {
+      webgl.onReadyChange?.(true);
+    });
+    expect(story).toHaveClass("gv-story--webgl-ready");
+    expect(fallback).toBeInTheDocument();
+
+    act(() => {
+      webgl.onReadyChange?.(false);
+    });
+    expect(story).not.toHaveClass("gv-story--webgl-ready");
+    expect(fallback).toBeInTheDocument();
   });
 
   it("renders the locked punctuation-free display copy and directory labels", () => {

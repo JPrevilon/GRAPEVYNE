@@ -12,6 +12,12 @@ const defaultManifestPath = path.join(
   "v2",
   "04a-final-media-manifest.json",
 );
+const defaultWebGLManifestPath = path.join(
+  defaultRepositoryRoot,
+  "docs",
+  "v2",
+  "05-webgl-asset-manifest.json",
+);
 
 const EXPECTED_MANIFEST_DIGEST =
   "0799b42fe1b610aa92b8cae9dc7a1dabcc368b6602df6bed0c83263a8fe55018";
@@ -19,6 +25,155 @@ const EXPECTED_MANIFEST_DIGEST_ALGORITHM =
   "SHA-256 of sorted `shasum -a 256` lines rooted at frontend/public/assets/video";
 const EXPECTED_FILE_COUNT = 30;
 const PRODUCTION_MEDIA_PREFIX = "frontend/public/assets/video/";
+const WEBGL_ASSET_COUNT = 10;
+const REQUIRED_MODEL_NAMES = [
+  "Bottle_Glass",
+  "Wine_Liquid",
+  "Cork",
+  "Capsule",
+  "Label_Front",
+  "Label_Back",
+  "Condensation",
+];
+const MODEL_BUDGETS_BYTES = {
+  high: 2_500_000,
+  standard: 1_200_000,
+};
+const webglAsset = ({ hasModelContract = false, ...asset }) => ({
+  ...asset,
+  maxByteSize: asset.maxByteSize ?? null,
+  nodeNames: hasModelContract ? REQUIRED_MODEL_NAMES : [],
+  geometryNames: hasModelContract ? REQUIRED_MODEL_NAMES : [],
+  labelVariant: asset.labelVariant ?? null,
+  copyStatus: "copied",
+});
+const approvedWebGLAssets = [
+  webglAsset({
+    assetPath:
+      "frontend/public/assets/models/grapevyne-master-bottle.glb",
+    sha256:
+      "2304b4b89cc7a249527746c6b1f7ceb02759f6395a709b129e539941c885c05a",
+    byteSize: 1_182_548,
+    assetKind: "model",
+    modelTier: "high",
+    maxByteSize: MODEL_BUDGETS_BYTES.high,
+    hasModelContract: true,
+    sourceLocation:
+      ".grapevyne-v2-reference/frontend/public/assets/models/grapevyne-master-bottle.glb",
+  }),
+  webglAsset({
+    assetPath:
+      "frontend/public/assets/models/grapevyne-master-bottle-mobile.glb",
+    sha256:
+      "1caa5eb4786326199f0f2b1fd4066590aaccda02a54da03e14bfba9bee10e3f8",
+    byteSize: 1_115_844,
+    assetKind: "model",
+    modelTier: "standard",
+    maxByteSize: MODEL_BUDGETS_BYTES.standard,
+    hasModelContract: true,
+    sourceLocation:
+      ".grapevyne-v2-reference/frontend/public/assets/models/grapevyne-master-bottle-mobile.glb",
+  }),
+  webglAsset({
+    assetPath: "frontend/public/assets/models/bottle-spec.json",
+    sha256:
+      "94573f075540f23594070997db39391a2eae992a8638378e2a491e99afe5ddaf",
+    byteSize: 868,
+    assetKind: "contract",
+    modelTier: "all",
+    sourceLocation:
+      ".grapevyne-v2-reference/frontend/public/assets/models/bottle-spec.json",
+  }),
+  webglAsset({
+    assetPath: "frontend/public/assets/models/model-validation.json",
+    sha256:
+      "deb4d10988c743bdf0a6b3cba8c06e9001e5f99d1a55d13491e2b283ea4c3bfd",
+    byteSize: 835,
+    assetKind: "contract",
+    modelTier: "all",
+    sourceLocation:
+      ".grapevyne-v2-reference/frontend/public/assets/models/model-validation.json",
+  }),
+  webglAsset({
+    assetPath:
+      "frontend/public/assets/labels/grapevyne-label-front-red.png",
+    sha256:
+      "fc1e798888c59d1dc335a964309de8ddf570be68b509f47b0be396be244f4281",
+    byteSize: 788_087,
+    assetKind: "label",
+    modelTier: "all",
+    labelVariant: "red",
+    sourceLocation:
+      ".grapevyne-v2-reference/frontend/public/assets/labels/grapevyne-label-front-red.png",
+  }),
+  webglAsset({
+    assetPath:
+      "frontend/public/assets/labels/grapevyne-label-front-white.png",
+    sha256:
+      "543107978d3e46f5b60846c326079f4cae8481ebaa91994c051a77450ecfa4c3",
+    byteSize: 789_205,
+    assetKind: "label",
+    modelTier: "all",
+    labelVariant: "white",
+    sourceLocation:
+      ".grapevyne-v2-reference/frontend/public/assets/labels/grapevyne-label-front-white.png",
+  }),
+  webglAsset({
+    assetPath:
+      "frontend/public/assets/labels/grapevyne-label-front-sparkling.png",
+    sha256:
+      "79a159d2399734f60f6602dde705cfc279d31aa70cfc607538244f29b0eed3ce",
+    byteSize: 830_486,
+    assetKind: "label",
+    modelTier: "all",
+    labelVariant: "sparkling",
+    sourceLocation:
+      ".grapevyne-v2-reference/frontend/public/assets/labels/grapevyne-label-front-sparkling.png",
+  }),
+  webglAsset({
+    assetPath:
+      "frontend/public/assets/labels/grapevyne-label-front-rose.png",
+    sha256:
+      "6f4b8d61ec65a22d50c391ebe2fd1846b2651ad5f30e08f40dcb953e3a074e50",
+    byteSize: 842_237,
+    assetKind: "label",
+    modelTier: "all",
+    labelVariant: "rose",
+    sourceLocation:
+      ".grapevyne-v2-reference/frontend/public/assets/labels/grapevyne-label-front-rose.png",
+  }),
+  webglAsset({
+    assetPath: "frontend/public/assets/labels/grapevyne-label-back.png",
+    sha256:
+      "d33586e7beeec7ef60d203a5bf74bbb8a39b9d30f21471549a6b2e7d32f791d3",
+    byteSize: 290_856,
+    assetKind: "label",
+    modelTier: "all",
+    labelVariant: "back",
+    sourceLocation:
+      ".grapevyne-v2-reference/frontend/public/assets/labels/grapevyne-label-back.png",
+  }),
+  webglAsset({
+    assetPath:
+      "frontend/public/assets/labels/grapevyne-label-neck-capsule.png",
+    sha256:
+      "63e056294a30643153444a8f33df805f715ba4a09cfeb39fe4156377cef5992e",
+    byteSize: 98_787,
+    assetKind: "label",
+    modelTier: "all",
+    labelVariant: "capsule",
+    sourceLocation:
+      ".grapevyne-v2-reference/frontend/public/assets/labels/grapevyne-label-neck-capsule.png",
+  }),
+];
+const approvedWebGLPaths = new Set(
+  approvedWebGLAssets.map((asset) => asset.assetPath),
+);
+const approvedModelPaths = new Set(
+  approvedWebGLAssets
+    .filter((asset) => asset.assetKind === "model")
+    .map((asset) => asset.assetPath),
+);
 const sceneSlugs = {
   atlas: "taste-atlas-finale",
   cellar: "cellar-corridor-push",
@@ -99,6 +254,78 @@ async function walk(directory) {
 
 async function sha256(filePath) {
   return createHash("sha256").update(await readFile(filePath)).digest("hex");
+}
+
+function sameStringArray(left, right) {
+  return (
+    Array.isArray(left) &&
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+  );
+}
+
+export function parseGlbContract(contents, displayPath = "GLB") {
+  const buffer = Buffer.isBuffer(contents) ? contents : Buffer.from(contents);
+
+  if (buffer.byteLength < 20) {
+    throw new Error(`${displayPath}: invalid GLB header`);
+  }
+
+  if (buffer.readUInt32LE(0) !== 0x46546c67) {
+    throw new Error(`${displayPath}: invalid GLB magic`);
+  }
+
+  if (buffer.readUInt32LE(4) !== 2) {
+    throw new Error(`${displayPath}: expected GLB version 2`);
+  }
+
+  const declaredLength = buffer.readUInt32LE(8);
+  if (declaredLength !== buffer.byteLength) {
+    throw new Error(
+      `${displayPath}: declared GLB length ${declaredLength} does not equal ${buffer.byteLength}`,
+    );
+  }
+
+  let offset = 12;
+  let document;
+
+  while (offset + 8 <= buffer.byteLength) {
+    const chunkLength = buffer.readUInt32LE(offset);
+    const chunkType = buffer.readUInt32LE(offset + 4);
+    const chunkStart = offset + 8;
+    const chunkEnd = chunkStart + chunkLength;
+
+    if (chunkEnd > buffer.byteLength) {
+      throw new Error(`${displayPath}: invalid GLB chunk length`);
+    }
+
+    if (chunkType === 0x4e4f534a && document === undefined) {
+      const json = buffer
+        .subarray(chunkStart, chunkEnd)
+        .toString("utf8")
+        .trimEnd();
+      document = JSON.parse(json);
+    }
+
+    offset = chunkEnd;
+  }
+
+  if (!document || typeof document !== "object") {
+    throw new Error(`${displayPath}: missing GLB JSON chunk`);
+  }
+
+  return {
+    nodeNames: Array.isArray(document.nodes)
+      ? document.nodes
+          .map((node) => node?.name)
+          .filter((name) => typeof name === "string")
+      : [],
+    geometryNames: Array.isArray(document.meshes)
+      ? document.meshes
+          .map((mesh) => mesh?.name)
+          .filter((name) => typeof name === "string")
+      : [],
+  };
 }
 
 function approvedManifestDigest(files) {
@@ -329,23 +556,137 @@ function validateManifest(manifest, failures) {
   return manifest.files;
 }
 
+function validateWebGLManifest(manifest, failures) {
+  if (!manifest || typeof manifest !== "object") {
+    failures.push("WebGL asset manifest: invalid JSON object");
+    return approvedWebGLAssets;
+  }
+
+  if (manifest.schemaVersion !== 1) {
+    failures.push("WebGL asset manifest: schemaVersion must be 1");
+  }
+  if (manifest.approvedAssetCount !== WEBGL_ASSET_COUNT) {
+    failures.push(
+      `WebGL asset manifest: approvedAssetCount must be ${WEBGL_ASSET_COUNT}`,
+    );
+  }
+  if (!sameStringArray(manifest.requiredNodeNames, REQUIRED_MODEL_NAMES)) {
+    failures.push("WebGL asset manifest: requiredNodeNames contract mismatch");
+  }
+  if (!sameStringArray(manifest.requiredGeometryNames, REQUIRED_MODEL_NAMES)) {
+    failures.push("WebGL asset manifest: requiredGeometryNames contract mismatch");
+  }
+  if (
+    !manifest.modelBudgetsBytes ||
+    manifest.modelBudgetsBytes.high !== MODEL_BUDGETS_BYTES.high ||
+    manifest.modelBudgetsBytes.standard !== MODEL_BUDGETS_BYTES.standard
+  ) {
+    failures.push("WebGL asset manifest: model byte budgets mismatch");
+  }
+
+  if (!Array.isArray(manifest.assets)) {
+    failures.push("WebGL asset manifest: assets must be an array");
+    return approvedWebGLAssets;
+  }
+
+  if (manifest.assets.length !== WEBGL_ASSET_COUNT) {
+    failures.push(
+      `WebGL asset manifest: expected ${WEBGL_ASSET_COUNT} entries, found ${manifest.assets.length}`,
+    );
+  }
+
+  const manifestPaths = manifest.assets.map((asset) => asset?.assetPath);
+  const uniqueManifestPaths = new Set(manifestPaths);
+  if (uniqueManifestPaths.size !== manifestPaths.length) {
+    failures.push("WebGL asset manifest: duplicate assetPath entry");
+  }
+
+  for (const asset of manifest.assets) {
+    if (
+      !asset ||
+      typeof asset.assetPath !== "string" ||
+      !approvedWebGLPaths.has(asset.assetPath)
+    ) {
+      failures.push(
+        `WebGL asset manifest: unexpected asset path ${String(asset?.assetPath)}`,
+      );
+    }
+  }
+
+  for (const expected of approvedWebGLAssets) {
+    const actual = manifest.assets.find(
+      (asset) => asset?.assetPath === expected.assetPath,
+    );
+
+    if (!actual) {
+      failures.push(`${expected.assetPath}: missing WebGL manifest entry`);
+      continue;
+    }
+
+    for (const field of [
+      "sha256",
+      "byteSize",
+      "assetKind",
+      "modelTier",
+      "maxByteSize",
+      "labelVariant",
+      "sourceLocation",
+      "copyStatus",
+    ]) {
+      if (actual[field] !== expected[field]) {
+        failures.push(
+          `${expected.assetPath}: WebGL manifest ${field} mismatch`,
+        );
+      }
+    }
+
+    if (!sameStringArray(actual.nodeNames, expected.nodeNames)) {
+      failures.push(
+        `${expected.assetPath}: WebGL manifest nodeNames mismatch`,
+      );
+    }
+    if (!sameStringArray(actual.geometryNames, expected.geometryNames)) {
+      failures.push(
+        `${expected.assetPath}: WebGL manifest geometryNames mismatch`,
+      );
+    }
+  }
+
+  return approvedWebGLAssets;
+}
+
 export async function loadFinalMediaManifest(
   manifestPath = defaultManifestPath,
 ) {
   return JSON.parse(await readFile(manifestPath, "utf8"));
 }
 
+export async function loadWebGLAssetManifest(
+  manifestPath = defaultWebGLManifestPath,
+) {
+  return JSON.parse(await readFile(manifestPath, "utf8"));
+}
+
 export async function verifyAssets({
   manifest,
+  webglManifest,
   repositoryRoot = defaultRepositoryRoot,
 } = {}) {
   const failures = [];
   const frontendRoot = path.join(repositoryRoot, "frontend");
   const publicRoot = path.join(frontendRoot, "public");
   const videoRoot = path.join(publicRoot, "assets", "video");
+  const modelRoot = path.join(publicRoot, "assets", "models");
   const resolvedManifest = manifest ?? (await loadFinalMediaManifest());
+  const resolvedWebGLManifest =
+    webglManifest ?? (await loadWebGLAssetManifest());
   const manifestFiles = validateManifest(resolvedManifest, failures);
+  const webglAssets = validateWebGLManifest(
+    resolvedWebGLManifest,
+    failures,
+  );
   const expectedPaths = new Set(expectedRepositoryPaths());
+  let verifiedWebGLAssetCount = 0;
 
   for (const assetPath of foundationalAssets) {
     await validateRequiredFile(
@@ -353,6 +694,67 @@ export async function verifyAssets({
       assetPath,
       failures,
     );
+  }
+
+  for (const asset of webglAssets) {
+    const absolutePath = path.join(repositoryRoot, asset.assetPath);
+    const fileStats = await validateRequiredFile(
+      absolutePath,
+      asset.assetPath,
+      failures,
+    );
+
+    if (!fileStats?.isFile() || fileStats.size === 0) continue;
+    verifiedWebGLAssetCount += 1;
+
+    if (fileStats.size !== asset.byteSize) {
+      failures.push(
+        `${asset.assetPath}: byte size mismatch (expected ${asset.byteSize}, received ${fileStats.size})`,
+      );
+    }
+    if (
+      asset.maxByteSize !== null &&
+      fileStats.size > asset.maxByteSize
+    ) {
+      failures.push(
+        `${asset.assetPath}: exceeds ${asset.modelTier} model budget of ${asset.maxByteSize} bytes`,
+      );
+    }
+
+    const actualHash = await sha256(absolutePath);
+    if (actualHash !== asset.sha256) {
+      failures.push(
+        `${asset.assetPath}: SHA-256 mismatch (expected ${asset.sha256}, received ${actualHash})`,
+      );
+    }
+
+    if (asset.assetKind === "model") {
+      try {
+        const contract = parseGlbContract(
+          await readFile(absolutePath),
+          asset.assetPath,
+        );
+
+        for (const requiredName of REQUIRED_MODEL_NAMES) {
+          if (!contract.nodeNames.includes(requiredName)) {
+            failures.push(
+              `${asset.assetPath}: missing required GLB node ${requiredName}`,
+            );
+          }
+          if (!contract.geometryNames.includes(requiredName)) {
+            failures.push(
+              `${asset.assetPath}: missing required GLB geometry ${requiredName}`,
+            );
+          }
+        }
+      } catch (error) {
+        failures.push(
+          error instanceof Error
+            ? error.message
+            : `${asset.assetPath}: unable to parse GLB JSON chunk`,
+        );
+      }
+    }
   }
 
   for (const file of manifestFiles) {
@@ -401,6 +803,19 @@ export async function verifyAssets({
     }
   }
 
+  const modelFiles = await walk(modelRoot);
+  for (const absolutePath of modelFiles) {
+    const filePath = repositoryRelative(repositoryRoot, absolutePath);
+    const extension = path.extname(absolutePath).toLowerCase();
+
+    if (
+      (extension === ".glb" || extension === ".gltf") &&
+      !approvedModelPaths.has(filePath)
+    ) {
+      failures.push(`${filePath}: unexpected GLB/GLTF model`);
+    }
+  }
+
   const publicFiles = await walk(publicRoot);
   for (const absolutePath of publicFiles) {
     const filePath = repositoryRelative(repositoryRoot, absolutePath);
@@ -412,9 +827,46 @@ export async function verifyAssets({
 
     if (
       !absolutePath.startsWith(`${videoRoot}${path.sep}`) &&
-      prohibitedOutsideMediaExtensions.has(extension)
+      prohibitedOutsideMediaExtensions.has(extension) &&
+      !approvedModelPaths.has(filePath)
     ) {
       failures.push(`${filePath}: prohibited media/model outside approved directory`);
+    }
+  }
+
+  const sourceRoot = path.join(frontendRoot, "src");
+  const sourceExtensions = new Set([
+    ".css",
+    ".html",
+    ".js",
+    ".jsx",
+    ".mjs",
+    ".ts",
+    ".tsx",
+  ]);
+  for (const absolutePath of await walk(sourceRoot)) {
+    if (!sourceExtensions.has(path.extname(absolutePath).toLowerCase())) {
+      continue;
+    }
+
+    const filePath = repositoryRelative(repositoryRoot, absolutePath);
+    const source = await readFile(absolutePath, "utf8");
+    const remoteUrls = source.match(/https?:\/\/[^\s"'<>),\]}]+/giu) ?? [];
+
+    for (const remoteUrl of remoteUrls) {
+      if (/\.(?:glb|gltf)(?:[?#]|$)/iu.test(remoteUrl)) {
+        failures.push(`${filePath}: remote model URL is prohibited`);
+      }
+      if (
+        /\.(?:hdr|exr)(?:[?#]|$)/iu.test(remoteUrl) ||
+        /\b(?:hdri|polyhaven)\b/iu.test(remoteUrl)
+      ) {
+        failures.push(`${filePath}: remote environment/HDRI URL is prohibited`);
+      }
+    }
+
+    if (/<Environment\b[^>]*\bpreset\s*=/isu.test(source)) {
+      failures.push(`${filePath}: remote Drei Environment preset is prohibited`);
     }
   }
 
@@ -422,6 +874,7 @@ export async function verifyAssets({
     failures: [...new Set(failures)],
     foundationalAssetCount: foundationalAssets.length,
     productionMediaCount: actualMediaPaths.length,
+    webglAssetCount: verifiedWebGLAssetCount,
   };
 }
 
@@ -445,7 +898,7 @@ async function runCli() {
   }
 
   console.log(
-    `Verified ${result.foundationalAssetCount} foundational assets and ${result.productionMediaCount} hash-locked final video/poster assets.`,
+    `Verified ${result.foundationalAssetCount} foundational assets, ${result.productionMediaCount} hash-locked final video/poster assets, and ${result.webglAssetCount} hash-locked WebGL assets.`,
   );
 }
 

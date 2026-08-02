@@ -13,6 +13,10 @@
 .gv-story {
   --story-progress: 0;
   --chapter-progress: 0;
+  --story-layer-background: 0;
+  --story-layer-scrim: 1;
+  --story-layer-webgl: 2;
+  --story-layer-content: 3;
   position: relative;
   min-width: 0;
   overflow: clip;
@@ -29,12 +33,12 @@
   overflow: clip;
   padding: clamp(5rem, 9vw, 8rem) var(--page-gutter);
   scroll-margin-top: calc(var(--nav-height) + 1rem);
-  isolation: isolate;
+  isolation: auto;
 }
 
 .gv-story-chapter::after {
   position: absolute;
-  z-index: 1;
+  z-index: var(--story-layer-scrim);
   inset: 0;
   background:
     linear-gradient(90deg, rgba(7, 7, 6, 0.92) 0%, rgba(7, 7, 6, 0.61) 47%, rgba(7, 7, 6, 0.18) 76%),
@@ -45,7 +49,7 @@
 
 .gv-story-chapter__inner {
   position: relative;
-  z-index: 2;
+  z-index: var(--story-layer-content);
   display: grid;
   width: min(100%, var(--content-wide));
   min-width: 0;
@@ -179,7 +183,7 @@
 
 .gv-story-media {
   position: absolute;
-  z-index: -1;
+  z-index: var(--story-layer-background);
   inset: 0;
   overflow: hidden;
   background: #100e0c;
@@ -194,12 +198,44 @@
 
 .gv-hero-bottle {
   position: absolute;
-  z-index: 2;
+  z-index: var(--story-layer-webgl);
   left: 67%;
   bottom: 5%;
   width: clamp(7rem, 10vw, 9.5rem);
   pointer-events: none;
   transform: translateX(-50%);
+  transition:
+    opacity 360ms ease,
+    visibility 0s linear 0s;
+}
+
+.gv-story--webgl-ready .gv-hero-bottle {
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity 360ms ease,
+    visibility 0s linear 360ms;
+}
+
+.gv-webgl-experience {
+  position: fixed;
+  z-index: var(--story-layer-webgl);
+  inset: 0;
+  contain: strict;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 360ms ease;
+}
+
+.gv-webgl-experience--ready {
+  opacity: 1;
+}
+
+.gv-webgl-experience canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .gv-hero-bottle .gv-bottle {
@@ -575,6 +611,27 @@ html.has-scroll-story {
 html.has-scroll-smoothing,
 html.has-scroll-smoothing body {
   overscroll-behavior: none;
+}
+
+@media (min-width: 64.0625rem) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .gv-story-chapter[data-story-pin] {
+    min-height: max(56rem, calc(135svh - var(--nav-height)));
+    align-items: start;
+  }
+
+  .gv-story-chapter[data-story-pin] .gv-story-chapter__inner {
+    position: sticky;
+    top: var(--nav-height);
+    min-height: calc(100svh - var(--nav-height));
+    align-content: center;
+  }
+}
+
+@media (min-width: 64.0625rem) {
+  .gv-story:not(.gv-story--webgl-ready) .gv-story-chapter--hero .gv-hero-bottle {
+    top: clamp(7rem, 20svh, 11rem);
+    bottom: auto;
+  }
 }
 
 @media (max-width: 64rem) {

@@ -10,6 +10,7 @@ import { SceneProvider } from "@/experience";
 const mocks = vi.hoisted(() => ({
   getCellarEntries: vi.fn(),
   getWineDetail: vi.fn(),
+  renderWebGLExperience: vi.fn(),
 }));
 
 vi.mock("@/features/auth/useAuth", () => ({
@@ -36,6 +37,13 @@ vi.mock("@/api/wines", () => ({
   searchWines: vi.fn(),
 }));
 
+vi.mock("@/experience/webgl/WebGLExperience", () => ({
+  default: () => {
+    mocks.renderWebGLExperience();
+    return <div aria-hidden="true" data-testid="webgl-home-loader" />;
+  },
+}));
+
 function renderRoute(path: string) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -60,6 +68,7 @@ function renderRoute(path: string) {
 afterEach(() => {
   cleanup();
   mocks.getCellarEntries.mockClear();
+  mocks.renderWebGLExperience.mockClear();
 });
 
 beforeEach(() => {
@@ -109,6 +118,23 @@ describe("major route composition", () => {
     expect(
       await screen.findByRole("heading", { name: "Direct Route Rouge" }),
     ).toBeInTheDocument();
+  });
+
+  it.each([
+    ["/discover", "DISCOVER WINES"],
+    ["/login", "RETURN TO YOUR CELLAR"],
+    ["/demo/cellar", "DEMO CELLAR"],
+    ["/demo/taste-atlas", "DEMO TASTE ATLAS"],
+    ["/wines/source-wine-17", "Direct Route Rouge"],
+  ])("does not render the Home WebGL loader or a canvas on %s", async (path, heading) => {
+    const view = renderRoute(path);
+
+    expect(
+      await screen.findByRole("heading", { name: heading }),
+    ).toBeInTheDocument();
+    expect(mocks.renderWebGLExperience).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("webgl-home-loader")).not.toBeInTheDocument();
+    expect(view.container.querySelector("canvas")).not.toBeInTheDocument();
   });
 
   it.each(["/cellar?status=favorite#entry-7", "/profile"])(
