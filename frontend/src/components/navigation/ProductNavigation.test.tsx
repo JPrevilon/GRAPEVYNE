@@ -116,6 +116,18 @@ describe("ProductNavigation", () => {
     document.body.style.overflow = "";
   });
 
+  it("uses live lockup text instead of the old serif wordmark asset", () => {
+    const { container } = renderNavigation();
+
+    expect(screen.getByText("GRAPEVYNE")).toBeInTheDocument();
+    expect(screen.getByText("PRIVATE WINE DIRECTORY")).toBeInTheDocument();
+    expect(container.querySelector("[src*='grapevyne-wordmark.svg']")).toBeNull();
+    expect(screen.getByRole("link", { name: "GRAPEVYNE home" })).toHaveAttribute(
+      "href",
+      "/",
+    );
+  });
+
   it("opens the modal drawer, focuses Close, contains body scroll, and restores both on close", () => {
     document.body.style.overflow = "clip";
     renderNavigation();
@@ -127,6 +139,7 @@ describe("ProductNavigation", () => {
     const closeButton = within(dialog).getByRole("button", { name: "Close" });
 
     expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(trigger.closest("header")).toHaveClass("gv-nav--drawer-open");
     expect(dialog).toHaveAttribute("aria-modal", "true");
     expect(closeButton).toHaveFocus();
     expect(document.body.style.overflow).toBe("hidden");
@@ -135,6 +148,7 @@ describe("ProductNavigation", () => {
 
     expect(screen.queryByRole("dialog", { name: "Menu" })).not.toBeInTheDocument();
     expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(trigger.closest("header")).not.toHaveClass("gv-nav--drawer-open");
     expect(trigger).toHaveFocus();
     expect(document.body.style.overflow).toBe("clip");
   });

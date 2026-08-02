@@ -44,14 +44,14 @@ export default function ProfilePage() {
       }
       className="profile-page"
       description="A private account surface grounded in your authenticated GrapeVyne identity."
-      eyebrow="Private profile"
-      title="Your GrapeVyne profile"
+      eyebrow="03 / PRIVATE DIRECTORY"
+      title="TASTE PROFILE"
     >
       {isLoading ? (
         <LoadingPanel
           description="Checking the current Flask session before displaying private account details."
           eyebrow="Session check"
-          title="Opening your profile…"
+          title="OPENING YOUR PROFILE"
         />
       ) : null}
 
@@ -64,7 +64,7 @@ export default function ProfilePage() {
           }
           description="The protected route normally handles this state. Sign in again to restore access without showing substitute profile data."
           eyebrow="Authentication required"
-          title="This profile needs an authenticated session."
+          title="THIS PROFILE NEEDS AN AUTHENTICATED SESSION"
         />
       ) : null}
 
@@ -75,7 +75,7 @@ export default function ProfilePage() {
               description="These fields come directly from the authenticated user response."
               eyebrow="Account identity"
               id="account-details-title"
-              title="Signed-in details"
+              title="SIGNED-IN DETAILS"
             />
 
             <dl className="profile-summary__details">
@@ -101,7 +101,7 @@ export default function ProfilePage() {
           <NoticePanel
             description="Taste Atlas computation is reserved for a later private engine phase. This page does not infer preferences, regions, scores, or statistics from account fields or demonstration bottles."
             eyebrow="Early profile"
-            title="Your personal Taste Atlas has not been calculated."
+            title="YOUR PERSONAL TASTE ATLAS HAS NOT BEEN CALCULATED"
           />
         </>
       ) : null}

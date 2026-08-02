@@ -68,7 +68,7 @@ describe("ProfilePage", () => {
     renderProfile();
 
     expect(
-      screen.getByRole("heading", { level: 1, name: "Your GrapeVyne profile" }),
+      screen.getByRole("heading", { level: 1, name: "TASTE PROFILE" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Rachel Vine")).toBeInTheDocument();
     expect(screen.getByText("rachel@example.test")).toBeInTheDocument();
@@ -86,7 +86,7 @@ describe("ProfilePage", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "Your personal Taste Atlas has not been calculated.",
+        name: "YOUR PERSONAL TASTE ATLAS HAS NOT BEEN CALCULATED",
       }),
     ).toBeInTheDocument();
     expect(
@@ -115,7 +115,7 @@ describe("ProfilePage", () => {
     );
     renderProfile();
 
-    expect(screen.getByRole("status")).toHaveTextContent("Opening your profile…");
+    expect(screen.getByRole("status")).toHaveTextContent("OPENING YOUR PROFILE");
     expect(screen.queryByText("rachel@example.test")).not.toBeInTheDocument();
   });
 
@@ -126,7 +126,7 @@ describe("ProfilePage", () => {
     renderProfile();
 
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "This profile needs an authenticated session.",
+      "THIS PROFILE NEEDS AN AUTHENTICATED SESSION",
     );
     expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
       "href",

@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
 
+import BrandLockup from "@/components/brand/BrandLockup";
+
 export default function Footer() {
   return (
     <footer className="gv-footer">
       <Link aria-label="GRAPEVYNE home" className="gv-footer__brand" to="/">
-        <img alt="" src="/assets/brand/grapevyne-wordmark.svg" />
+        <BrandLockup />
       </Link>
       <p>Wine discovery and private cellar memory, handled with restraint.</p>
       <nav aria-label="Footer navigation">

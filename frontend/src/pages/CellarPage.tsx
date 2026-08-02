@@ -154,58 +154,76 @@ export default function CellarPage() {
 
   if (cellarQuery.isPending) {
     return (
-      <div className="gv-page-shell gv-cellar-page" data-cellar-source="authenticated-api">
-        <LoadingPanel
-          description="Loading only the cellar entries owned by this signed-in session."
-          eyebrow="Private cellar"
-          headingLevel="h1"
-          title="Opening your saved bottles."
-        />
-      </div>
+      <PageShell
+        className="gv-cellar-page"
+        description="Loading only the cellar entries owned by this signed-in session."
+        eyebrow="02 / PRIVATE DIRECTORY"
+        title="YOUR CELLAR"
+      >
+        <div data-cellar-source="authenticated-api">
+          <LoadingPanel
+            description="Loading only the cellar entries owned by this signed-in session."
+            eyebrow="Private cellar"
+            title="OPENING YOUR SAVED BOTTLES"
+          />
+        </div>
+      </PageShell>
     );
   }
 
   if (cellarQuery.isError) {
     return (
-      <div className="gv-page-shell gv-cellar-page" data-cellar-source="authenticated-api">
-        <ErrorPanel
-          action={
-            <Button
-              busyLabel="Trying again…"
-              isBusy={cellarQuery.isFetching}
-              onClick={() => void cellarQuery.refetch()}
-              variant="secondary"
-            >
-              <RefreshCw aria-hidden="true" size={17} />
-              Try again
-            </Button>
-          }
-          description={errorMessage(cellarQuery.error)}
-          eyebrow="Private cellar · No demo fallback"
-          headingLevel="h1"
-          title="Your saved cellar is unavailable."
-        >
-          <p>No demonstration bottles have been substituted and no saved data changed.</p>
-        </ErrorPanel>
-      </div>
+      <PageShell
+        className="gv-cellar-page"
+        description="The private cellar service did not return this account’s saved entries."
+        eyebrow="02 / PRIVATE DIRECTORY"
+        title="YOUR CELLAR"
+      >
+        <div data-cellar-source="authenticated-api">
+          <ErrorPanel
+            action={
+              <Button
+                busyLabel="Trying again…"
+                isBusy={cellarQuery.isFetching}
+                onClick={() => void cellarQuery.refetch()}
+                variant="secondary"
+              >
+                <RefreshCw aria-hidden="true" size={17} />
+                Try again
+              </Button>
+            }
+            description={errorMessage(cellarQuery.error)}
+            eyebrow="Private cellar · No demo fallback"
+            title="YOUR SAVED CELLAR IS UNAVAILABLE"
+          >
+            <p>No demonstration bottles have been substituted and no saved data changed.</p>
+          </ErrorPanel>
+        </div>
+      </PageShell>
     );
   }
 
   if (entries.length === 0) {
     return (
-      <div className="gv-page-shell gv-cellar-page" data-cellar-source="authenticated-api">
-        <EmptyState
-          action={
-            <ButtonLink to="/discover" variant="primary">
-              Discover a wine
-            </ButtonLink>
-          }
-          description="Wines will appear here only after the cellar API confirms a save for this account."
-          eyebrow="Private cellar · Live account data"
-          headingLevel="h1"
-          title="Your cellar is ready for its first bottle."
-        />
-      </div>
+      <PageShell
+        className="gv-cellar-page"
+        description="Build a private archive from bottles confirmed by the authenticated cellar API."
+        eyebrow="02 / PRIVATE DIRECTORY"
+        title="YOUR CELLAR"
+      >
+        <div data-cellar-source="authenticated-api">
+          <EmptyState
+            action={
+              <ButtonLink to="/discover" variant="primary">
+                Discover a wine
+              </ButtonLink>
+            }
+            description="Wines will appear here only after the cellar API confirms a save for this account."
+            eyebrow="Private cellar · Live account data"
+            title="YOUR CELLAR IS READY FOR ITS FIRST BOTTLE"
+          />
+        </div>
+      </PageShell>
     );
   }
 
@@ -213,15 +231,15 @@ export default function CellarPage() {
     <PageShell
       className="gv-cellar-page"
       description="Review the bottles returned by your authenticated cellar, then edit only the private fields you choose."
-      eyebrow="Private cellar · Live account data"
-      title="Your saved bottles"
+      eyebrow="02 / PRIVATE DIRECTORY / LIVE ACCOUNT DATA"
+      title="YOUR CELLAR"
     >
       <div data-cellar-source="authenticated-api">
         {cellarQuery.isFetching ? (
           <NoticePanel
             description="The current list remains visible while the private cellar is refreshed."
             eyebrow="Refreshing"
-            title="Checking for current cellar data."
+            title="CHECKING FOR CURRENT CELLAR DATA"
           />
         ) : null}
 
@@ -229,7 +247,7 @@ export default function CellarPage() {
           <NoticePanel
             description={`${duplicateCount} repeated ${duplicateCount === 1 ? "entry was" : "entries were"} returned with an existing wine ID. Every API entry remains visible and none were merged.`}
             eyebrow="Cellar integrity notice"
-            title="Repeated saved-wine records were received."
+            title="REPEATED SAVED-WINE RECORDS WERE RECEIVED"
           />
         ) : null}
 
@@ -257,7 +275,7 @@ export default function CellarPage() {
             }
             description="No API entry contains that wine, producer, varietal, or place."
             eyebrow="Cellar search"
-            title="No saved bottle matches this search."
+            title="NO SAVED BOTTLE MATCHES THIS SEARCH"
           />
         ) : (
           <div className="gv-cellar-layout">

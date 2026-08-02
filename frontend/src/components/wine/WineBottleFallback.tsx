@@ -18,7 +18,7 @@ export function WineBottleFallback({
         <span className="gv-bottle__shine" />
         <span className="gv-bottle__label">
           <b>G</b>
-          <small>{label}</small>
+          <small className="gv-dynamic-data">{label}</small>
         </span>
       </span>
     </span>

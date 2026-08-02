@@ -18,8 +18,8 @@ export default function LoginPage() {
     <PageShell
       className="gv-auth-page gv-auth-page--login"
       description="Return to your saved bottles, tasting notes, and personal wine memory."
-      eyebrow="Welcome back"
-      title="Sign in to open your cellar."
+      eyebrow="05 / ACCOUNT ACCESS"
+      title="RETURN TO YOUR CELLAR"
     >
       <AuthForm
         mode="login"

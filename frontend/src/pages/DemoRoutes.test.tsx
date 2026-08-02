@@ -59,7 +59,7 @@ describe("public demonstration routes", () => {
     expect(screen.getByText("Public demonstration · Read-only")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
-        name: /A cellar designed around the moments bottles join/i,
+        name: "DEMO CELLAR",
       }),
     ).toBeInTheDocument();
     expectRealProductCtas();
@@ -89,7 +89,7 @@ describe("public demonstration routes", () => {
     expect(screen.getByText("Public demonstration · Read-only")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
-        name: /A Taste Atlas made from fixture data alone/i,
+        name: "DEMO TASTE ATLAS",
       }),
     ).toBeInTheDocument();
     expect(

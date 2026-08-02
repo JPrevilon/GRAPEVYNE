@@ -253,7 +253,9 @@ function CellarEntryEditor({
           />
         </div>
         <div>
-          {entry.wine.varietal ? <p className="gv-eyebrow">{entry.wine.varietal}</p> : null}
+          {entry.wine.varietal ? (
+            <p className="gv-eyebrow gv-eyebrow--data">{entry.wine.varietal}</p>
+          ) : null}
           <h2 id={headingId}>{entry.wine.name}</h2>
           {entry.wine.winery ? <p>{entry.wine.winery}</p> : null}
         </div>
@@ -320,7 +322,7 @@ function CellarEntryEditor({
       >
         <div className="gv-cellar-editor__heading">
           <p className="gv-eyebrow">Private fields</p>
-          <h3 id={editorHeadingId}>Edit your cellar entry</h3>
+          <h3 id={editorHeadingId}>EDIT YOUR CELLAR ENTRY</h3>
           <p>Only these persisted account fields will be changed.</p>
         </div>
 
@@ -461,7 +463,7 @@ export default function CellarDetailPanel({
         labelledBy="live-cellar-detail-empty-title"
       >
         <Wine aria-hidden="true" size={28} />
-        <h2 id="live-cellar-detail-empty-title">Select a bottle</h2>
+        <h2 id="live-cellar-detail-empty-title">SELECT A BOTTLE</h2>
         <p>Choose a saved bottle to inspect and edit its private cellar fields.</p>
       </SidePanel>
     );

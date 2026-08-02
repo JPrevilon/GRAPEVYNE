@@ -1,12 +1,25 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SceneProvider } from "@/experience";
 
 import ChapterProgress from "./ChapterProgress";
 
+const scrollIntoViewMock = vi.fn();
+
 describe("ChapterProgress", () => {
-  afterEach(cleanup);
+  beforeEach(() => {
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoViewMock,
+    });
+    scrollIntoViewMock.mockClear();
+  });
+
+  afterEach(() => {
+    cleanup();
+    delete (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView;
+  });
 
   it("provides an ordered, keyboard-focusable link for every chapter", () => {
     render(
@@ -44,12 +57,18 @@ describe("ChapterProgress", () => {
       </SceneProvider>,
     );
 
-    fireEvent.click(screen.getByRole("link", { name: "Atlas" }));
+    scrollIntoViewMock.mockClear();
+    fireEvent.click(screen.getByRole("link", { name: "TASTE ATLAS" }));
 
-    expect(screen.getByRole("link", { name: "Atlas" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "TASTE ATLAS" })).toHaveAttribute(
       "aria-current",
       "step",
     );
     expect(screen.getByText("Chapter 8 of 9")).toBeInTheDocument();
+    expect(scrollIntoViewMock).toHaveBeenCalledWith({
+      behavior: "auto",
+      block: "nearest",
+      inline: "center",
+    });
   });
 });

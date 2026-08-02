@@ -122,7 +122,7 @@ describe("protected live cellar", () => {
     renderCellar();
 
     expect(
-      screen.getByRole("heading", { name: "Opening your saved bottles." }),
+      screen.getByRole("heading", { name: "OPENING YOUR SAVED BOTTLES" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(
       /owned by this signed-in session/i,
@@ -142,6 +142,39 @@ describe("protected live cellar", () => {
     expect(screen.queryByText(/unrated/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/price unavailable/i)).not.toBeInTheDocument();
     expect(mocks.getCellarEntries).toHaveBeenCalledTimes(1);
+  });
+
+  it("marks API bottle labels and varietals to preserve their source casing", async () => {
+    mocks.getCellarEntries.mockResolvedValue({
+      count: 1,
+      entries: [
+        createEntry({
+          wine: {
+            name: "mIxEd Case Cuvée",
+            varietal: "Cabernet fRanc",
+          },
+        }),
+      ],
+    });
+
+    const view = renderCellar();
+
+    expect(
+      await screen.findByRole("button", { name: /mIxEd Case Cuvée/i }),
+    ).toBeInTheDocument();
+    expect(
+      view.container.querySelector(".gv-bottle__label .gv-dynamic-data"),
+    ).toHaveTextContent("mIxEd Case Cuvée");
+    expect(screen.getByText("Cabernet fRanc")).toHaveClass("gv-eyebrow--data");
+
+    fireEvent.click(entryButton("mIxEd Case Cuvée"));
+
+    expect(
+      await screen.findByRole("heading", { name: "mIxEd Case Cuvée" }),
+    ).toBeInTheDocument();
+    screen.getAllByText("Cabernet fRanc").forEach((varietal) => {
+      expect(varietal).toHaveClass("gv-eyebrow--data");
+    });
   });
 
   it("shows an honest API error and never falls back to a demo bottle", async () => {
@@ -167,7 +200,7 @@ describe("protected live cellar", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: "Your cellar is ready for its first bottle.",
+        name: "YOUR CELLAR IS READY FOR ITS FIRST BOTTLE",
       }),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Discover a wine" })).toHaveAttribute(
@@ -190,7 +223,7 @@ describe("protected live cellar", () => {
     });
 
     expect(
-      screen.getByRole("heading", { name: "No saved bottle matches this search." }),
+      screen.getByRole("heading", { name: "NO SAVED BOTTLE MATCHES THIS SEARCH" }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Live Session Merlot/i })).not.toBeInTheDocument();
 
@@ -213,7 +246,7 @@ describe("protected live cellar", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: "Repeated saved-wine records were received.",
+        name: "REPEATED SAVED-WINE RECORDS WERE RECEIVED",
       }),
     ).toBeInTheDocument();
     expect(
@@ -328,7 +361,7 @@ describe("protected live cellar", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: "Your cellar is ready for its first bottle.",
+        name: "YOUR CELLAR IS READY FOR ITS FIRST BOTTLE",
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("Bottle removed")).toBeInTheDocument();

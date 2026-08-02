@@ -1,6 +1,7 @@
 import { type ChangeEvent, type FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+import BrandLockup from "@/components/brand/BrandLockup";
 import { Button } from "@/components/ui/Button";
 import { PasswordInput, TextInput } from "@/components/ui/FormControls";
 import { useToast } from "@/components/ui/useToast.js";
@@ -137,6 +138,7 @@ export default function AuthForm({
       noValidate
       onSubmit={handleSubmit}
     >
+      <BrandLockup className="gv-auth-card__brand" />
       {errorMessage ? (
         <p
           aria-live="assertive"

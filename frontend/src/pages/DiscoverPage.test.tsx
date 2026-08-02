@@ -141,7 +141,7 @@ describe("DiscoverPage", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "Tell us the moment. We’ll help find the bottle.",
+        name: "DISCOVER WINES",
       }),
     ).toBeInTheDocument();
     expect(
@@ -159,7 +159,7 @@ describe("DiscoverPage", () => {
 
     const view = renderDiscover("/discover?query=steak");
 
-    expect(await screen.findByText("Following the vine…")).toBeInTheDocument();
+    expect(await screen.findByText("FOLLOWING THE VINE")).toBeInTheDocument();
     expect(mockedSearchWines).toHaveBeenCalledWith(
       "steak",
       expect.any(AbortSignal),
@@ -182,6 +182,12 @@ describe("DiscoverPage", () => {
     expect(
       screen.getByRole("link", { name: "Estate Sauvignon Blanc" }),
     ).toBeInTheDocument();
+    expect(screen.getByText("Frog's Leap")).toHaveTextContent("Frog's Leap");
+    expect(
+      Array.from(document.querySelectorAll(".gv-wine-card__index"), (node) =>
+        node.textContent?.trim(),
+      ),
+    ).toEqual(["01", "02"]);
     expect(screen.getByText("Source: mock")).toBeInTheDocument();
 
     const varietalFilter = screen.getByRole("combobox", { name: "Varietal" });
@@ -207,7 +213,7 @@ describe("DiscoverPage", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: "No bottle matched “moonlight”.",
+        name: "NO BOTTLE MATCHED “moonlight”",
       }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Reserve Pinot Noir")).not.toBeInTheDocument();
@@ -228,7 +234,7 @@ describe("DiscoverPage", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "No current result has that varietal and region together.",
+        name: "NO CURRENT RESULT HAS THAT VARIETAL AND REGION TOGETHER",
       }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Reserve Pinot Noir")).not.toBeInTheDocument();
@@ -278,7 +284,7 @@ describe("DiscoverPage", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: "The GrapeVyne API is out of reach.",
+        name: "THE GRAPEVYNE API IS OUT OF REACH",
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("Could not reach the local API.")).toBeInTheDocument();
@@ -297,7 +303,7 @@ describe("DiscoverPage", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: "The wine source could not complete that search.",
+        name: "THE WINE SOURCE COULD NOT COMPLETE THAT SEARCH",
       }),
     ).toBeInTheDocument();
     expect(

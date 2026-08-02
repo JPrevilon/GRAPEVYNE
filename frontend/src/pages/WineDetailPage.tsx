@@ -42,7 +42,7 @@ function detailError(error: unknown) {
   if (error instanceof ApiError && (error.status === 404 || error.code === "wine_not_found")) {
     return {
       eyebrow: "Bottle not found",
-      title: "This bottle is not in the current catalog.",
+      title: "THIS BOTTLE IS NOT IN THE CURRENT CATALOG",
       description: error.message,
     };
   }
@@ -50,7 +50,7 @@ function detailError(error: unknown) {
   if (isNetworkFailure(error)) {
     return {
       eyebrow: "Wine service unavailable",
-      title: "The bottle profile cannot be reached right now.",
+      title: "THE BOTTLE PROFILE CANNOT BE REACHED RIGHT NOW",
       description:
         error instanceof Error
           ? error.message
@@ -60,7 +60,7 @@ function detailError(error: unknown) {
 
   return {
     eyebrow: "Wine detail error",
-    title: "Bottle details could not be opened.",
+    title: "BOTTLE DETAILS COULD NOT BE OPENED",
     description:
       error instanceof Error ? error.message : "The wine service returned an unexpected response.",
   };
@@ -152,7 +152,7 @@ export default function WineDetailPage() {
           description="Reading the fields returned by the current wine service."
           eyebrow="Wine detail"
           headingLevel="h1"
-          title="Bringing the bottle forward."
+          title="BRINGING THE BOTTLE FORWARD"
         />
       </div>
     );
@@ -211,28 +211,34 @@ export default function WineDetailPage() {
         </div>
 
         <div className="gv-wine-detail__copy">
-          {wine.varietal ? <p className="gv-eyebrow">{wine.varietal}</p> : null}
+          <p className="gv-eyebrow">WINE DIRECTORY / CATALOG RECORD</p>
           <h1>{wine.name}</h1>
-          {wine.winery ? <p className="gv-wine-detail__producer">{wine.winery}</p> : null}
           {wine.description ? <p className="gv-wine-detail__description">{wine.description}</p> : null}
 
-          {locationLabel || wine.vintage || wine.averageRating !== null || wine.priceCents !== null ? (
+          {wine.winery || wine.varietal || locationLabel || wine.vintage || wine.averageRating !== null || wine.priceCents !== null ? (
             <dl className="gv-wine-detail__facts">
+              {wine.winery ? (
+                <div>
+                  <dt>PRODUCER</dt>
+                  <dd>{wine.winery}</dd>
+                </div>
+              ) : null}
               {locationLabel ? (
                 <div>
-                  <dt><MapPin aria-hidden="true" size={16} />Origin</dt>
+                  <dt><MapPin aria-hidden="true" size={16} />ORIGIN</dt>
                   <dd>{locationLabel}</dd>
                 </div>
               ) : null}
-              {wine.vintage ? <div><dt>Vintage</dt><dd>{wine.vintage}</dd></div> : null}
+              {wine.varietal ? <div><dt>VARIETAL</dt><dd>{wine.varietal}</dd></div> : null}
+              {wine.vintage ? <div><dt>VINTAGE</dt><dd>{wine.vintage}</dd></div> : null}
               {wine.averageRating !== null ? (
                 <div>
-                  <dt><Star aria-hidden="true" size={16} />Catalog rating</dt>
+                  <dt><Star aria-hidden="true" size={16} />CATALOG RATING</dt>
                   <dd>{wine.averageRating.toFixed(1)}</dd>
                 </div>
               ) : null}
               {wine.priceCents !== null ? (
-                <div><dt>Listed price</dt><dd>{formatPrice(wine.priceCents)}</dd></div>
+                <div><dt>LISTED PRICE</dt><dd>{formatPrice(wine.priceCents)}</dd></div>
               ) : null}
             </dl>
           ) : null}
@@ -276,7 +282,7 @@ export default function WineDetailPage() {
           {wine.tastingNotes.length > 0 ? (
             <section aria-labelledby="tasting-notes-title" className="gv-detail-section">
               <p className="gv-eyebrow">From the catalog</p>
-              <h2 id="tasting-notes-title">Tasting notes</h2>
+              <h2 id="tasting-notes-title">TASTING NOTES</h2>
               <div className="gv-tag-list">
                 {wine.tastingNotes.map((note) => <span key={note}>{note}</span>)}
               </div>
@@ -285,7 +291,7 @@ export default function WineDetailPage() {
           {wine.pairings.length > 0 || wine.occasion ? (
             <section aria-labelledby="pairings-title" className="gv-detail-section">
               <p className="gv-eyebrow">Sourced suggestions</p>
-              <h2 id="pairings-title">Pairings and occasion</h2>
+              <h2 id="pairings-title">PAIRINGS AND OCCASION</h2>
               <div className="gv-tag-list">
                 {wine.pairings.map((pairing) => <span key={pairing}>{pairing}</span>)}
                 {wine.occasion ? <span>{wine.occasion}</span> : null}
@@ -295,7 +301,7 @@ export default function WineDetailPage() {
           {structures.length > 0 ? (
             <section aria-labelledby="structure-title" className="gv-detail-section">
               <p className="gv-eyebrow">Bottle structure</p>
-              <h2 id="structure-title">Available characteristics</h2>
+              <h2 id="structure-title">AVAILABLE CHARACTERISTICS</h2>
               <dl className="gv-structure-list">
                 {structures.map(([label, value]) => (
                   <div key={label}>

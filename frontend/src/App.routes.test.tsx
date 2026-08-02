@@ -93,12 +93,12 @@ beforeEach(() => {
 
 describe("major route composition", () => {
   it.each([
-    ["/", /Find the bottle.*Keep the memory/i],
-    ["/discover", /Tell us the moment.*help find the bottle/i],
-    ["/login", /Sign in to open your cellar/i],
-    ["/signup", /Begin your personal wine memory/i],
-    ["/demo/cellar", /A cellar designed around the moments bottles join/i],
-    ["/demo/taste-atlas", /A Taste Atlas made from fixture data alone/i],
+    ["/", /FIND THE BOTTLE.*KEEP THE MEMORY/i],
+    ["/discover", "DISCOVER WINES"],
+    ["/login", "RETURN TO YOUR CELLAR"],
+    ["/signup", "CREATE YOUR CELLAR"],
+    ["/demo/cellar", "DEMO CELLAR"],
+    ["/demo/taste-atlas", "DEMO TASTE ATLAS"],
   ])("renders a direct load of %s", async (path, heading) => {
     renderRoute(path);
     expect(await screen.findByRole("heading", { name: heading })).toBeInTheDocument();
@@ -116,7 +116,7 @@ describe("major route composition", () => {
     async (path) => {
       renderRoute(path);
       expect(
-        await screen.findByRole("heading", { name: /Sign in to open your cellar/i }),
+        await screen.findByRole("heading", { name: "RETURN TO YOUR CELLAR" }),
       ).toBeInTheDocument();
       expect(mocks.getCellarEntries).not.toHaveBeenCalled();
     },
@@ -128,7 +128,7 @@ describe("major route composition", () => {
       await screen.findByRole("link", { name: /View demo Taste Atlas/i }),
     );
     expect(
-      await screen.findByRole("heading", { name: /A Taste Atlas made from fixture data alone/i }),
+      await screen.findByRole("heading", { name: "DEMO TASTE ATLAS" }),
     ).toBeInTheDocument();
     expect(mocks.getCellarEntries).not.toHaveBeenCalled();
   });

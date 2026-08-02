@@ -233,7 +233,7 @@ describe("WineDetailPage", () => {
     expect(
       await screen.findByRole("heading", {
         level: 1,
-        name: "Bringing the bottle forward.",
+        name: "BRINGING THE BOTTLE FORWARD",
       }),
     ).toBeInTheDocument();
     expect(mockedGetWineDetail).toHaveBeenCalledWith(
@@ -265,15 +265,15 @@ describe("WineDetailPage", () => {
     expect(screen.getByText("2021")).toBeInTheDocument();
     expect(screen.getByText("4.3")).toBeInTheDocument();
     expect(screen.getByText("$42")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Tasting notes" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "TASTING NOTES" })).toBeInTheDocument();
     expect(screen.getByText("red cherry")).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Pairings and occasion" }),
+      screen.getByRole("heading", { name: "PAIRINGS AND OCCASION" }),
     ).toBeInTheDocument();
     expect(screen.getByText("salmon")).toBeInTheDocument();
     expect(screen.getByText("date night dinner")).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Available characteristics" }),
+      screen.getByRole("heading", { name: "AVAILABLE CHARACTERISTICS" }),
     ).toBeInTheDocument();
     expect(screen.getByText("55-60 F")).toBeInTheDocument();
   });
@@ -309,12 +309,12 @@ describe("WineDetailPage", () => {
     expect(screen.queryByText("Vintage")).not.toBeInTheDocument();
     expect(screen.queryByText("Catalog rating")).not.toBeInTheDocument();
     expect(screen.queryByText("Listed price")).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Tasting notes" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "TASTING NOTES" })).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("heading", { name: "Pairings and occasion" }),
+      screen.queryByRole("heading", { name: "PAIRINGS AND OCCASION" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("heading", { name: "Available characteristics" }),
+      screen.queryByRole("heading", { name: "AVAILABLE CHARACTERISTICS" }),
     ).not.toBeInTheDocument();
   });
 
@@ -330,7 +330,7 @@ describe("WineDetailPage", () => {
     expect(
       await screen.findByRole("heading", {
         level: 1,
-        name: "This bottle is not in the current catalog.",
+        name: "THIS BOTTLE IS NOT IN THE CURRENT CATALOG",
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("Wine was not found.")).toBeInTheDocument();

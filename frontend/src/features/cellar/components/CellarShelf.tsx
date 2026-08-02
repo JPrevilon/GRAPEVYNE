@@ -27,15 +27,16 @@ export default function CellarShelf({
         description="Newest saves appear first. Choose a bottle to review or edit its persisted cellar fields."
         eyebrow="Live account data"
         id="live-cellar-list-title"
-        title="Saved bottles"
+        title="SAVED BOTTLES"
       />
 
       <ul className="gv-cellar-shelf__list">
-        {entries.map((entry) => (
+        {entries.map((entry, index) => (
           <li key={entry.id}>
             <CellarBottleCard
               disabled={disabled}
               entry={entry}
+              index={index + 1}
               isSelected={entry.id === selectedEntryId}
               onSelect={onSelect}
             />

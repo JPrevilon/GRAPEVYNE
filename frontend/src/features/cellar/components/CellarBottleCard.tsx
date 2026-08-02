@@ -12,6 +12,7 @@ import {
 interface CellarBottleCardProps {
   disabled?: boolean;
   entry: CellarEntry;
+  index: number;
   isSelected: boolean;
   onSelect: (entry: CellarEntry) => void;
 }
@@ -19,6 +20,7 @@ interface CellarBottleCardProps {
 export default function CellarBottleCard({
   disabled = false,
   entry,
+  index,
   isSelected,
   onSelect,
 }: CellarBottleCardProps) {
@@ -38,6 +40,9 @@ export default function CellarBottleCard({
       type="button"
     >
       <span aria-hidden="true" className="gv-cellar-bottle__glow" />
+      <span aria-hidden="true" className="gv-cellar-bottle__index">
+        {String(index).padStart(2, "0")}
+      </span>
       <span className="gv-cellar-bottle__visual">
         <WineVisual
           imageUrl={wine.imageUrl}
@@ -47,7 +52,9 @@ export default function CellarBottleCard({
       </span>
 
       <span className="gv-cellar-bottle__copy">
-        {wine.varietal ? <span className="gv-eyebrow">{wine.varietal}</span> : null}
+        {wine.varietal ? (
+          <span className="gv-eyebrow gv-eyebrow--data">{wine.varietal}</span>
+        ) : null}
         <strong>{wine.name}</strong>
         {wine.winery ? <span>{wine.winery}</span> : null}
         {origin ? <span>{origin}</span> : null}

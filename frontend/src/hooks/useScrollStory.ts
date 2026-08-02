@@ -521,6 +521,20 @@ export function useScrollStory(
         }
 
         stopRuntime = cleanup;
+
+        const fontSet = document.fonts;
+
+        if (fontSet) {
+          void fontSet.ready.then(() => {
+            if (
+              !disposed &&
+              generation === runtimeGeneration &&
+              stopRuntime === cleanup
+            ) {
+              ScrollTrigger.refresh();
+            }
+          });
+        }
       } catch {
         if (!disposed && generation === runtimeGeneration) {
           stopRuntime = startNativeRuntime();

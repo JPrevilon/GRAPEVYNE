@@ -18,8 +18,8 @@ export default function SignupPage() {
     <PageShell
       className="gv-auth-page gv-auth-page--signup"
       description="Save bottles, rate them, and build a cellar that remembers what you love."
-      eyebrow="Create account"
-      title="Begin your personal wine memory."
+      eyebrow="05 / NEW DIRECTORY ENTRY"
+      title="CREATE YOUR CELLAR"
     >
       <AuthForm
         mode="signup"

@@ -84,6 +84,60 @@ describe("HomePage scroll story", () => {
     expect(container.querySelector("model-viewer")).not.toBeInTheDocument();
   });
 
+  it("renders the locked punctuation-free display copy and directory labels", () => {
+    const { container } = renderHome();
+    const chapters = Array.from(
+      container.querySelectorAll<HTMLElement>("section[data-story-chapter]"),
+    );
+    const headings = chapters.map((chapter) =>
+      chapter.querySelector<HTMLHeadingElement>("h1, h2"),
+    );
+    const expectedHeadings = [
+      /FIND THE BOTTLE\s*KEEP THE MEMORY/,
+      "DESCRIBE THE MOMENT",
+      "WHY IT FITS",
+      "TASTE TAKES SHAPE",
+      "OPEN THE CELLAR",
+      "BUILD THE COLLECTION",
+      "REMEMBER THE POUR",
+      "YOUR TASTE ATLAS",
+      "KEEP THE STORY",
+    ];
+    const expectedLabels = [
+      "01 / DISCOVERY",
+      "02 / SEARCH",
+      "03 / MATCH LOGIC",
+      "04 / TASTE SIGNALS",
+      "05 / PRIVATE CELLAR",
+      "06 / COLLECTION",
+      "07 / TASTING MEMORY",
+      "08 / TASTE ATLAS",
+      "09 / GRAPEVYNE",
+    ];
+
+    headings.forEach((heading, index) => {
+      expect(heading).not.toBeNull();
+      const text = heading?.textContent?.replace(/\s+/g, " ").trim() ?? "";
+      const expected = expectedHeadings[index];
+
+      if (expected instanceof RegExp) {
+        expect(text).toMatch(expected);
+      } else {
+        expect(text).toBe(expected);
+      }
+      expect(text).not.toMatch(/[.!?]$/);
+    });
+
+    expect(
+      chapters.map((chapter) =>
+        chapter
+          .querySelector(".gv-story-heading__number")
+          ?.textContent?.replace(/\s+/g, " ")
+          .trim(),
+      ),
+    ).toEqual(expectedLabels);
+  });
+
   it("trims and encodes natural-language discovery navigation", () => {
     renderHome();
     const input = screen.getByLabelText("What is the bottle for?");

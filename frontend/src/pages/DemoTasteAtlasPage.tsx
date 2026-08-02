@@ -19,9 +19,9 @@ const regions = countValues(demoCellarBottles.map((bottle) => bottle.region));
 const occasions = countValues(demoCellarBottles.map((bottle) => bottle.occasion));
 
 const atlasGroups = [
-  { icon: Grape, items: varietals, label: "Varietals", title: "What appears in the demo" },
-  { icon: MapIcon, items: regions, label: "Regions", title: "Places represented" },
-  { icon: Compass, items: occasions, label: "Occasions", title: "Recorded demo moments" },
+  { icon: Grape, items: varietals, label: "Varietals", title: "WHAT APPEARS IN THE DEMO" },
+  { icon: MapIcon, items: regions, label: "Regions", title: "PLACES REPRESENTED" },
+  { icon: Compass, items: occasions, label: "Occasions", title: "RECORDED DEMO MOMENTS" },
 ] as const;
 
 export default function DemoTasteAtlasPage() {
@@ -30,7 +30,7 @@ export default function DemoTasteAtlasPage() {
       className="gv-demo-page gv-demo-atlas"
       description="A transparent summary derived only from the eleven fictional bottles in the public demonstration cellar."
       eyebrow="Public demonstration · Read-only"
-      title={<>A Taste Atlas made from <em>fixture data alone.</em></>}
+      title="DEMO TASTE ATLAS"
     >
       <NoticePanel
         action={
@@ -45,7 +45,7 @@ export default function DemoTasteAtlasPage() {
         }
         description="This page does not query a profile endpoint, predict your taste, or read authenticated cellar data. Full personal Taste Atlas computation remains a later engine phase."
         eyebrow="Demo boundary"
-        title="Illustrative patterns—not a visitor profile."
+        title="ILLUSTRATIVE PATTERNS—NOT A VISITOR PROFILE"
         tone="demo"
       />
 
@@ -54,7 +54,7 @@ export default function DemoTasteAtlasPage() {
           description={`${demoCellarBottles.length} fictional bottles across ${demoCellarSections.length} curated shelves.`}
           eyebrow="Fixture summary"
           id="atlas-summary-title"
-          title="A small collection, shown honestly."
+          title="A SMALL COLLECTION, SHOWN HONESTLY"
         />
         <div
           aria-label="Demonstration collection overview"

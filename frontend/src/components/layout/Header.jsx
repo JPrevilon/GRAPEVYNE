@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { LogOut, Search, UserRound } from "lucide-react";
 
+import BrandLockup from "../brand/BrandLockup";
 import { useToast } from "../ui/useToast.js";
 import { useAuth } from "../../features/auth/useAuth";
 
@@ -41,11 +42,7 @@ export default function Header() {
   return (
     <header className="site-header">
       <NavLink to="/" className="brand-mark" aria-label="GrapeVyne home">
-        <img
-          className="brand-wordmark"
-          src="/assets/brand/grapevyne-wordmark.svg"
-          alt=""
-        />
+        <BrandLockup compact />
       </NavLink>
 
       <nav className="primary-nav" aria-label="Primary navigation">

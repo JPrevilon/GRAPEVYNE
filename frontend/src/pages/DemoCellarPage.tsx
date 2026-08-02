@@ -14,6 +14,12 @@ import {
   type DemoBottle,
 } from "@/data/demoCellar";
 
+const demoBottleIndexes = new Map(
+  demoCellarSections
+    .flatMap((section) => section.bottles)
+    .map((bottle, index) => [bottle.cellarEntryId, index + 1]),
+);
+
 export default function DemoCellarPage() {
   const [query, setQuery] = useState("");
   const [selectedBottle, setSelectedBottle] = useState<DemoBottle | null>(null);
@@ -28,7 +34,7 @@ export default function DemoCellarPage() {
       className="gv-demo-page gv-demo-cellar"
       description="Browse eleven illustrative bottles without signing in. Nothing on this page reads or changes a visitor’s cellar."
       eyebrow="Public demonstration · Read-only"
-      title={<>A cellar designed around <em>the moments bottles join.</em></>}
+      title="DEMO CELLAR"
     >
       <NoticePanel
         action={
@@ -42,7 +48,7 @@ export default function DemoCellarPage() {
         }
         description="Every bottle, rating, note, pairing, and occasion below belongs to a curated fictional fixture. There are no save, favorite, edit, rating, or delete actions."
         eyebrow="Demo boundary"
-        title="Visible fiction, never private account data."
+        title="VISIBLE FICTION, NEVER PRIVATE ACCOUNT DATA"
         tone="demo"
       />
 
@@ -56,7 +62,7 @@ export default function DemoCellarPage() {
           description={`${visibleCount} of 11 fictional bottles shown.`}
           eyebrow="The demonstration collection"
           id="demo-collection-title"
-          title="Five shelves, one transparent fixture."
+          title="FIVE SHELVES, ONE TRANSPARENT FIXTURE"
         />
 
         <div className="gv-demo-cellar__search">
@@ -74,7 +80,7 @@ export default function DemoCellarPage() {
           <EmptyState
             action={<Button onClick={() => setQuery("")} variant="secondary">Clear search</Button>}
             description="Try another bottle, varietal, region, pairing, or occasion."
-            title="No fictional bottle matches that search."
+            title="NO FICTIONAL BOTTLE MATCHES THAT SEARCH"
           />
         ) : (
           <div className="gv-demo-shelves">
@@ -103,6 +109,9 @@ export default function DemoCellarPage() {
                         onClick={() => setSelectedBottle(bottle)}
                         type="button"
                       >
+                        <span aria-hidden="true" className="gv-demo-bottle__index">
+                          {String(demoBottleIndexes.get(bottle.cellarEntryId) ?? 0).padStart(2, "0")}
+                        </span>
                         <WineBottleFallback
                           label={bottle.name}
                           tone={getBottleTone(bottle.varietal)}
@@ -163,7 +172,7 @@ export default function DemoCellarPage() {
         ) : (
           <div className="gv-demo-detail__empty">
             <LockKeyhole aria-hidden="true" size={24} />
-            <h2 id="demo-detail-title">Select a fictional bottle</h2>
+            <h2 id="demo-detail-title">SELECT A FICTIONAL BOTTLE</h2>
             <p>Open any bottle card to read its clearly labeled demonstration details.</p>
           </div>
         )}

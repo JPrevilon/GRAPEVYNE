@@ -17,7 +17,12 @@ function wineLocation(wine: Wine) {
   return [wine.region, wine.country].filter(Boolean).join(", ");
 }
 
-export default function WineCard({ wine }: { wine: Wine }) {
+interface WineCardProps {
+  index?: number;
+  wine: Wine;
+}
+
+export default function WineCard({ index, wine }: WineCardProps) {
   const detailPath = wine.externalWineId
     ? `/wines/${encodeURIComponent(wine.externalWineId)}`
     : null;
@@ -25,6 +30,11 @@ export default function WineCard({ wine }: { wine: Wine }) {
 
   return (
     <article className="gv-wine-card">
+      {index ? (
+        <span aria-hidden="true" className="gv-wine-card__index">
+          {String(index).padStart(2, "0")}
+        </span>
+      ) : null}
       <div className="gv-wine-card__visual">
         <WineVisual
           imageUrl={wine.imageUrl}
@@ -35,7 +45,7 @@ export default function WineCard({ wine }: { wine: Wine }) {
       </div>
 
       <div className="gv-wine-card__body">
-        {wine.varietal ? <p className="gv-eyebrow">{wine.varietal}</p> : null}
+        <p className="gv-eyebrow">CATALOG RECORD</p>
         <h2>
           {detailPath ? <Link to={detailPath}>{wine.name}</Link> : wine.name}
         </h2>
@@ -44,24 +54,39 @@ export default function WineCard({ wine }: { wine: Wine }) {
           <p className="gv-wine-card__description">{wine.description}</p>
         ) : null}
 
-        {location || wine.averageRating !== null || wine.priceCents !== null ? (
-          <div className="gv-wine-card__meta">
+        {location || wine.varietal || wine.vintage || wine.averageRating !== null || wine.priceCents !== null ? (
+          <dl className="gv-wine-card__meta">
             {location ? (
-              <span>
-                <MapPin aria-hidden="true" size={15} />
-                {location}
-              </span>
+              <div>
+                <dt><MapPin aria-hidden="true" size={15} />ORIGIN</dt>
+                <dd>{location}</dd>
+              </div>
+            ) : null}
+            {wine.varietal ? (
+              <div>
+                <dt>VARIETAL</dt>
+                <dd>{wine.varietal}</dd>
+              </div>
+            ) : null}
+            {wine.vintage ? (
+              <div>
+                <dt>VINTAGE</dt>
+                <dd>{wine.vintage}</dd>
+              </div>
             ) : null}
             {wine.averageRating !== null ? (
-              <span>
-                <Star aria-hidden="true" size={15} />
-                {wine.averageRating.toFixed(1)}
-              </span>
+              <div>
+                <dt><Star aria-hidden="true" size={15} />RATING</dt>
+                <dd>{wine.averageRating.toFixed(1)}</dd>
+              </div>
             ) : null}
             {wine.priceCents !== null ? (
-              <strong>{formatPrice(wine.priceCents)}</strong>
+              <div>
+                <dt>PRICE</dt>
+                <dd>{formatPrice(wine.priceCents)}</dd>
+              </div>
             ) : null}
-          </div>
+          </dl>
         ) : null}
 
         {detailPath ? (

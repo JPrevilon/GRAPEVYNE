@@ -142,14 +142,14 @@ export default function DiscoverPage() {
     <PageShell
       className="discover-page"
       description="Search the current GrapeVyne wine service by meal, mood, grape, place, or occasion."
-      eyebrow="Discovery chamber"
-      title="Tell us the moment. We’ll help find the bottle."
+      eyebrow="01 / LIVE WINE DIRECTORY"
+      title="DISCOVER WINES"
     >
       <section className="discover-search-panel" aria-labelledby="discover-search-title">
         <div className="discover-search-panel__intro">
           <Sparkles aria-hidden="true" size={20} />
           <div>
-            <h2 id="discover-search-title">Begin with a natural-language clue</h2>
+            <h2 id="discover-search-title">BEGIN WITH A NATURAL-LANGUAGE CLUE</h2>
             <p>Try “Pinot Noir for salmon” or “a traditional bottle for a gift.”</p>
           </div>
         </div>
@@ -190,7 +190,7 @@ export default function DiscoverPage() {
         <NoticePanel
           description="Search is connected to the current wine API. No demonstration bottles will replace a missing or failed response."
           eyebrow="Start with a clue"
-          title="Your next bottle can begin with a dish, place, or feeling."
+          title="YOUR NEXT BOTTLE CAN BEGIN WITH A DISH, PLACE, OR FEELING"
         />
       ) : null}
 
@@ -198,7 +198,7 @@ export default function DiscoverPage() {
         <LoadingPanel
           description={`Checking the current wine catalog for “${submittedQuery}”.`}
           eyebrow="Searching"
-          title="Following the vine…"
+          title="FOLLOWING THE VINE"
         />
       ) : null}
 
@@ -216,8 +216,8 @@ export default function DiscoverPage() {
           eyebrow="Search unavailable"
           title={
             isNetworkFailure(wineSearch.error)
-              ? "The GrapeVyne API is out of reach."
-              : "The wine source could not complete that search."
+              ? "THE GRAPEVYNE API IS OUT OF REACH"
+              : "THE WINE SOURCE COULD NOT COMPLETE THAT SEARCH"
           }
         />
       ) : null}
@@ -226,7 +226,7 @@ export default function DiscoverPage() {
         <EmptyState
           description="Try a broader varietal, region, pairing, or occasion. The live result remains empty rather than being replaced with demo wines."
           eyebrow="No matches"
-          title={`No bottle matched “${wineSearch.data.query}”.`}
+          title={`NO BOTTLE MATCHED “${wineSearch.data.query}”`}
         />
       ) : null}
 
@@ -276,12 +276,13 @@ export default function DiscoverPage() {
               description="Clear one or both filters to see the API results again."
               eyebrow="Filters narrowed too far"
               headingLevel="h3"
-              title="No current result has that varietal and region together."
+              title="NO CURRENT RESULT HAS THAT VARIETAL AND REGION TOGETHER"
             />
           ) : (
             <div className="wine-grid">
               {visibleWines.map((wine, index) => (
                 <WineCard
+                  index={index + 1}
                   key={
                     wine.externalWineId ??
                     wine.externalApiId ??

@@ -77,6 +77,7 @@ interface MediaQueryMock {
 let mediaQueries: MediaQueryMock[] = [];
 let requestAnimationFrameMock: ReturnType<typeof vi.fn>;
 let cancelAnimationFrameMock: ReturnType<typeof vi.fn>;
+const originalFontsDescriptor = Object.getOwnPropertyDescriptor(document, "fonts");
 
 function installMediaQueries(matches: (query: string) => boolean) {
   vi.spyOn(window, "matchMedia").mockImplementation((query) => {
@@ -168,6 +169,7 @@ function createDesktopRuntimeMock() {
     lenisStarts: 0,
     matchMediaRevert: vi.fn(),
     registerPlugin: vi.fn(),
+    scrollTriggerRefresh: vi.fn(),
     scrollTriggerUpdate: vi.fn(),
     tickerAdd: vi.fn(),
     tickerCallback: undefined as ((time: number) => void) | undefined,
@@ -193,6 +195,7 @@ function createDesktopRuntimeMock() {
 
   const ScrollTrigger = {
     create: vi.fn(createTrigger),
+    refresh: state.scrollTriggerRefresh,
     update: state.scrollTriggerUpdate,
   };
 
@@ -302,6 +305,11 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  if (originalFontsDescriptor) {
+    Object.defineProperty(document, "fonts", originalFontsDescriptor);
+  } else {
+    Reflect.deleteProperty(document, "fonts");
+  }
 });
 
 describe("useScrollStory native runtime", () => {
@@ -377,6 +385,63 @@ describe("useScrollStory native runtime", () => {
 });
 
 describe("useScrollStory desktop runtime", () => {
+  it("refreshes measurements once after fonts settle", async () => {
+    installMediaQueries(() => false);
+    const { loadRuntime, state } = createDesktopRuntimeMock();
+    let resolveFonts: () => void = () => undefined;
+    const fontsReady = new Promise<void>((resolve) => {
+      resolveFonts = resolve;
+    });
+    Object.defineProperty(document, "fonts", {
+      configurable: true,
+      value: { ready: fontsReady },
+    });
+
+    const view = render(<StoryHarness loadRuntime={loadRuntime} />);
+    await waitFor(() => expect(state.lenisStarts).toBe(1));
+    expect(state.scrollTriggerRefresh).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveFonts();
+      await fontsReady;
+    });
+    expect(state.scrollTriggerRefresh).toHaveBeenCalledOnce();
+
+    view.unmount();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(state.scrollTriggerRefresh).toHaveBeenCalledOnce();
+  });
+
+  it("does not refresh or revive the runtime when fonts settle after unmount", async () => {
+    installMediaQueries(() => false);
+    const { loadRuntime, state } = createDesktopRuntimeMock();
+    let resolveFonts: () => void = () => undefined;
+    const fontsReady = new Promise<void>((resolve) => {
+      resolveFonts = resolve;
+    });
+
+    Object.defineProperty(document, "fonts", {
+      configurable: true,
+      value: { ready: fontsReady },
+    });
+
+    const view = render(<StoryHarness loadRuntime={loadRuntime} />);
+    await waitFor(() => expect(state.lenisStarts).toBe(1));
+    expect(state.scrollTriggerRefresh).not.toHaveBeenCalled();
+
+    view.unmount();
+    await act(async () => {
+      resolveFonts();
+      await fontsReady;
+      await Promise.resolve();
+    });
+
+    expect(state.scrollTriggerRefresh).not.toHaveBeenCalled();
+    expect(state.lenisDestroy).toHaveBeenCalledOnce();
+  });
+
   it("sleeps an imported GSAP ticker when unmounted before runtime setup", async () => {
     installMediaQueries(() => false);
     const { runtime, state } = createDesktopRuntimeMock();

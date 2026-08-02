@@ -248,7 +248,7 @@ describe("AuthForm", () => {
 
     fireEvent.click(screen.getByRole("link", { name: "Create an account" }));
     expect(
-      screen.getByRole("heading", { name: "Begin your personal wine memory." }),
+      screen.getByRole("heading", { name: "CREATE YOUR CELLAR" }),
     ).toBeInTheDocument();
 
     fillSignupForm();

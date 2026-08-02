@@ -804,7 +804,10 @@
   .gv-auth-page .gv-page-hero h1 { font-size: clamp(3rem, 14vw, 5rem); }
   .gv-demo-shelf__rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .gv-demo-atlas__constellation { min-height: 30rem; grid-template-columns: 1fr; padding-block: var(--space-7); }
-  .gv-demo-atlas__orbit--two { width: 27rem; height: 27rem; }
+  .gv-demo-atlas__orbit--two {
+    width: min(27rem, calc(100% - 1.5rem));
+    height: min(27rem, calc(100% - 1.5rem));
+  }
   .gv-cellar-shelf__list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .gv-cellar-toolbar { display: grid; align-items: start; }
   .gv-cellar-toolbar__search { width: 100%; }
@@ -840,4 +843,641 @@
   .gv-demo-bottle[aria-pressed="true"],
   .gv-cellar-bottle:hover:not(:disabled),
   .gv-cellar-bottle--selected { transform: none; }
+}
+
+/* Prompt 04B: GRAPEVYNE / NEO CELLAR DIRECTORY -------------------------- */
+
+.gv-page-hero {
+  display: grid;
+  grid-template-columns: var(--editorial-grid);
+  align-items: end;
+  max-width: none;
+  padding-bottom: clamp(2rem, 5vw, 4.5rem);
+  border-bottom: 1px solid var(--color-border-strong);
+}
+
+.gv-page-hero__copy {
+  grid-column: 1 / span 10;
+  max-width: none;
+}
+
+.gv-page-hero h1 {
+  max-width: 14ch;
+  margin-bottom: clamp(1.5rem, 3vw, 2.75rem);
+  overflow-wrap: anywhere;
+}
+
+.gv-page-hero__lede {
+  max-width: 42ch;
+}
+
+.gv-section-heading h2,
+.gv-state-panel h1,
+.gv-state-panel h2,
+.gv-state-panel h3,
+.discover-search-panel__intro h2,
+.gv-detail-section h2,
+.gv-atlas-card h2,
+.gv-cellar-editor__heading h3,
+.gv-demo-detail__empty h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 0.92;
+}
+
+.gv-state-panel,
+.gv-side-panel,
+.discover-search-panel,
+.discover-filters,
+.gv-detail-section,
+.gv-auth-card,
+.gv-demo-shelf,
+.gv-atlas-card,
+.tool-surface.profile-summary,
+.gv-cellar-shelf,
+.gv-cellar-toolbar {
+  border-radius: var(--radius-md);
+  backdrop-filter: none;
+}
+
+.gv-state-panel,
+.gv-side-panel,
+.gv-auth-card,
+.tool-surface.profile-summary {
+  background: var(--color-cellar-black);
+}
+
+.gv-button--secondary,
+.gv-button--ghost,
+.gv-button--danger {
+  border-radius: var(--radius-sm);
+}
+
+.gv-field input,
+.gv-field select,
+.gv-field textarea {
+  border-radius: var(--radius-sm);
+  background: #0d0c0a;
+}
+
+.gv-field__description,
+.gv-natural-search__description,
+.gv-state-panel__content > p:not(.gv-eyebrow),
+.gv-section-heading p:last-child {
+  font-family: var(--font-body);
+}
+
+/* Live discovery directory */
+.discover-search-panel {
+  grid-template-columns: var(--editorial-grid);
+  max-width: none;
+  padding: clamp(1.5rem, 3vw, 2.75rem) 0;
+  border-width: 1px 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.discover-search-panel__intro {
+  grid-column: 1 / span 4;
+}
+
+.discover-search-panel > .gv-natural-search {
+  grid-column: 5 / -1;
+}
+
+.discover-search-panel > .suggestion-row {
+  grid-column: 5 / -1;
+}
+
+.discover-search-panel__intro h2 {
+  max-width: 12ch;
+  font-size: clamp(2rem, 3vw, 3.2rem);
+}
+
+.discover-filters {
+  padding-inline: 0;
+  border-width: 1px 0;
+  background: #0c0b09;
+}
+
+.wine-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-top: 1px solid var(--color-border-strong);
+}
+
+.gv-wine-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--editorial-grid);
+  grid-template-rows: none;
+  gap: clamp(1rem, 2.5vw, 2.5rem);
+  padding: clamp(1.5rem, 3vw, 2.75rem) 0;
+  overflow: visible;
+  border: 0;
+  border-bottom: var(--border-hairline);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.gv-wine-card:hover {
+  border-color: var(--color-border-strong);
+  box-shadow: none;
+  transform: none;
+}
+
+.gv-wine-card__index {
+  grid-column: 1;
+  align-self: start;
+  color: var(--color-champagne);
+  font-family: var(--font-directory);
+  font-size: var(--size-numerical);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.gv-wine-card__visual {
+  grid-column: 2 / span 3;
+  min-height: 18rem;
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+}
+
+.gv-wine-card__body {
+  grid-column: 5 / -1;
+  align-self: center;
+  padding: 0;
+}
+
+.gv-wine-card__body h2 {
+  max-width: 19ch;
+  margin-bottom: var(--space-3);
+  font-family: var(--font-display);
+  font-size: clamp(2.35rem, 4.2vw, 4.75rem);
+  font-weight: 400;
+  letter-spacing: -0.045em;
+  line-height: 0.92;
+  text-transform: none;
+}
+
+.gv-wine-card__producer {
+  margin-bottom: var(--space-4);
+  color: var(--color-aged-ivory);
+  font-size: clamp(1rem, 1.4vw, 1.2rem);
+  font-weight: 650;
+}
+
+.gv-wine-card__description {
+  max-width: 58ch;
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.gv-wine-card__meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  border-top: var(--border-hairline);
+}
+
+.gv-wine-card__meta > div {
+  min-width: 0;
+  padding: 0.72rem 0.75rem 0.72rem 0;
+  border-bottom: var(--border-hairline);
+}
+
+.gv-wine-card__meta dt,
+.gv-wine-detail__facts dt,
+.gv-structure-list dt,
+.gv-demo-detail__facts dt,
+.profile-summary__details dt,
+.gv-cellar-detail__facts dt {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--color-champagne);
+  font-family: var(--font-directory);
+  font-size: var(--size-metadata);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.gv-wine-card__meta dd {
+  margin: 0.25rem 0 0;
+  overflow-wrap: anywhere;
+  color: var(--color-aged-ivory);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.gv-wine-card__link {
+  width: max-content;
+  min-height: 2.75rem;
+  padding-top: var(--space-3);
+  border-bottom: 1px solid currentColor;
+  font-family: var(--font-directory);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+/* Product record */
+.gv-wine-detail__layout {
+  grid-template-columns: var(--editorial-grid);
+  align-items: center;
+  gap: clamp(1.5rem, 3vw, 3rem);
+}
+
+.gv-wine-detail__stage {
+  grid-column: 1 / span 5;
+  border-radius: var(--radius-lg);
+}
+
+.gv-wine-detail__copy {
+  grid-column: 7 / -1;
+  max-width: none;
+}
+
+.gv-wine-detail__copy h1 {
+  max-width: 12ch;
+  font-size: var(--size-display-page);
+  font-weight: 400;
+  letter-spacing: -0.05em;
+  line-height: 0.87;
+  text-transform: none;
+}
+
+.gv-wine-detail__description {
+  max-width: 48ch;
+  font-size: clamp(1.08rem, 1.5vw, 1.35rem);
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  line-height: 1.35;
+}
+
+.gv-wine-detail__facts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gv-wine-detail__facts dd,
+.gv-structure-list dd,
+.gv-demo-detail__facts dd,
+.profile-summary__details dd,
+.gv-cellar-detail__facts dd {
+  font-family: var(--font-body);
+  font-weight: 600;
+  text-transform: none;
+}
+
+.gv-wine-detail__sections {
+  gap: 0;
+  border-top: 1px solid var(--color-border-strong);
+}
+
+.gv-detail-section {
+  border-width: 0 1px 1px 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.gv-detail-section h2 {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: clamp(1.65rem, 2.5vw, 2.2rem);
+}
+
+/* Account entry terminal */
+.gv-auth-page {
+  grid-template-columns: var(--editorial-grid);
+  align-content: center;
+  gap: 0;
+}
+
+.gv-auth-page > .gv-page-hero {
+  grid-column: 1 / span 7;
+  align-self: stretch;
+  padding-right: clamp(2rem, 6vw, 7rem);
+  border-right: var(--border-hairline);
+  border-bottom: 0;
+}
+
+.gv-auth-page > .gv-auth-card {
+  grid-column: 9 / -1;
+}
+
+.gv-auth-page .gv-page-hero__copy {
+  grid-column: 1 / -1;
+}
+
+.gv-auth-page .gv-page-hero h1 {
+  max-width: 9ch;
+  font-size: var(--size-display-page);
+}
+
+.gv-auth-card {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  box-shadow: none;
+}
+
+.gv-auth-card__brand {
+  padding-bottom: var(--space-5);
+  border-bottom: var(--border-hairline);
+}
+
+/* Public fixture directory */
+.gv-demo-shelf {
+  padding: clamp(1rem, 2.5vw, 2rem) 0;
+  border-width: 1px 0 0;
+  background: transparent;
+}
+
+.gv-demo-shelf__rail {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  border-bottom: var(--border-hairline);
+}
+
+.gv-demo-bottle {
+  position: relative;
+  min-height: 13rem;
+  grid-template-columns: 2.25rem minmax(4rem, 0.3fr) minmax(0, 1fr);
+  grid-template-rows: 1fr;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 1rem;
+  border-width: 1px 1px 0 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.gv-demo-bottle__index,
+.gv-cellar-bottle__index {
+  align-self: start;
+  color: var(--color-champagne);
+  font-family: var(--font-directory);
+  font-size: var(--size-numerical);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.gv-demo-bottle > .gv-bottle {
+  width: 3.1rem;
+  height: 9.5rem;
+}
+
+.gv-demo-bottle strong {
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 1.8vw, 1.65rem);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  text-transform: none;
+}
+
+.gv-demo-bottle small {
+  font-family: var(--font-directory);
+  font-size: var(--size-metadata);
+  font-weight: 700;
+}
+
+.gv-demo-atlas__constellation {
+  border-radius: var(--radius-lg);
+}
+
+.gv-demo-atlas__constellation strong {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.gv-demo-atlas__grid {
+  gap: 0;
+  border-top: var(--border-hairline);
+  border-left: var(--border-hairline);
+}
+
+.gv-atlas-card {
+  border-width: 0 1px 1px 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.profile-page {
+  max-width: none;
+}
+
+.tool-surface.profile-summary {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.profile-summary__details dd,
+.gv-nav__user {
+  text-transform: none;
+}
+
+/* Authenticated private directory */
+.gv-cellar-layout {
+  grid-template-columns: minmax(0, 7fr) minmax(22rem, 5fr);
+}
+
+.gv-cellar-shelf {
+  padding: 0;
+  border-width: 1px 0 0;
+  background: transparent;
+}
+
+.gv-cellar-shelf > .gv-section-heading {
+  padding: var(--space-5) 0;
+}
+
+.gv-cellar-shelf__count {
+  border-radius: var(--radius-sm);
+  font-family: var(--font-directory);
+  font-weight: 700;
+}
+
+.gv-cellar-shelf__list {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.gv-cellar-bottle {
+  grid-template-columns: 2.75rem minmax(5rem, 0.28fr) minmax(0, 0.92fr) minmax(9rem, 0.8fr);
+  grid-template-rows: 1fr;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: 13rem;
+  padding: 1rem 0;
+  overflow: visible;
+  border-width: 1px 0 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.gv-cellar-bottle:hover:not(:disabled),
+.gv-cellar-bottle--selected {
+  padding-inline: 1rem;
+  border-color: var(--color-champagne);
+  background: rgba(113, 28, 53, 0.12);
+  transform: none;
+}
+
+.gv-cellar-bottle__glow {
+  display: none;
+}
+
+.gv-cellar-bottle__visual {
+  min-height: 10rem;
+}
+
+.gv-cellar-bottle__visual .gv-bottle {
+  width: 3.2rem;
+  height: 9.5rem;
+}
+
+.gv-cellar-bottle__copy strong,
+.gv-cellar-detail__hero h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  text-transform: none;
+}
+
+.gv-cellar-bottle__copy strong {
+  font-size: clamp(1.45rem, 2.3vw, 2.2rem);
+}
+
+.gv-cellar-bottle__meta {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0 0 0 var(--space-4);
+  border-top: 0;
+  border-left: var(--border-hairline);
+}
+
+.gv-cellar-bottle__meta > span {
+  font-family: var(--font-directory);
+  font-size: var(--size-metadata);
+  font-weight: 600;
+}
+
+.gv-cellar-detail {
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+
+@media (max-width: 64rem) {
+  .gv-page-hero__copy { grid-column: 1 / -1; }
+
+  .discover-search-panel__intro { grid-column: 1 / span 5; }
+  .discover-search-panel > .gv-natural-search,
+  .discover-search-panel > .suggestion-row { grid-column: 6 / -1; }
+
+  .gv-wine-card__visual { grid-column: 2 / span 4; }
+  .gv-wine-card__body { grid-column: 6 / -1; }
+  .gv-wine-card__meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .gv-wine-detail__stage { grid-column: 1 / span 5; }
+  .gv-wine-detail__copy { grid-column: 6 / -1; }
+  .gv-wine-detail__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .gv-auth-page > .gv-page-hero { grid-column: 1 / span 7; }
+  .gv-auth-page > .gv-auth-card { grid-column: 8 / -1; }
+
+  .gv-cellar-shelf__list { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 48rem) {
+  .gv-page-hero {
+    grid-template-columns: 1fr;
+    padding-bottom: var(--space-6);
+  }
+
+  .discover-search-panel {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+
+  .discover-search-panel__intro,
+  .discover-search-panel > .gv-natural-search,
+  .discover-search-panel > .suggestion-row {
+    grid-column: 1;
+  }
+
+  .gv-wine-card {
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+
+  .gv-wine-card__index { grid-column: 1; grid-row: 1; }
+  .gv-wine-card__visual { grid-column: 2; grid-row: 1; min-height: 16rem; }
+  .gv-wine-card__body { grid-column: 1 / -1; grid-row: 2; }
+  .gv-wine-card__body h2 { font-size: clamp(2.35rem, 11vw, 3.8rem); }
+  .gv-wine-card__meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .gv-wine-detail__layout { grid-template-columns: 1fr; }
+  .gv-wine-detail__stage,
+  .gv-wine-detail__copy { grid-column: 1; }
+  .gv-wine-detail__copy h1 { font-size: clamp(3rem, 14vw, 5.25rem); }
+
+  .gv-auth-page {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .gv-auth-page > .gv-page-hero,
+  .gv-auth-page > .gv-auth-card {
+    grid-column: 1;
+  }
+
+  .gv-auth-page > .gv-page-hero {
+    padding-right: 0;
+    padding-bottom: var(--space-6);
+    border-right: 0;
+    border-bottom: var(--border-hairline);
+  }
+
+  .gv-demo-shelf__rail { grid-template-columns: 1fr; }
+  .gv-demo-bottle { border-right: 0; }
+
+  .gv-cellar-bottle {
+    grid-template-columns: 2.25rem minmax(5rem, 0.32fr) minmax(0, 1fr);
+  }
+
+  .gv-cellar-bottle__index { grid-column: 1; }
+  .gv-cellar-bottle__visual { grid-column: 2; }
+  .gv-cellar-bottle__copy { grid-column: 3; }
+  .gv-cellar-bottle__meta {
+    grid-column: 1 / -1;
+    padding: var(--space-3) 0 0;
+    border-top: var(--border-hairline);
+    border-left: 0;
+  }
+}
+
+@media (max-width: 30rem) {
+  .gv-wine-card__meta,
+  .gv-wine-detail__facts { grid-template-columns: 1fr; }
+
+  .gv-demo-bottle {
+    grid-template-columns: 2rem 4.5rem minmax(0, 1fr);
+    padding-inline: 0;
+  }
+
+  .gv-cellar-bottle {
+    grid-template-columns: 2rem 5rem minmax(0, 1fr);
+    gap: var(--space-3);
+  }
 }

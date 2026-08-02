@@ -8,6 +8,7 @@ import {
 import { type ReactNode, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import BrandLockup from "@/components/brand/BrandLockup";
 import ChapterProgress from "@/components/navigation/ChapterProgress";
 import { ButtonLink } from "@/components/ui/Button";
 import { NaturalLanguageSearch } from "@/components/ui/FormControls";
@@ -61,15 +62,15 @@ function ChapterHeading({ chapter }: { chapter: StoryChapterDefinition }) {
 
   return (
     <header className="gv-story-heading" data-story-reveal>
-      <p className="gv-story-heading__number">
-        <span aria-hidden="true">{chapter.number}</span>
-        <span>{chapter.navLabel}</span>
+        <p className="gv-story-heading__number">
+          <span>{chapter.number}</span>
+          <span aria-hidden="true"> / </span>
+          <span>{chapter.navLabel}</span>
       </p>
       {chapter.key === "hero" ? (
         <h1 id={headingId}>
-          Find the bottle.
-          <br />
-          <em>Keep the memory.</em>
+          <span>FIND THE BOTTLE</span>{" "}
+          <span>KEEP THE MEMORY</span>
         </h1>
       ) : (
         <h2 id={headingId}>{chapter.title}</h2>
@@ -147,7 +148,7 @@ function HeroChapter() {
         <WineBottleFallback label="From Vine to Memory" tone="red" />
       </div>
       <div className="gv-story-copy gv-story-copy--hero">
-        <p className="gv-story-brand">GRAPEVYNE</p>
+        <BrandLockup className="gv-story-brand" />
         <p className="gv-story-lede">
           Discover wines for the meal, moment, or mood. Save every bottle worth
           remembering in a private cellar.
@@ -310,7 +311,7 @@ function MemoryChapter() {
       <div className="gv-story-copy gv-story-copy--memory">
         <article className="gv-memory-card" aria-labelledby="demo-memory-title">
           <p className="gv-story-kicker">Demonstration tasting memory</p>
-          <h3 id="demo-memory-title">Celebration dinner</h3>
+          <h3 id="demo-memory-title">CELEBRATION DINNER</h3>
           <p>Blackberry and cedar opened after twenty minutes.</p>
           <dl>
             <div>
@@ -382,11 +383,7 @@ function FinaleChapter() {
 
   return (
     <div className="gv-story-copy gv-story-copy--finale">
-      <img
-        alt="GRAPEVYNE"
-        className="gv-story-wordmark"
-        src="/assets/brand/grapevyne-wordmark.svg"
-      />
+      <BrandLockup className="gv-story-wordmark" />
       <p className="gv-story-lede">
         Search with a moment in mind, then keep the bottles that deserve another pour.
       </p>

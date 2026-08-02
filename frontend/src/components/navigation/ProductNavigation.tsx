@@ -2,6 +2,7 @@ import { LogOut, Menu, Search, UserRound, X } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
+import BrandLockup from "@/components/brand/BrandLockup";
 import { useToast } from "@/components/ui/useToast.js";
 import { useAuth } from "@/features/auth/useAuth";
 
@@ -15,15 +16,15 @@ const FOCUSABLE_SELECTOR = [
 ].join(",");
 
 const authenticatedLinks = [
-  { label: "Discover", to: "/discover" },
-  { label: "Cellar", to: "/cellar" },
-  { label: "Profile", to: "/profile" },
-  { label: "Demo", to: "/demo/cellar" },
+  { label: "Discover", number: "01", to: "/discover" },
+  { label: "Cellar", number: "02", to: "/cellar" },
+  { label: "Taste Profile", number: "03", to: "/profile" },
+  { label: "Demo", number: "04", to: "/demo/cellar" },
 ] as const;
 
 const anonymousLinks = [
-  { label: "Discover", to: "/discover" },
-  { label: "Demo", to: "/demo/cellar" },
+  { label: "Discover", number: "01", to: "/discover" },
+  { label: "Demo", number: "04", to: "/demo/cellar" },
 ] as const;
 
 function getFocusableElements(container: HTMLElement): HTMLElement[] {
@@ -136,18 +137,9 @@ export default function ProductNavigation() {
   }
 
   return (
-    <header className="gv-nav">
+    <header className={`gv-nav${isDrawerOpen ? " gv-nav--drawer-open" : ""}`}>
       <NavLink className="gv-nav__brand" to="/" aria-label="GRAPEVYNE home">
-        <img
-          className="gv-nav__wordmark"
-          src="/assets/brand/grapevyne-wordmark.svg"
-          alt=""
-        />
-        <img
-          className="gv-nav__monogram"
-          src="/assets/brand/grapevyne-monogram.svg"
-          alt=""
-        />
+        <BrandLockup compact />
       </NavLink>
 
       <nav className="gv-nav__links" aria-label="Primary navigation">
@@ -225,7 +217,10 @@ export default function ProductNavigation() {
             role="dialog"
           >
             <div className="gv-nav__drawer-header">
-              <h2 id={drawerTitleId}>Menu</h2>
+              <div>
+                <BrandLockup compact />
+                <h2 id={drawerTitleId}>Menu</h2>
+              </div>
               <button
                 className="gv-nav__drawer-close"
                 onClick={closeDrawer}
@@ -247,12 +242,16 @@ export default function ProductNavigation() {
                   onClick={closeDrawer}
                   to={item.to}
                 >
-                  {item.label}
+                  <span aria-hidden="true" className="gv-nav__drawer-number">
+                    {item.number} /
+                  </span>
+                  <span>{item.label}</span>
                 </NavLink>
               ))}
             </nav>
 
             <div className="gv-nav__drawer-account">
+              <p className="gv-nav__drawer-account-label">05 / ACCOUNT</p>
               {isLoading ? (
                 <span className="gv-nav__session-status" role="status">
                   Checking session

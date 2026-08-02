@@ -72,6 +72,6 @@ describe("ProtectedRoute", () => {
 
     renderProtectedRoute();
 
-    expect(screen.getByRole("status")).toHaveTextContent("Opening GRAPEVYNE");
+    expect(screen.getByRole("status")).toHaveTextContent("OPENING GRAPEVYNE");
   });
 });
