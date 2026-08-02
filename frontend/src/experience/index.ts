@@ -1,7 +1,12 @@
 export { SceneProvider } from "./SceneProvider";
 export {
-  STORY_CHAPTERS,
   type SceneContextValue,
-  type StoryChapter,
 } from "./sceneContextValue";
+export {
+  getStoryChapter,
+  STORY_CHAPTERS,
+  STORY_CHAPTER_KEYS,
+  type StoryChapter,
+  type StoryChapterDefinition,
+} from "./storyChapters";
 export { useScene } from "./useScene";

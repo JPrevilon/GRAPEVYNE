@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 
 import App from "@/App";
 import { ToastProvider } from "@/components/ui/ToastProvider.jsx";
+import { SceneProvider } from "@/experience";
 
 const mocks = vi.hoisted(() => ({
   getCellarEntries: vi.fn(),
@@ -47,7 +48,9 @@ function renderRoute(path: string) {
           future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
           initialEntries={[path]}
         >
-          <App />
+          <SceneProvider>
+            <App />
+          </SceneProvider>
         </MemoryRouter>
       </ToastProvider>
     </QueryClientProvider>,

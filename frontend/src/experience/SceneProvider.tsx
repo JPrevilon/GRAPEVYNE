@@ -1,33 +1,27 @@
-import { type PropsWithChildren, useEffect, useMemo, useState } from "react";
+import { type PropsWithChildren, useMemo, useState } from "react";
 
-import {
-  SceneContext,
-  type StoryChapter,
-} from "./sceneContextValue";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
-const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+import { SceneContext } from "./sceneContextValue";
+import { STORY_CHAPTER_KEYS, type StoryChapter } from "./storyChapters";
 
 export function SceneProvider({ children }: PropsWithChildren) {
   const [chapter, setChapter] = useState<StoryChapter>("hero");
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== "function") {
-      return undefined;
-    }
-
-    const mediaQuery = window.matchMedia(REDUCED_MOTION_QUERY);
-    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches);
-
-    updatePreference();
-    mediaQuery.addEventListener("change", updatePreference);
-
-    return () => mediaQuery.removeEventListener("change", updatePreference);
-  }, []);
+  const [homepageActive, setHomepageActive] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
   const value = useMemo(
-    () => ({ chapter, prefersReducedMotion, setChapter }),
-    [chapter, prefersReducedMotion]
+    () => ({
+      chapter,
+      chapterIndex: STORY_CHAPTER_KEYS.indexOf(chapter),
+      currentChapterId: chapter,
+      homepageActive,
+      prefersReducedMotion,
+      setChapter,
+      setCurrentChapterId: setChapter,
+      setHomepageActive,
+    }),
+    [chapter, homepageActive, prefersReducedMotion],
   );
 
   return <SceneContext.Provider value={value}>{children}</SceneContext.Provider>;
