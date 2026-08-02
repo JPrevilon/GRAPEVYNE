@@ -1,12 +1,16 @@
-import PageHeader from "@/components/ui/PageHeader";
+import { ArrowRight, Compass, Grape, Map as MapIcon, Sparkles } from "lucide-react";
+
+import { ButtonLink } from "@/components/ui/Button";
+import { PageShell, SectionHeading } from "@/components/ui/PageShell";
+import { NoticePanel } from "@/components/ui/StatePanels";
 import { demoCellarBottles, demoCellarSections } from "@/data/demoCellar";
-import { Link } from "react-router-dom";
 
 function countValues(values: string[]) {
-  return [...new Set(values)].map((value) => ({
-    count: values.filter((candidate) => candidate === value).length,
-    value,
-  })).sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
+  const counts = new Map<string, number>();
+  values.forEach((value) => counts.set(value, (counts.get(value) ?? 0) + 1));
+  return [...counts.entries()]
+    .map(([value, count]) => ({ count, value }))
+    .sort((left, right) => right.count - left.count || left.value.localeCompare(right.value));
 }
 
 const favoriteCount = demoCellarBottles.filter((bottle) => bottle.favorite).length;
@@ -14,62 +18,69 @@ const varietals = countValues(demoCellarBottles.map((bottle) => bottle.varietal)
 const regions = countValues(demoCellarBottles.map((bottle) => bottle.region));
 const occasions = countValues(demoCellarBottles.map((bottle) => bottle.occasion));
 
+const atlasGroups = [
+  { icon: Grape, items: varietals, label: "Varietals", title: "What appears in the demo" },
+  { icon: MapIcon, items: regions, label: "Regions", title: "Places represented" },
+  { icon: Compass, items: occasions, label: "Occasions", title: "Recorded demo moments" },
+] as const;
+
 export default function DemoTasteAtlasPage() {
   return (
-    <div className="content-stack demo-page" data-demo-surface="taste-atlas">
-      <section className="demo-notice" aria-labelledby="demo-atlas-title">
-        <p className="eyebrow">Public demonstration · Read-only</p>
-        <h1 id="demo-atlas-title">Taste Atlas from fictional cellar data</h1>
-        <p>
-          This illustrative summary is derived only from the same 11 demo bottles.
-          It is not a personal profile and never reads or writes account data.
-        </p>
-        <Link className="text-link" to="/demo/cellar">
-          Return to the demo cellar
-        </Link>
-      </section>
-
-      <PageHeader
-        eyebrow="Demo Taste Atlas"
-        headingLevel="h2"
-        title="A transparent view of the fixture collection"
-        description={`${demoCellarBottles.length} fictional bottles across ${demoCellarSections.length} curated shelves.`}
+    <PageShell
+      className="gv-demo-page gv-demo-atlas"
+      description="A transparent summary derived only from the eleven fictional bottles in the public demonstration cellar."
+      eyebrow="Public demonstration · Read-only"
+      title={<>A Taste Atlas made from <em>fixture data alone.</em></>}
+    >
+      <NoticePanel
+        action={
+          <div className="gv-action-row">
+            <ButtonLink to="/demo/cellar" variant="secondary">Return to demo cellar</ButtonLink>
+            <ButtonLink to="/signup" variant="primary">Create an account</ButtonLink>
+            <ButtonLink to="/login" variant="ghost">Sign in</ButtonLink>
+            <ButtonLink to="/discover" variant="text">
+              Begin real discovery <ArrowRight aria-hidden="true" size={16} />
+            </ButtonLink>
+          </div>
+        }
+        description="This page does not query a profile endpoint, predict your taste, or read authenticated cellar data. Full personal Taste Atlas computation remains a later engine phase."
+        eyebrow="Demo boundary"
+        title="Illustrative patterns—not a visitor profile."
+        tone="demo"
       />
 
-      <div className="demo-atlas-grid">
-        <section className="tool-surface" aria-labelledby="atlas-varietals">
-          <span className="eyebrow">Varietals</span>
-          <h2 id="atlas-varietals">What appears in the demo</h2>
-          <div className="tag-list">
-            {varietals.map(({ count, value }) => <span key={value}>{value} · {count}</span>)}
-          </div>
-        </section>
+      <section aria-labelledby="atlas-summary-title" className="gv-demo-atlas__summary">
+        <SectionHeading
+          description={`${demoCellarBottles.length} fictional bottles across ${demoCellarSections.length} curated shelves.`}
+          eyebrow="Fixture summary"
+          id="atlas-summary-title"
+          title="A small collection, shown honestly."
+        />
+        <div
+          aria-label="Demonstration collection overview"
+          className="gv-demo-atlas__constellation"
+          role="group"
+        >
+          <span aria-hidden="true" className="gv-demo-atlas__orbit gv-demo-atlas__orbit--one" />
+          <span aria-hidden="true" className="gv-demo-atlas__orbit gv-demo-atlas__orbit--two" />
+          <div><Sparkles aria-hidden="true" size={22} /><strong>{favoriteCount}</strong><span>fixture favorites</span></div>
+          <div><Grape aria-hidden="true" size={22} /><strong>{varietals.length}</strong><span>varietals</span></div>
+          <div><MapIcon aria-hidden="true" size={22} /><strong>{regions.length}</strong><span>regions</span></div>
+        </div>
+      </section>
 
-        <section className="tool-surface" aria-labelledby="atlas-regions">
-          <span className="eyebrow">Regions</span>
-          <h2 id="atlas-regions">Places represented</h2>
-          <div className="tag-list">
-            {regions.map(({ count, value }) => <span key={value}>{value} · {count}</span>)}
-          </div>
-        </section>
-
-        <section className="tool-surface" aria-labelledby="atlas-occasions">
-          <span className="eyebrow">Occasions</span>
-          <h2 id="atlas-occasions">Recorded demo moments</h2>
-          <div className="tag-list">
-            {occasions.map(({ count, value }) => <span key={value}>{value} · {count}</span>)}
-          </div>
-        </section>
-
-        <section className="tool-surface" aria-labelledby="atlas-favorites">
-          <span className="eyebrow">Fixture summary</span>
-          <h2 id="atlas-favorites">{favoriteCount} marked favorites</h2>
-          <p>
-            This count reflects the curated fixture flags only. It does not predict
-            or represent a visitor&apos;s taste.
-          </p>
-        </section>
+      <div className="gv-demo-atlas__grid">
+        {atlasGroups.map(({ icon: Icon, items, label, title }) => (
+          <section className="gv-atlas-card" key={label}>
+            <Icon aria-hidden="true" size={22} />
+            <p className="gv-eyebrow">{label}</p>
+            <h2>{title}</h2>
+            <div className="gv-tag-list">
+              {items.map(({ count, value }) => <span key={value}>{value} · {count}</span>)}
+            </div>
+          </section>
+        ))}
       </div>
-    </div>
+    </PageShell>
   );
 }

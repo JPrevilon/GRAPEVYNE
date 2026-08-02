@@ -1,0 +1,463 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  MemoryRouter,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
+
+import { saveWineToCellar } from "@/api/cellar";
+import { ApiError } from "@/api/client";
+import { getWineDetail } from "@/api/wines";
+import { useToast } from "@/components/ui/useToast.js";
+import type { AuthContextValue } from "@/features/auth/authContextValue";
+import { useAuth } from "@/features/auth/useAuth";
+import type {
+  CellarEntry,
+  User,
+  Wine,
+  WineDetailResult,
+} from "@/types/domain";
+
+import WineDetailPage from "./WineDetailPage";
+
+vi.mock("@/api/cellar", () => ({
+  saveWineToCellar: vi.fn(),
+}));
+
+vi.mock("@/api/wines", () => ({
+  getWineDetail: vi.fn(),
+}));
+
+vi.mock("@/components/ui/useToast.js", () => ({
+  useToast: vi.fn(),
+}));
+
+vi.mock("@/features/auth/useAuth", () => ({
+  useAuth: vi.fn(),
+}));
+
+const mockedGetWineDetail = vi.mocked(getWineDetail);
+const mockedSaveWineToCellar = vi.mocked(saveWineToCellar);
+const mockedUseAuth = vi.mocked(useAuth);
+const mockedUseToast = vi.mocked(useToast);
+const showToast = vi.fn();
+
+const EXTERNAL_WINE_ID = "mock-argyle-reserve-pinot-noir-2021";
+
+const user: User = {
+  createdAt: "2026-01-17T12:00:00+00:00",
+  email: "cellar@example.test",
+  id: 17,
+  name: "Cellar Owner",
+  updatedAt: "2026-01-17T12:00:00+00:00",
+};
+
+function wine(overrides: Partial<Wine> = {}): Wine {
+  return {
+    acidity: "bright",
+    averageRating: 4.3,
+    body: "medium",
+    country: "United States",
+    createdAt: null,
+    description: "Red cherry, rose petal, and a clean mineral line.",
+    externalApiId: null,
+    externalWineId: EXTERNAL_WINE_ID,
+    id: null,
+    imageUrl: null,
+    name: "Reserve Pinot Noir",
+    occasion: "date night dinner",
+    pairings: ["salmon", "mushroom risotto"],
+    priceCents: 4200,
+    region: "Willamette Valley",
+    servingTemp: "55-60 F",
+    source: "mock",
+    sweetness: "dry",
+    tastingNotes: ["red cherry", "rose petal"],
+    updatedAt: null,
+    varietal: "Pinot Noir",
+    vintage: "2021",
+    winery: "Argyle",
+    ...overrides,
+  };
+}
+
+const fullWine = wine();
+
+const savedEntry: CellarEntry = {
+  createdAt: "2026-08-02T12:00:00+00:00",
+  favorite: false,
+  id: 91,
+  notes: null,
+  occasion: null,
+  savedAt: "2026-08-02T12:00:00+00:00",
+  status: "saved",
+  tags: [],
+  updatedAt: "2026-08-02T12:00:00+00:00",
+  userId: user.id,
+  userRating: null,
+  wine: wine({
+    createdAt: "2026-08-02T12:00:00+00:00",
+    externalApiId: EXTERNAL_WINE_ID,
+    id: 44,
+    occasion: null,
+    pairings: [],
+    servingTemp: null,
+    tastingNotes: [],
+    updatedAt: "2026-08-02T12:00:00+00:00",
+  }),
+  wineId: 44,
+};
+
+function authValue(
+  overrides: Partial<AuthContextValue> = {},
+): AuthContextValue {
+  return {
+    isAuthenticated: true,
+    isLoading: false,
+    login: vi.fn(),
+    logout: vi.fn(),
+    refreshUser: vi.fn(),
+    signup: vi.fn(),
+    status: "ready",
+    user,
+    ...overrides,
+  };
+}
+
+function detailResult(value: Wine = fullWine): WineDetailResult {
+  return { source: "mock", wine: value };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+
+  return { promise, reject, resolve };
+}
+
+function LoginProbe() {
+  const location = useLocation();
+  const state = location.state as { from?: string } | null;
+
+  return (
+    <>
+      <h1>Login destination</h1>
+      <output data-testid="login-return-path">{state?.from ?? ""}</output>
+    </>
+  );
+}
+
+function renderDetail(
+  route = `/wines/${EXTERNAL_WINE_ID}`,
+  currentAuth: AuthContextValue = authValue(),
+) {
+  mockedUseAuth.mockReturnValue(currentAuth);
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        gcTime: Number.POSITIVE_INFINITY,
+        retry: false,
+      },
+    },
+  });
+  const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+  const view = render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter
+        future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
+        initialEntries={[route]}
+      >
+        <Routes>
+          <Route path="/wines/:wineId" element={<WineDetailPage />} />
+          <Route path="/login" element={<LoginProbe />} />
+          <Route path="/discover" element={<h1>Discover destination</h1>} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+
+  return {
+    ...view,
+    invalidateQueries,
+    queryClient,
+    unmount: () => {
+      view.unmount();
+      queryClient.clear();
+    },
+  };
+}
+
+beforeEach(() => {
+  mockedGetWineDetail.mockResolvedValue(detailResult());
+  mockedSaveWineToCellar.mockResolvedValue(savedEntry);
+  mockedUseAuth.mockReturnValue(authValue());
+  mockedUseToast.mockReturnValue({
+    dismissToast: vi.fn(),
+    showToast,
+  });
+});
+
+afterEach(() => {
+  cleanup();
+  mockedGetWineDetail.mockReset();
+  mockedSaveWineToCellar.mockReset();
+  mockedUseAuth.mockReset();
+  mockedUseToast.mockReset();
+  showToast.mockReset();
+});
+
+describe("WineDetailPage", () => {
+  it("shows a loading state, passes the real route identifier, and consumes the abort signal", async () => {
+    let receivedSignal: AbortSignal | undefined;
+    mockedGetWineDetail.mockImplementation((_wineId, signal) => {
+      receivedSignal = signal;
+      return new Promise<WineDetailResult>(() => undefined);
+    });
+
+    const view = renderDetail();
+
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Bringing the bottle forward.",
+      }),
+    ).toBeInTheDocument();
+    expect(mockedGetWineDetail).toHaveBeenCalledWith(
+      EXTERNAL_WINE_ID,
+      expect.any(AbortSignal),
+    );
+
+    view.unmount();
+    expect(receivedSignal?.aborted).toBe(true);
+  });
+
+  it("renders every available source-backed field", async () => {
+    renderDetail();
+
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Reserve Pinot Noir",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Catalog source: mock")).toBeInTheDocument();
+    expect(screen.getByText("Argyle")).toBeInTheDocument();
+    expect(
+      screen.getByText("Red cherry, rose petal, and a clean mineral line."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Willamette Valley, United States"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("2021")).toBeInTheDocument();
+    expect(screen.getByText("4.3")).toBeInTheDocument();
+    expect(screen.getByText("$42")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Tasting notes" })).toBeInTheDocument();
+    expect(screen.getByText("red cherry")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Pairings and occasion" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("salmon")).toBeInTheDocument();
+    expect(screen.getByText("date night dinner")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Available characteristics" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("55-60 F")).toBeInTheDocument();
+  });
+
+  it("omits optional fact and characteristic sections when fields are absent", async () => {
+    mockedGetWineDetail.mockResolvedValue(
+      detailResult(
+        wine({
+          acidity: null,
+          averageRating: null,
+          body: null,
+          country: null,
+          description: null,
+          occasion: null,
+          pairings: [],
+          priceCents: null,
+          region: null,
+          servingTemp: null,
+          sweetness: null,
+          tastingNotes: [],
+          varietal: null,
+          vintage: null,
+          winery: null,
+        }),
+      ),
+    );
+    renderDetail();
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Reserve Pinot Noir" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Origin")).not.toBeInTheDocument();
+    expect(screen.queryByText("Vintage")).not.toBeInTheDocument();
+    expect(screen.queryByText("Catalog rating")).not.toBeInTheDocument();
+    expect(screen.queryByText("Listed price")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Tasting notes" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Pairings and occasion" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Available characteristics" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders the backend not-found contract without substituting another wine", async () => {
+    mockedGetWineDetail.mockRejectedValue(
+      new ApiError("Wine was not found.", {
+        code: "wine_not_found",
+        status: 404,
+      }),
+    );
+    renderDetail("/wines/does-not-exist");
+
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "This bottle is not in the current catalog.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Wine was not found.")).toBeInTheDocument();
+    expect(screen.queryByText("Reserve Pinot Noir")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to discovery" })).toHaveAttribute(
+      "href",
+      "/discover",
+    );
+    expect(mockedGetWineDetail).toHaveBeenCalledWith(
+      "does-not-exist",
+      expect.any(AbortSignal),
+    );
+  });
+
+  it("preserves pathname, search, and hash when a signed-out visitor saves", async () => {
+    renderDetail(
+      `/wines/${EXTERNAL_WINE_ID}?from=discover#tasting-notes`,
+      authValue({ isAuthenticated: false, user: null }),
+    );
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Sign in to save" }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "Login destination" }),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("login-return-path")).toHaveTextContent(
+      `/wines/${EXTERNAL_WINE_ID}?from=discover#tasting-notes`,
+    );
+    expect(mockedSaveWineToCellar).not.toHaveBeenCalled();
+  });
+
+  it("keeps save pending until backend confirmation, then confirms and invalidates only the user's cellar", async () => {
+    const pendingSave = deferred<CellarEntry>();
+    mockedSaveWineToCellar.mockReturnValue(pendingSave.promise);
+    const { invalidateQueries, queryClient } = renderDetail();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save to my cellar" }),
+    );
+
+    const pendingButton = await screen.findByRole("button", {
+      name: "Saving bottle…",
+    });
+    expect(pendingButton).toBeDisabled();
+    expect(pendingButton).toHaveAttribute("aria-busy", "true");
+    expect(mockedSaveWineToCellar).toHaveBeenCalledWith({
+      externalWineId: EXTERNAL_WINE_ID,
+    });
+    expect(invalidateQueries).not.toHaveBeenCalled();
+    expect(showToast).not.toHaveBeenCalled();
+
+    await act(async () => {
+      pendingSave.resolve(savedEntry);
+      await pendingSave.promise;
+    });
+
+    expect(
+      await screen.findByRole("status"),
+    ).toHaveTextContent("Saved to your private cellar.");
+    expect(screen.getByRole("button", { name: "Saved to cellar" })).toBeDisabled();
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["private", user.id, "cellar"],
+    });
+    expect(
+      queryClient.getMutationCache().getAll()[0]?.options.mutationKey,
+    ).toEqual(["private", user.id, "cellar", "save", EXTERNAL_WINE_ID]);
+    expect(showToast).toHaveBeenCalledWith({
+      message: "Reserve Pinot Noir is now in your private cellar.",
+      title: "Bottle saved",
+    });
+  });
+
+  it("reports the backend duplicate contract without claiming a new save", async () => {
+    mockedSaveWineToCellar.mockRejectedValue(
+      new ApiError("This wine is already in your cellar.", {
+        code: "cellar_entry_exists",
+        details: { entry: savedEntry },
+        status: 409,
+      }),
+    );
+    const { invalidateQueries } = renderDetail();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save to my cellar" }),
+    );
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "This bottle is already in your cellar.",
+    );
+    expect(screen.getByRole("button", { name: "Already in cellar" })).toBeDisabled();
+    expect(mockedSaveWineToCellar).toHaveBeenCalledWith({
+      externalWineId: EXTERNAL_WINE_ID,
+    });
+    expect(invalidateQueries).not.toHaveBeenCalled();
+    expect(showToast).toHaveBeenCalledWith({
+      message: "This bottle is already in your cellar.",
+      title: "Already saved",
+    });
+  });
+
+  it("renders a failed save as an alert and leaves retry available", async () => {
+    mockedSaveWineToCellar.mockRejectedValue(
+      new ApiError("A database error occurred.", {
+        code: "database_error",
+        status: 500,
+      }),
+    );
+    const { invalidateQueries } = renderDetail();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save to my cellar" }),
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "A database error occurred.",
+    );
+    expect(screen.getByRole("button", { name: "Save to my cellar" })).toBeEnabled();
+    expect(mockedSaveWineToCellar).toHaveBeenCalledWith({
+      externalWineId: EXTERNAL_WINE_ID,
+    });
+    expect(invalidateQueries).not.toHaveBeenCalled();
+    expect(showToast).toHaveBeenCalledWith({
+      message: "A database error occurred.",
+      title: "Save failed",
+      tone: "error",
+    });
+  });
+});

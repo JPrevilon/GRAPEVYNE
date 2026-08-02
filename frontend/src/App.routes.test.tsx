@@ -30,7 +30,7 @@ vi.mock("@/api/cellar", () => ({
   updateCellarEntry: vi.fn(),
 }));
 
-vi.mock("@/features/wines/wineApi.js", () => ({
+vi.mock("@/api/wines", () => ({
   getWineDetail: mocks.getWineDetail,
   searchWines: vi.fn(),
 }));
@@ -61,39 +61,41 @@ afterEach(() => {
 
 beforeEach(() => {
   mocks.getWineDetail.mockResolvedValue({
-    data: {
+    source: "test",
+    wine: {
+      acidity: "bright",
+      averageRating: 4.3,
+      body: "medium",
+      country: "France",
+      description: "A source-backed test bottle.",
+      externalApiId: "source-wine-17",
+      externalWineId: "source-wine-17",
+      id: "source-wine-17",
+      imageUrl: null,
+      name: "Direct Route Rouge",
+      occasion: "Dinner",
+      pairings: ["Mushrooms"],
+      priceCents: 3200,
+      region: "Loire Valley",
+      servingTemp: "Cellar temperature",
       source: "test",
-      wine: {
-        acidity: "bright",
-        averageRating: 4.3,
-        body: "medium",
-        country: "France",
-        description: "A source-backed test bottle.",
-        externalWineId: "source-wine-17",
-        imageUrl: null,
-        name: "Direct Route Rouge",
-        pairings: ["Mushrooms"],
-        priceCents: 3200,
-        region: "Loire Valley",
-        servingTemp: "Cellar temperature",
-        sweetness: "dry",
-        tastingNotes: ["Cherry"],
-        varietal: "Cabernet Franc",
-        vintage: "2021",
-        winery: "Test Domaine",
-      },
+      sweetness: "dry",
+      tastingNotes: ["Cherry"],
+      varietal: "Cabernet Franc",
+      vintage: "2021",
+      winery: "Test Domaine",
     },
   });
 });
 
 describe("major route composition", () => {
   it.each([
-    ["/", /Find the bottle that fits the moment/i],
-    ["/discover", /Find a bottle for the meal, moment, or mood/i],
+    ["/", /Find the bottle.*Keep the memory/i],
+    ["/discover", /Tell us the moment.*help find the bottle/i],
     ["/login", /Sign in to open your cellar/i],
     ["/signup", /Begin your personal wine memory/i],
-    ["/demo/cellar", /Explore a fictional GRAPEVYNE cellar/i],
-    ["/demo/taste-atlas", /Taste Atlas from fictional cellar data/i],
+    ["/demo/cellar", /A cellar designed around the moments bottles join/i],
+    ["/demo/taste-atlas", /A Taste Atlas made from fixture data alone/i],
   ])("renders a direct load of %s", async (path, heading) => {
     renderRoute(path);
     expect(await screen.findByRole("heading", { name: heading })).toBeInTheDocument();
@@ -120,10 +122,10 @@ describe("major route composition", () => {
   it("navigates between both public demos without touching the private cellar API", async () => {
     renderRoute("/demo/cellar");
     fireEvent.click(
-      await screen.findByRole("link", { name: /View the demo Taste Atlas/i }),
+      await screen.findByRole("link", { name: /View demo Taste Atlas/i }),
     );
     expect(
-      await screen.findByRole("heading", { name: /Taste Atlas from fictional cellar data/i }),
+      await screen.findByRole("heading", { name: /A Taste Atlas made from fixture data alone/i }),
     ).toBeInTheDocument();
     expect(mocks.getCellarEntries).not.toHaveBeenCalled();
   });
