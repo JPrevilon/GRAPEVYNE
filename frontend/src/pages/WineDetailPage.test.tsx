@@ -17,12 +17,15 @@ import {
 
 import { saveWineToCellar } from "@/api/cellar";
 import { ApiError } from "@/api/client";
+import { getWineRecommendations } from "@/api/recommendations";
 import { getWineDetail } from "@/api/wines";
 import { useToast } from "@/components/ui/useToast.js";
 import type { AuthContextValue } from "@/features/auth/authContextValue";
 import { useAuth } from "@/features/auth/useAuth";
 import type {
   CellarEntry,
+  RecommendationDimension,
+  RecommendationResponse,
   User,
   Wine,
   WineDetailResult,
@@ -39,6 +42,11 @@ vi.mock("@/api/wines", () => ({
   getWineDetail: vi.fn(),
 }));
 
+vi.mock("@/api/recommendations", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/api/recommendations")>()),
+  getWineRecommendations: vi.fn(),
+}));
+
 vi.mock("@/components/ui/useToast.js", () => ({
   useToast: vi.fn(),
 }));
@@ -48,6 +56,7 @@ vi.mock("@/features/auth/useAuth", () => ({
 }));
 
 const mockedGetWineDetail = vi.mocked(getWineDetail);
+const mockedGetWineRecommendations = vi.mocked(getWineRecommendations);
 const mockedSaveWineToCellar = vi.mocked(saveWineToCellar);
 const mockedUseAuth = vi.mocked(useAuth);
 const mockedUseToast = vi.mocked(useToast);
@@ -141,6 +150,89 @@ function detailResult(value: Wine = fullWine): WineDetailResult {
   return { source: "mock", wine: value };
 }
 
+function recommendationContext(): RecommendationResponse {
+  const names: RecommendationDimension["dimension"][] = [
+    "pairing",
+    "personal_taste",
+    "requested_style",
+    "budget",
+    "occasion",
+    "source_confidence",
+    "discovery_balance",
+  ];
+  const weights: Record<RecommendationDimension["dimension"], number> = {
+    budget: 10,
+    discovery_balance: 5,
+    occasion: 10,
+    pairing: 30,
+    personal_taste: 25,
+    requested_style: 15,
+    source_confidence: 5,
+  };
+  const breakdown: RecommendationDimension[] = names.map((dimension) => ({
+    availablePoints: dimension === "pairing" ? 30 : 0,
+    dimension,
+    earnedPoints: dimension === "pairing" ? 30 : 0,
+    evidence:
+      dimension === "pairing"
+        ? ["MATCH: Catalog pairing matches salmon."]
+        : [],
+    normalizedContribution: dimension === "pairing" ? 100 : 0,
+    unavailableReason:
+      dimension === "pairing" ? null : "This dimension was unavailable.",
+    weight: weights[dimension],
+  }));
+
+  return {
+    catalog: {
+      candidateCount: 6,
+      isDemonstrationCatalog: true,
+      limitations: "Limited demonstration catalog.",
+      provider: "mock",
+    },
+    intent: {
+      acidities: [],
+      bodies: [],
+      budget: null,
+      categories: [],
+      countries: [],
+      evidence: [],
+      excludedSweetness: [],
+      flavors: [],
+      novelty: null,
+      occasions: [],
+      pairings: ["salmon"],
+      regions: [],
+      sweetness: [],
+      tannins: [],
+      unparsedTerms: [],
+      varietals: [],
+      warnings: [],
+    },
+    personalization: {
+      disclosure: "Results use only this request.",
+      signalCount: 0,
+      status: "anonymous",
+    },
+    query: "something light for salmon",
+    results: [
+      {
+        match: {
+          breakdown,
+          cautions: [],
+          confidence: "medium",
+          matchedTags: ["salmon"],
+          missingDataDisclosures: [],
+          reasons: ["Catalog pairing matches salmon."],
+          score: 88,
+          scoreBasis: "request_only",
+        },
+        wine: fullWine,
+      },
+    ],
+  };
+}
+
 function deferred<T>() {
   let resolve!: (value: T | PromiseLike<T>) => void;
   let reject!: (reason?: unknown) => void;
@@ -211,6 +303,7 @@ function renderDetail(
 
 beforeEach(() => {
   mockedGetWineDetail.mockResolvedValue(detailResult());
+  mockedGetWineRecommendations.mockResolvedValue(recommendationContext());
   mockedSaveWineToCellar.mockResolvedValue(savedEntry);
   mockedUseAuth.mockReturnValue(authValue());
   mockedUseToast.mockReturnValue({
@@ -223,6 +316,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   mockedGetWineDetail.mockReset();
+  mockedGetWineRecommendations.mockReset();
   mockedSaveWineToCellar.mockReset();
   mockedUseAuth.mockReset();
   mockedUseToast.mockReset();
@@ -327,6 +421,67 @@ describe("WineDetailPage", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("reconstructs safe recommendation context without making it part of the bottle contract", async () => {
+    renderDetail(
+      `/wines/${EXTERNAL_WINE_ID}?request=something%20light%20for%20salmon`,
+      authValue({ isAuthenticated: false, user: null }),
+    );
+
+    expect(
+      await screen.findByText("“something light for salmon”"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "WHY IT FITS THIS REQUEST" }),
+    ).toBeInTheDocument();
+    expect(document.querySelector(".gv-recommendation-score")).toHaveTextContent(
+      "88/ 100 match",
+    );
+    expect(screen.getByText("Catalog pairing matches salmon.")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Recommendation context is ready for Reserve Pinot Noir.",
+    );
+    expect(mockedGetWineRecommendations).toHaveBeenCalledWith(
+      "something light for salmon",
+      { limit: 6, signal: expect.any(AbortSignal) },
+    );
+    expect(screen.getByRole("link", { name: "Back to discovery" })).toHaveAttribute(
+      "href",
+      "/discover?query=something+light+for+salmon",
+    );
+  });
+
+  it("keeps direct Wine Detail independent from recommendation context", async () => {
+    renderDetail();
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Reserve Pinot Noir" }),
+    ).toBeInTheDocument();
+    expect(mockedGetWineRecommendations).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("heading", { name: "WHY IT FITS THIS REQUEST" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the bottle usable when reconstructed context fails", async () => {
+    mockedGetWineRecommendations.mockRejectedValue(
+      new ApiError("Recommendation service unavailable.", {
+        code: "wine_service_unavailable",
+        status: 503,
+      }),
+    );
+    renderDetail(
+      `/wines/${EXTERNAL_WINE_ID}?request=something%20light%20for%20salmon`,
+    );
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Reserve Pinot Noir" }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText(/recommendation context could not be reconstructed/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save to my cellar" })).toBeEnabled();
+  });
+
   it("renders the backend not-found contract without substituting another wine", async () => {
     mockedGetWineDetail.mockRejectedValue(
       new ApiError("Wine was not found.", {
@@ -392,7 +547,7 @@ describe("WineDetailPage", () => {
     expect(mockedSaveWineToCellar).not.toHaveBeenCalled();
   });
 
-  it("keeps save pending until backend confirmation, then confirms and invalidates only the user's cellar", async () => {
+  it("keeps save pending until backend confirmation, then invalidates only the user's private cellar and recommendations", async () => {
     const pendingSave = deferred<CellarEntry>();
     mockedSaveWineToCellar.mockReturnValue(pendingSave.promise);
     const { invalidateQueries, queryClient } = renderDetail();
@@ -422,9 +577,13 @@ describe("WineDetailPage", () => {
       await screen.findByRole("status"),
     ).toHaveTextContent("Saved to your private cellar.");
     expect(screen.getByRole("button", { name: "Saved to cellar" })).toBeDisabled();
-    expect(invalidateQueries).toHaveBeenCalledWith({
+    expect(invalidateQueries).toHaveBeenNthCalledWith(1, {
       queryKey: ["private", user.id, "cellar"],
     });
+    expect(invalidateQueries).toHaveBeenNthCalledWith(2, {
+      queryKey: ["private", user.id, "wine-recommendations"],
+    });
+    expect(invalidateQueries).toHaveBeenCalledTimes(2);
     expect(
       queryClient.getMutationCache().getAll()[0]?.options.mutationKey,
     ).toEqual(["private", user.id, "cellar", "save", EXTERNAL_WINE_ID]);
@@ -432,6 +591,31 @@ describe("WineDetailPage", () => {
       message: "Reserve Pinot Noir is now in your private cellar.",
       title: "Bottle saved",
     });
+  });
+
+  it("invalidates confirmed owner caches but suppresses feedback after unmount", async () => {
+    const pendingSave = deferred<CellarEntry>();
+    mockedSaveWineToCellar.mockReturnValue(pendingSave.promise);
+    const { invalidateQueries, unmount } = renderDetail();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save to my cellar" }),
+    );
+    unmount();
+
+    await act(async () => {
+      pendingSave.resolve(savedEntry);
+      await pendingSave.promise;
+    });
+    await waitFor(() => expect(invalidateQueries).toHaveBeenCalledTimes(2));
+
+    expect(invalidateQueries).toHaveBeenNthCalledWith(1, {
+      queryKey: ["private", user.id, "cellar"],
+    });
+    expect(invalidateQueries).toHaveBeenNthCalledWith(2, {
+      queryKey: ["private", user.id, "wine-recommendations"],
+    });
+    expect(showToast).not.toHaveBeenCalled();
   });
 
   it("suppresses private save feedback when revalidation starts during cache refresh", async () => {
@@ -448,7 +632,7 @@ describe("WineDetailPage", () => {
       pendingSave.resolve(savedEntry);
       await pendingSave.promise;
     });
-    await waitFor(() => expect(invalidateQueries).toHaveBeenCalledOnce());
+    await waitFor(() => expect(invalidateQueries).toHaveBeenCalledTimes(2));
 
     rerenderAuth(authValue({ isLoading: true, status: "loading" }));
     await act(async () => {

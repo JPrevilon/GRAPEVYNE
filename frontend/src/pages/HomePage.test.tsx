@@ -284,7 +284,7 @@ describe("HomePage scroll story", () => {
   it("labels every illustrative state and never renders a personalized percentage", () => {
     const { container } = renderHome();
 
-    expect(screen.getByText("Demonstration of match reasoning")).toBeInTheDocument();
+    expect(screen.getByText("Explainable match reasoning")).toBeInTheDocument();
     expect(screen.getByText("Demonstration tasting memory")).toBeInTheDocument();
     expect(
       within(
@@ -292,10 +292,10 @@ describe("HomePage scroll story", () => {
       ).getByText("Fresh & mineral"),
     ).toBeInTheDocument();
     expect(container.textContent).not.toMatch(/\d+\s*%/);
-    expect(container.textContent).toMatch(/personalized engine is not implemented yet/i);
+    expect(container.textContent).toMatch(/full personalized Taste Atlas remains future work/i);
   });
 
-  it("keeps the engineering disclosure factual about implemented WebGL and deferred engines", () => {
+  it("keeps the engineering disclosure factual about implemented engines and deferred Taste Atlas", () => {
     renderHome();
 
     expect(
@@ -305,10 +305,10 @@ describe("HomePage scroll story", () => {
       screen.getByText(/local desktop and mobile GLB models/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/A recommendation engine and personalized Taste Atlas remain future work/i),
+      screen.getByText(/Discover now includes a deterministic explainable recommendation engine/i),
     ).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent(
-      "WebGL, a recommendation engine, and a personalized Taste Atlas remain future work.",
+      "A recommendation engine and personalized Taste Atlas remain future work.",
     );
   });
 });

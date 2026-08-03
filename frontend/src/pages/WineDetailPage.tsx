@@ -1,40 +1,20 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
-  Check,
-  Heart,
   MapPin,
-  ShieldCheck,
   Star,
   Thermometer,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useMemo } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 
-import {
-  assertCellarEntryOwner,
-  isCellarErrorEntryOwnedBy,
-  isCellarIdentityMismatch,
-  saveWineToCellar,
-} from "@/api/cellar";
-import {
-  ApiError,
-  isAbortError,
-  isAuthenticationRequired,
-  isNetworkFailure,
-} from "@/api/client";
+import { ApiError, isNetworkFailure } from "@/api/client";
 import { getWineDetail } from "@/api/wines";
-import { Button, ButtonLink } from "@/components/ui/Button";
+import { ButtonLink } from "@/components/ui/Button";
 import { ErrorPanel, LoadingPanel } from "@/components/ui/StatePanels";
 import { WineVisual } from "@/components/wine/WineBottleFallback";
-import { privateQueryKey } from "@/features/auth/privateQueryKeys";
-import { useAuth } from "@/features/auth/useAuth";
-
-import { useToast } from "@/components/ui/useToast.js";
-
-type SaveFeedback =
-  | { kind: "duplicate" | "error" | "success"; message: string }
-  | null;
+import SaveWineControl from "@/features/cellar/components/SaveWineControl";
+import WineRecommendationContext from "@/features/recommendations/components/WineRecommendationContext";
 
 function formatPrice(priceCents: number) {
   return new Intl.NumberFormat("en-US", {
@@ -42,10 +22,6 @@ function formatPrice(priceCents: number) {
     maximumFractionDigits: 0,
     style: "currency",
   }).format(priceCents / 100);
-}
-
-function returnPath(location: ReturnType<typeof useLocation>) {
-  return `${location.pathname}${location.search}${location.hash}`;
 }
 
 function detailError(error: unknown) {
@@ -78,23 +54,17 @@ function detailError(error: unknown) {
 
 export default function WineDetailPage() {
   const { wineId = "" } = useParams();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const {
-    handleAuthenticationRequired,
-    isAuthenticated,
-    status: authStatus,
-    user,
-  } = useAuth();
-  const { showToast } = useToast();
-  const [saveFeedback, setSaveFeedback] = useState<SaveFeedback>(null);
-  const activeAuthStatus = useRef(authStatus);
-  const activeUserId = useRef(user?.id);
-  const saveOperationId = useRef(0);
-
-  activeAuthStatus.current = authStatus;
-  activeUserId.current = user?.id;
+  const [searchParams] = useSearchParams();
+  const requestContext = searchParams.get("request")?.trim() ?? "";
+  const validRequestContext =
+    requestContext.length >= 2 &&
+    requestContext.length <= 300 &&
+    !/[<>]|[\u0000-\u001f]/u.test(requestContext)
+      ? requestContext
+      : null;
+  const discoveryPath = validRequestContext
+    ? `/discover?${new URLSearchParams({ query: validRequestContext })}`
+    : "/discover";
 
   const wineQuery = useQuery({
     enabled: Boolean(wineId),
@@ -103,130 +73,11 @@ export default function WineDetailPage() {
     staleTime: 5 * 60_000,
   });
 
-  const saveMutation = useMutation({
-    gcTime: 0,
-    mutationFn: async ({
-      externalWineId,
-      ownerId,
-    }: {
-      externalWineId: string;
-      ownerId: number;
-    }) =>
-      assertCellarEntryOwner(
-        await saveWineToCellar({ externalWineId }, ownerId),
-        ownerId,
-      ),
-    mutationKey: user
-      ? privateQueryKey(user.id, "cellar", "save", wineId)
-      : (["private", "anonymous", "cellar", "save", wineId] as const),
-  });
-
-  useEffect(() => {
-    saveOperationId.current += 1;
-    setSaveFeedback(null);
-    saveMutation.reset();
-    // Reset confirmation when the route or signed-in identity changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authStatus, user?.id, wineId]);
-
   const wine = wineQuery.data?.wine;
   const locationLabel = useMemo(
     () => (wine ? [wine.region, wine.country].filter(Boolean).join(", ") : ""),
     [wine],
   );
-
-  async function handleSave() {
-    if (!wine) return;
-
-    if (authStatus !== "ready") {
-      return;
-    }
-
-    if (!isAuthenticated) {
-      navigate("/login", { state: { from: returnPath(location) } });
-      return;
-    }
-
-    if (!user || !wine.externalWineId) {
-      setSaveFeedback({
-        kind: "error",
-        message: "This catalog record does not include a saveable external identifier.",
-      });
-      return;
-    }
-
-    setSaveFeedback(null);
-    const operationId = ++saveOperationId.current;
-    const savingUserId = user.id;
-
-    try {
-      await saveMutation.mutateAsync({
-        externalWineId: wine.externalWineId,
-        ownerId: savingUserId,
-      });
-
-      if (
-        operationId !== saveOperationId.current ||
-        activeAuthStatus.current !== "ready" ||
-        activeUserId.current !== savingUserId
-      ) {
-        return;
-      }
-
-      await queryClient.invalidateQueries({
-        queryKey: privateQueryKey(savingUserId, "cellar"),
-      });
-
-      if (
-        operationId !== saveOperationId.current ||
-        activeAuthStatus.current !== "ready" ||
-        activeUserId.current !== savingUserId
-      ) {
-        return;
-      }
-
-      setSaveFeedback({ kind: "success", message: "Saved to your private cellar." });
-      showToast({
-        message: `${wine.name} is now in your private cellar.`,
-        title: "Bottle saved",
-      });
-    } catch (error) {
-      if (
-        operationId !== saveOperationId.current ||
-        activeAuthStatus.current !== "ready" ||
-        activeUserId.current !== savingUserId ||
-        isAbortError(error)
-      ) {
-        return;
-      }
-
-      if (isCellarIdentityMismatch(error)) {
-        await handleAuthenticationRequired(savingUserId);
-        return;
-      }
-
-      if (isAuthenticationRequired(error)) {
-        await handleAuthenticationRequired(savingUserId);
-        return;
-      }
-
-      if (error instanceof ApiError && error.code === "cellar_entry_exists") {
-        if (!isCellarErrorEntryOwnedBy(error, savingUserId)) {
-          await handleAuthenticationRequired(savingUserId);
-          return;
-        }
-
-        const message = "This bottle is already in your cellar.";
-        setSaveFeedback({ kind: "duplicate", message });
-        showToast({ message, title: "Already saved" });
-        return;
-      }
-
-      const message = error instanceof Error ? error.message : "This bottle could not be saved.";
-      setSaveFeedback({ kind: "error", message });
-      showToast({ message, title: "Save failed", tone: "error" });
-    }
-  }
 
   if (wineQuery.isPending) {
     return (
@@ -247,7 +98,7 @@ export default function WineDetailPage() {
       <div className="gv-page-shell">
         <ErrorPanel
           action={
-            <ButtonLink to="/discover" variant="secondary">
+            <ButtonLink to={discoveryPath} variant="secondary">
               <ArrowLeft aria-hidden="true" size={17} />
               Back to discovery
             </ButtonLink>
@@ -268,12 +119,9 @@ export default function WineDetailPage() {
     ["Serve", wine.servingTemp],
   ].filter((entry): entry is [string, string] => Boolean(entry[1]));
   const hasTags = wine.tastingNotes.length > 0 || wine.pairings.length > 0 || Boolean(wine.occasion);
-  const displayedSaveFeedback =
-    authStatus === "ready" ? saveFeedback : null;
-
   return (
     <article className="gv-page-shell gv-wine-detail">
-      <Link className="gv-back-link" to="/discover">
+      <Link className="gv-back-link" to={discoveryPath}>
         <ArrowLeft aria-hidden="true" size={17} />
         Back to discovery
       </Link>
@@ -328,39 +176,25 @@ export default function WineDetailPage() {
             </dl>
           ) : null}
 
-          <div className="gv-wine-detail__save">
-            <Button
-              busyLabel="Saving bottle…"
-              disabled={
-                authStatus !== "ready" ||
-                displayedSaveFeedback?.kind === "success" ||
-                displayedSaveFeedback?.kind === "duplicate"
-              }
-              isBusy={saveMutation.isPending}
-              onClick={() => void handleSave()}
-              variant="primary"
-            >
-              {displayedSaveFeedback?.kind === "success" ? (
-                <><Check aria-hidden="true" size={17} />Saved to cellar</>
-              ) : displayedSaveFeedback?.kind === "duplicate" ? (
-                <><Check aria-hidden="true" size={17} />Already in cellar</>
-              ) : isAuthenticated ? (
-                <><Heart aria-hidden="true" size={17} />Save to my cellar</>
-              ) : (
-                <><ShieldCheck aria-hidden="true" size={17} />Sign in to save</>
-              )}
-            </Button>
-            {displayedSaveFeedback ? (
-              <p
-                className={`gv-inline-feedback gv-inline-feedback--${displayedSaveFeedback.kind}`}
-                role={displayedSaveFeedback.kind === "error" ? "alert" : "status"}
-              >
-                {displayedSaveFeedback.message}
-              </p>
-            ) : null}
-          </div>
+          <SaveWineControl className="gv-wine-detail__save" wine={wine} />
         </div>
       </div>
+
+      {validRequestContext && wine.externalWineId ? (
+        <WineRecommendationContext
+          externalWineId={wine.externalWineId}
+          query={validRequestContext}
+        />
+      ) : requestContext ? (
+        <section className="gv-recommendation-context gv-recommendation-context--unavailable">
+          <p className="gv-eyebrow">Request context</p>
+          <h2>WHY IT FITS THIS REQUEST</h2>
+          <p>
+            The request context was invalid or too long, so it was not sent to the
+            recommendation endpoint. Bottle details remain available directly.
+          </p>
+        </section>
+      ) : null}
 
       {hasTags || structures.length > 0 ? (
         <div className="gv-wine-detail__sections">

@@ -58,13 +58,101 @@ export interface CellarEntry {
   wine: Wine;
 }
 
-export interface RecommendationResult {
-  wine: Wine;
-  matchScore: number;
+export interface RecommendationBudget {
+  minimumCents: number | null;
+  maximumCents: number | null;
+}
+
+export interface RecommendationParserEvidence {
+  dimension: string;
+  value: string;
+  matchedText: string;
+}
+
+export interface RecommendationParserWarning {
+  code: string;
+  message: string;
+}
+
+export interface RecommendationIntent {
+  categories: string[];
+  varietals: string[];
+  regions: string[];
+  countries: string[];
+  bodies: string[];
+  acidities: string[];
+  tannins: string[];
+  sweetness: string[];
+  excludedSweetness: string[];
+  pairings: string[];
+  flavors: string[];
+  occasions: string[];
+  novelty: "familiar" | "adventurous" | null;
+  budget: RecommendationBudget | null;
+  evidence: RecommendationParserEvidence[];
+  warnings: RecommendationParserWarning[];
+  unparsedTerms: string[];
+}
+
+export type RecommendationPersonalizationStatus =
+  | "anonymous"
+  | "insufficient_data"
+  | "active";
+
+export interface RecommendationPersonalization {
+  status: RecommendationPersonalizationStatus;
+  signalCount: number;
+  disclosure: string;
+}
+
+export interface RecommendationCatalog {
+  provider: string;
+  candidateCount: number;
+  isDemonstrationCatalog: boolean;
+  limitations: string;
+}
+
+export type RecommendationDimensionName =
+  | "pairing"
+  | "personal_taste"
+  | "requested_style"
+  | "budget"
+  | "occasion"
+  | "source_confidence"
+  | "discovery_balance";
+
+export interface RecommendationDimension {
+  dimension: RecommendationDimensionName;
+  weight: number;
+  earnedPoints: number;
+  availablePoints: number;
+  normalizedContribution: number;
+  evidence: string[];
+  unavailableReason: string | null;
+}
+
+export interface RecommendationMatch {
+  score: number;
   confidence: "high" | "medium" | "limited";
+  scoreBasis: "request_only" | "personalized";
   reasons: string[];
   cautions: string[];
   matchedTags: string[];
+  missingDataDisclosures: string[];
+  breakdown: RecommendationDimension[];
+}
+
+export interface RecommendationResult {
+  wine: Wine;
+  match: RecommendationMatch;
+}
+
+export interface RecommendationResponse {
+  query: string;
+  intent: RecommendationIntent;
+  personalization: RecommendationPersonalization;
+  catalog: RecommendationCatalog;
+  results: RecommendationResult[];
 }
 
 export type TasteProfileWineId = number | string;

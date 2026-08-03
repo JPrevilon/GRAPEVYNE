@@ -329,7 +329,8 @@ describe("protected live cellar", () => {
       }),
     );
 
-    renderCellar();
+    const { queryClient } = renderCellar();
+    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
     const bottleButton = await screen.findByRole("button", {
       name: /Live Session Merlot/i,
     });
@@ -370,6 +371,7 @@ describe("protected live cellar", () => {
         42,
       ),
     );
+    expect(invalidateQueries).not.toHaveBeenCalled();
 
     await act(async () => {
       resolveUpdate?.(updatedEntry);
@@ -380,6 +382,10 @@ describe("protected live cellar", () => {
       await screen.findByText("Changes saved to your private cellar."),
     ).toBeInTheDocument();
     expect(screen.getByText("Bottle updated")).toBeInTheDocument();
+    expect(invalidateQueries).toHaveBeenCalledOnce();
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["private", 42, "wine-recommendations"],
+    });
   });
 
   it("keeps server-confirmed cellar data unchanged when PATCH fails", async () => {
@@ -389,7 +395,8 @@ describe("protected live cellar", () => {
       new Error("This request did not come from a trusted application origin."),
     );
 
-    renderCellar();
+    const { queryClient } = renderCellar();
+    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
     fireEvent.click(
       await screen.findByRole("button", { name: /Live Session Merlot/i }),
     );
@@ -406,6 +413,7 @@ describe("protected live cellar", () => {
     expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
     expect(screen.getByText("Update failed")).toBeInTheDocument();
     expect(entry.favorite).toBe(false);
+    expect(invalidateQueries).not.toHaveBeenCalled();
   });
 
   it("suppresses a PATCH result and private toast during session revalidation", async () => {
@@ -510,7 +518,8 @@ describe("protected live cellar", () => {
       }),
     );
 
-    renderCellar();
+    const { queryClient } = renderCellar();
+    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
     fireEvent.click(
       await screen.findByRole("button", { name: /Live Session Merlot/i }),
     );
@@ -531,6 +540,7 @@ describe("protected live cellar", () => {
     await waitFor(() =>
       expect(mocks.deleteCellarEntry).toHaveBeenCalledWith(91, 42),
     );
+    expect(invalidateQueries).not.toHaveBeenCalled();
 
     await act(async () => {
       resolveDelete?.(91);
@@ -543,6 +553,10 @@ describe("protected live cellar", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("Bottle removed")).toBeInTheDocument();
+    expect(invalidateQueries).toHaveBeenCalledOnce();
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["private", 42, "wine-recommendations"],
+    });
   });
 
   it("reconciles a confirmed DELETE but suppresses its toast during revalidation", async () => {
@@ -588,7 +602,8 @@ describe("protected live cellar", () => {
       new Error("The cellar service is unavailable."),
     );
 
-    renderCellar();
+    const { queryClient } = renderCellar();
+    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
     fireEvent.click(
       await screen.findByRole("button", { name: /Live Session Merlot/i }),
     );
@@ -604,6 +619,7 @@ describe("protected live cellar", () => {
     expect(screen.getByRole("button", { name: "Confirm removal" })).toBeEnabled();
     expect(screen.getByText("Remove failed")).toBeInTheDocument();
     expect(screen.queryByText("Bottle removed")).not.toBeInTheDocument();
+    expect(invalidateQueries).not.toHaveBeenCalled();
   });
 
   it("revalidates the current owner when DELETE reports session expiry", async () => {

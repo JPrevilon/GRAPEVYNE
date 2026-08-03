@@ -1,3 +1,6 @@
+from copy import deepcopy
+
+
 MOCK_WINES = [
     {
         "externalWineId": "mock-argyle-reserve-pinot-noir-2021",
@@ -192,6 +195,23 @@ class WineService:
     """
 
     source = "mock"
+
+    def list_candidates(self):
+        """Return isolated provider records for deterministic recommendation work."""
+
+        return deepcopy(MOCK_WINES)
+
+    def catalog_metadata(self):
+        return {
+            "provider": self.source,
+            "candidateCount": len(MOCK_WINES),
+            "isDemonstrationCatalog": True,
+            "limitations": (
+                "The current portfolio build uses a limited demonstration catalog. "
+                "Matching logic is real, but the available candidate set is "
+                "intentionally small."
+            ),
+        }
 
     def search(self, query):
         normalized_query = self._normalize_query(query)

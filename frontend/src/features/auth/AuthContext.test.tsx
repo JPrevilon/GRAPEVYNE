@@ -12,6 +12,7 @@ import type { PropsWithChildren } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "../../api/client";
+import { RECOMMENDATION_QUERY_RESOURCE } from "../../api/recommendationQueryKeys";
 import {
   getCurrentUser,
   login as loginRequest,
@@ -890,6 +891,15 @@ describe("AuthProvider", () => {
         ["first user's private bottle"],
       );
       queryClient.setQueryData(
+        privateQueryKey(
+          testUser.id,
+          RECOMMENDATION_QUERY_RESOURCE,
+          "steak night",
+          6,
+        ),
+        ["first user's personalized recommendation"],
+      );
+      queryClient.setQueryData(
         ["public", "wine-search", "pinot"],
         ["public bottle"],
       );
@@ -900,6 +910,16 @@ describe("AuthProvider", () => {
 
     expect(
       queryClient.getQueryData(privateQueryKey(testUser.id, "cellar")),
+    ).toBeUndefined();
+    expect(
+      queryClient.getQueryData(
+        privateQueryKey(
+          testUser.id,
+          RECOMMENDATION_QUERY_RESOURCE,
+          "steak night",
+          6,
+        ),
+      ),
     ).toBeUndefined();
     expect(
       queryClient.getQueryData(["public", "wine-search", "pinot"]),
@@ -921,7 +941,20 @@ describe("AuthProvider", () => {
         privateQueryKey(testUser.id, "cellar"),
         ["private bottle"]
       );
+      queryClient.setQueryData(
+        privateQueryKey(
+          testUser.id,
+          RECOMMENDATION_QUERY_RESOURCE,
+          "oysters",
+          6,
+        ),
+        ["private recommendation"],
+      );
       queryClient.setQueryData(["public", "wine", 4], "public bottle");
+      queryClient.setQueryData(
+        ["public", RECOMMENDATION_QUERY_RESOURCE, "oysters", 6],
+        ["anonymous recommendation"],
+      );
       queryClient.getMutationCache().build(queryClient, {
         mutationFn: async () => "updated private notes",
         mutationKey: privateQueryKey(testUser.id, "cellar", "update"),
@@ -939,9 +972,27 @@ describe("AuthProvider", () => {
     expect(
       queryClient.getQueryData(privateQueryKey(testUser.id, "cellar"))
     ).toBeUndefined();
+    expect(
+      queryClient.getQueryData(
+        privateQueryKey(
+          testUser.id,
+          RECOMMENDATION_QUERY_RESOURCE,
+          "oysters",
+          6,
+        ),
+      ),
+    ).toBeUndefined();
     expect(queryClient.getQueryData(["public", "wine", 4])).toBe(
       "public bottle"
     );
+    expect(
+      queryClient.getQueryData([
+        "public",
+        RECOMMENDATION_QUERY_RESOURCE,
+        "oysters",
+        6,
+      ]),
+    ).toEqual(["anonymous recommendation"]);
     expect(
       queryClient.getMutationCache().findAll({
         mutationKey: privateQueryKey(testUser.id, "cellar", "update"),

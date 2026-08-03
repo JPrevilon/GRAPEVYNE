@@ -12,6 +12,7 @@ import {
   updateCellarEntry,
 } from "@/api/cellar";
 import { isAbortError, isAuthenticationRequired } from "@/api/client";
+import { RECOMMENDATION_QUERY_RESOURCE } from "@/api/recommendationQueryKeys";
 import DirectoryHeading from "@/components/typography/DirectoryHeading";
 import { DIRECTORY_PAGE_HEADINGS } from "@/components/typography/directoryHeadingPresets";
 import { Button, ButtonLink } from "@/components/ui/Button";
@@ -158,6 +159,9 @@ export default function CellarPage() {
             }
           : current,
       );
+      void queryClient.invalidateQueries({
+        queryKey: privateQueryKey(ownerId, RECOMMENDATION_QUERY_RESOURCE),
+      });
     },
   });
 
@@ -193,6 +197,9 @@ export default function CellarPage() {
             }
           : current,
       );
+      void queryClient.invalidateQueries({
+        queryKey: privateQueryKey(ownerId, RECOMMENDATION_QUERY_RESOURCE),
+      });
       setSelectedEntryId(null);
     },
   });

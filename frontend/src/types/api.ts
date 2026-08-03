@@ -35,6 +35,14 @@ export interface WineDetailData {
   source: unknown;
 }
 
+export interface RecommendationData {
+  query: unknown;
+  intent: unknown;
+  personalization: unknown;
+  catalog: unknown;
+  results: unknown;
+}
+
 export interface CellarListData {
   entries: unknown;
   count: unknown;

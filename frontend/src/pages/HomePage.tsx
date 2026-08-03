@@ -40,6 +40,7 @@ const matchDimensions = [
   "Budget fit",
   "Occasion fit",
   "Source-data confidence",
+  "Discovery balance when you request it",
   "Personal taste fit after you have rated bottles",
 ] as const;
 
@@ -217,16 +218,18 @@ function MatchChapter() {
   return (
     <div className="gv-story-copy gv-story-copy--split">
       <div>
-        <p className="gv-story-kicker">Demonstration of match reasoning</p>
+        <p className="gv-story-kicker">Explainable match reasoning</p>
         <p className="gv-story-lede">
           Why a bottle fits should be as clear as the recommendation itself.
         </p>
         <p>
-          This preview explains the dimensions a future recommendation may use. It is
-          not a score, recommendation, or profile for the current visitor.
+          The implemented engine parses controlled request clues and scores sourced
+          catalog evidence across pairing, style, budget, occasion, source confidence,
+          discovery balance, and optional aggregate cellar signals.
         </p>
         <p className="gv-story-disclosure">
-          Personal taste matching begins after you save and rate bottles.
+          Results stay request-only until at least three meaningful cellar signals exist
+          across two sourced bottles. Every available point remains visible on Discover.
         </p>
       </div>
       <ul className="gv-match-signals">
@@ -359,8 +362,8 @@ function AtlasChapter() {
       </div>
       <p className="gv-story-disclosure">
         Demonstration only. These clusters show how an early profile may appear after
-        enough real cellar activity exists. The personalized engine is not implemented
-        yet.
+        enough real cellar activity exists. The full personalized Taste Atlas remains
+        future work.
       </p>
       <div className="gv-story-actions">
         <ButtonLink to="/demo/taste-atlas" variant="secondary">
@@ -419,7 +422,8 @@ function FinaleChapter() {
             accessible navigation, responsive final media, and a persistent React Three
             Fiber WebGL bottle built from local desktop and mobile GLB models. Capability
             checks and reduced-motion preferences retain the CSS bottle fallback when
-            needed. A recommendation engine and personalized Taste Atlas remain future work.
+            needed. Discover now includes a deterministic explainable recommendation
+            engine; the full personalized Taste Atlas remains future work.
           </p>
         </div>
       </details>
