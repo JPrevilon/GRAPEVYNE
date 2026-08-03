@@ -8,11 +8,18 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "lint": "eslint . --max-warnings=0",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.e2e.json",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "node scripts/run-e2e.mjs",
+    "test:e2e:chromium": "node scripts/run-e2e.mjs --project=desktop-chromium --project=mobile-chromium --project=reduced-motion-chromium",
+    "test:e2e:cross-browser": "node scripts/run-e2e.mjs --project=desktop-firefox --project=desktop-webkit --project=mobile-webkit --grep=@smoke",
+    "test:e2e:headed": "node scripts/run-e2e.mjs --project=desktop-chromium --headed",
+    "test:a11y": "node scripts/run-e2e.mjs e2e/accessibility.spec.ts --project=desktop-chromium",
+    "test:visual": "GRAPEVYNE_VISUAL_BASELINES=1 node scripts/run-e2e.mjs e2e/visual.spec.ts --project=reduced-motion-chromium",
     "verify:assets": "node scripts/verify-assets.mjs",
-    "check": "npm run verify:assets && npm run lint && npm run test && npm run build"
+    "verify:bundle": "node scripts/verify-bundle.mjs",
+    "check": "npm run verify:assets && npm run lint && npm run test && npm run build && npm run verify:bundle"
   },
   "dependencies": {
     "@fontsource-variable/jost": "5.3.0",
@@ -32,7 +39,9 @@
     "vite": "^5.4.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
     "@eslint/js": "9.39.4",
+    "@playwright/test": "1.62.1",
     "@testing-library/dom": "10.4.0",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.1.0",

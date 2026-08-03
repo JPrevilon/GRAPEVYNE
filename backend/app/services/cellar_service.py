@@ -2,6 +2,7 @@ from datetime import date
 from decimal import Decimal
 
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import contains_eager
 
 from app.extensions import db
 from app.models import CellarEntry, Wine
@@ -18,7 +19,8 @@ class CellarService:
         return (
             CellarEntry.query.filter_by(user_id=user_id)
             .join(Wine)
-            .order_by(CellarEntry.saved_at.desc())
+            .options(contains_eager(CellarEntry.wine))
+            .order_by(CellarEntry.saved_at.desc(), CellarEntry.id.desc())
             .all()
         )
 

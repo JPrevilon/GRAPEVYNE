@@ -89,6 +89,13 @@ MAX_CELLAR_TAG_LENGTH = 40
 ISO_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
+@cellar_bp.after_request
+def prevent_shared_cellar_caching(response):
+    response.headers["Cache-Control"] = "private, no-store"
+    response.vary.add("Cookie")
+    return response
+
+
 def validate_cellar_create_payload(payload):
     errors = validate_allowed_fields(
         payload,

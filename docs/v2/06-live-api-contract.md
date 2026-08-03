@@ -61,6 +61,8 @@ The tables below describe the real routes. “Public” means the route does not
 
 The returned user object contains `id`, `name`, `email`, `createdAt`, and `updatedAt`; password and password-hash fields are never serialized.
 
+Prompt 09 cache hardening adds `Cache-Control: private, no-store` and `Vary: Cookie` to every auth response, including validation/authentication errors. This response-header contract does not change any status code or JSON envelope.
+
 Signup validation is exact:
 
 - `name`: required non-empty text after trimming, maximum 120 characters;
@@ -119,11 +121,13 @@ The server first resolves a nested record against `WineService`. When a canonica
 - `OPTIONS` preflight remains public: an exact trusted origin receives credentialed approval and an untrusted origin receives a normal preflight response without an allow-origin header.
 - Trusted preflight permits both `Content-Type` and the expected-user consistency header; the preferred same-origin topology does not require a cross-origin preflight.
 - Safe GET requests are unaffected by CSRF/origin enforcement, though CORS headers are still exact-origin only.
-- Flask does not set an endpoint-specific `Cache-Control` policy in this phase. Cache statements above describe the frontend's in-memory React Query policy, not a shared HTTP/CDN cache.
+- Auth and Cellar blueprint responses, Taste Profile responses, and recommendation responses explicitly set `Cache-Control: private, no-store` and `Vary: Cookie`; this includes their handled error responses. Other public catalog/health routes retain no endpoint-specific cache policy. Frontend React Query caching remains a separate in-memory policy.
 
 ## Public/private cache boundary
 
 Public wine keys begin with `public` and contain no account identity or cellar data. Private keys begin with `private`, put the authenticated numeric user ID second, and use `gcTime: 0` for current cellar operations. On logout or identity change, `AuthProvider` cancels and removes all private queries and removes private mutations; public wine search/detail data may remain. Responses whose `userId` does not match the active identity are rejected as `session_identity_mismatch`, while an expected-user precondition mismatch is `session_identity_changed`; both trigger session revalidation and neither can write into another user's cache. A matching server-confirmed update/delete still reconciles its owner-scoped cache if session revalidation begins before the response arrives, but private editor feedback is suppressed until the identity is verified ready.
+
+Every `/api/cellar` response now carries the same `private, no-store` and `Vary: Cookie` policy as auth/Profile/personalized responses. This is defense in depth for shared HTTP caches and does not replace signed-session authentication or owner filtering.
 
 The public `/demo/cellar` and `/demo/taste-atlas` routes use explicit read-only fixture data and no private query keys. A discovery network error may display a visibly labeled link to that demo route; it never inserts demo entries into live search results.
 

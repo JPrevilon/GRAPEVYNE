@@ -78,4 +78,19 @@ export default [
     },
     rules: js.configs.recommended.rules,
   },
+  {
+    files: ["e2e/**/*.ts", "playwright.config.ts"],
+    languageOptions: {
+      ecmaVersion: "latest",
+      globals: { ...globals.browser, ...globals.node },
+      parser: tseslint.parser,
+      parserOptions: { sourceType: "module" },
+    },
+    plugins: {
+      "@typescript-eslint": tseslint.plugin,
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+    },
+  },
 ];

@@ -4,6 +4,9 @@ __pycache__/
 .pytest_cache/
 .venv/
 .env
+.env.*
+!.env.example
+!**/.env.example
 
 # Flask
 instance/
@@ -12,6 +15,22 @@ instance/
 node_modules/
 dist/
 .vite/
+frontend/playwright-report/
+frontend/test-results/
+frontend/.auth/
+frontend/e2e/.auth/
+coverage/
+htmlcov/
+.coverage*
+blob-report/
+*.sqlite
+*.sqlite3
+*.db
+*.log
+*.pem
+*.key
+*.p12
+*.pfx
 
 # OS/editor
 .DS_Store

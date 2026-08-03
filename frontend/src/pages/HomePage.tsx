@@ -354,7 +354,7 @@ function AtlasChapter() {
         bottle.
       </p>
       <div
-        aria-label="Demonstration of future taste preference clusters"
+        aria-label="Demonstration of taste preference clusters"
         className="gv-atlas-demo"
         role="group"
       >

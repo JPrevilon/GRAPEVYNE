@@ -288,7 +288,7 @@ describe("HomePage scroll story", () => {
     expect(screen.getByText("Demonstration tasting memory")).toBeInTheDocument();
     expect(
       within(
-        screen.getByRole("group", { name: /Demonstration of future taste/i }),
+        screen.getByRole("group", { name: /Demonstration of taste/i }),
       ).getByText("Fresh & mineral"),
     ).toBeInTheDocument();
     expect(container.textContent).not.toMatch(/\d+\s*%/);

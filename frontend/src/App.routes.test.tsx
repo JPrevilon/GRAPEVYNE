@@ -168,4 +168,14 @@ describe("major route composition", () => {
     ).toBeInTheDocument();
     expect(mocks.getCellarEntries).not.toHaveBeenCalled();
   });
+
+  it("renders an honest not-found route without redirecting to the homepage", async () => {
+    renderRoute("/missing-private-vintage");
+    expect(
+      await screen.findByRole("heading", {
+        name: "THIS PAGE IS NOT IN THE DIRECTORY",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "FIND THE BOTTLE KEEP THE MEMORY" })).not.toBeInTheDocument();
+  });
 });

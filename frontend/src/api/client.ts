@@ -13,6 +13,7 @@ interface ApiErrorOptions {
 const configuredApiBase = import.meta.env.VITE_API_BASE_URL?.trim();
 
 export const API_BASE_URL = (configuredApiBase || "/api").replace(/\/+$/, "");
+export const API_REQUEST_TIMEOUT_MS = 15_000;
 
 export class ApiError extends Error {
   readonly status: number;
@@ -100,6 +101,24 @@ export async function apiRequest<T = unknown>(
   options: RequestInit = {},
 ): Promise<T> {
   const headers = new Headers(options.headers);
+  const requestController = new AbortController();
+  const callerSignal = options.signal;
+  let didTimeout = false;
+
+  const forwardCallerAbort = () => {
+    requestController.abort(callerSignal?.reason);
+  };
+
+  if (callerSignal?.aborted) {
+    forwardCallerAbort();
+  } else {
+    callerSignal?.addEventListener("abort", forwardCallerAbort, { once: true });
+  }
+
+  const timeoutId = window.setTimeout(() => {
+    didTimeout = true;
+    requestController.abort();
+  }, API_REQUEST_TIMEOUT_MS);
 
   if (
     options.body !== undefined &&
@@ -116,8 +135,22 @@ export async function apiRequest<T = unknown>(
       ...options,
       credentials: "include",
       headers,
+      signal: requestController.signal,
     });
   } catch (cause) {
+    window.clearTimeout(timeoutId);
+    callerSignal?.removeEventListener("abort", forwardCallerAbort);
+
+    if (didTimeout) {
+      throw new ApiError(
+        "The GrapeVyne API took too long to respond. Please try again.",
+        {
+          cause,
+          code: "request_timeout",
+        },
+      );
+    }
+
     if (isAbortError(cause)) {
       throw cause;
     }
@@ -136,6 +169,16 @@ export async function apiRequest<T = unknown>(
   try {
     payload = await readResponsePayload(response);
   } catch (cause) {
+    if (didTimeout) {
+      throw new ApiError(
+        "The GrapeVyne API took too long to respond. Please try again.",
+        {
+          cause,
+          code: "request_timeout",
+        },
+      );
+    }
+
     if (isAbortError(cause)) {
       throw cause;
     }
@@ -147,6 +190,9 @@ export async function apiRequest<T = unknown>(
         code: "network_error",
       },
     );
+  } finally {
+    window.clearTimeout(timeoutId);
+    callerSignal?.removeEventListener("abort", forwardCallerAbort);
   }
 
   if (!response.ok) {
@@ -168,7 +214,10 @@ export function unwrapData<T>(payload: unknown): T {
 }
 
 export function isNetworkFailure(error: unknown): boolean {
-  return error instanceof ApiError && error.code === "network_error";
+  return (
+    error instanceof ApiError &&
+    (error.code === "network_error" || error.code === "request_timeout")
+  );
 }
 
 export function getHealth(signal?: AbortSignal) {

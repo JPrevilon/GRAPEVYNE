@@ -371,6 +371,30 @@ def test_large_deterministic_profile_fixture_is_linear_and_bounded(
     assert elapsed_seconds < 2.0
 
 
+def test_larger_profile_stress_fixture_remains_deterministic_and_output_bounded(
+    deterministic_large_profile_rows,
+):
+    manual_rows = deterministic_large_profile_rows[:-len(MOCK_WINES)] * 4
+    catalog_rows = deterministic_large_profile_rows[-len(MOCK_WINES):]
+    rows = manual_rows + catalog_rows
+    service = TasteProfileService(signal_service=_StaticSignalService(rows))
+
+    first = service.for_user(1)
+    second = service.for_user(1)
+
+    assert first == second
+    assert first["state"] == "active"
+    assert first["evidence"]["totalCellarEntries"] == 10_006
+    assert first["evidence"]["distinctCanonicalWines"] == len(MOCK_WINES)
+    assert first["evidence"]["signalCount"] <= (
+        len(MOCK_WINES) * MAX_SIGNALS_PER_CANONICAL_WINE
+    )
+    assert len(first["signals"]) <= 12
+    assert len(first["lowerAffinitySignals"]) <= 12
+    assert len(json.dumps(first)) < 16_384
+    assert "PRIVATE PERFORMANCE TAG" not in json.dumps(first)
+
+
 def test_missing_catalog_attributes_create_no_invented_scores_or_suggestion():
     candidate = {
         "externalWineId": "mock-missing-attributes",

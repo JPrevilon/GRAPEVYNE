@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactNode } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 
 import AppLayout from "@/components/layout/AppLayout";
 import ProtectedRoute from "@/components/routing/ProtectedRoute";
@@ -11,6 +11,7 @@ const DemoTasteAtlasPage = lazy(() => import("@/pages/DemoTasteAtlasPage"));
 const DiscoverPage = lazy(() => import("@/pages/DiscoverPage"));
 const HomePage = lazy(() => import("@/pages/HomePage"));
 const LoginPage = lazy(() => import("@/pages/LoginPage"));
+const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
 const SignupPage = lazy(() => import("@/pages/SignupPage"));
 const WineDetailPage = lazy(() => import("@/pages/WineDetailPage"));
@@ -46,7 +47,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<SuspendedRoute><NotFoundPage /></SuspendedRoute>} />
       </Route>
     </Routes>
   );

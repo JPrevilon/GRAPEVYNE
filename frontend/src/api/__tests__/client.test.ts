@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   API_BASE_URL,
+  API_REQUEST_TIMEOUT_MS,
   ApiError,
   apiRequest,
   isAbortError,
@@ -13,6 +14,7 @@ const fetchMock = vi.fn<typeof fetch>();
 
 describe("apiRequest", () => {
   beforeEach(() => {
+    vi.useRealTimers();
     fetchMock.mockReset();
     vi.stubGlobal("fetch", fetchMock);
   });
@@ -110,6 +112,27 @@ describe("apiRequest", () => {
     await expect(apiRequest("/auth/me")).rejects.toBe(abortError);
     expect(isAbortError(abortError)).toBe(true);
     expect(isAbortError({ name: "AbortError" })).toBe(true);
+  });
+
+  it("bounds a stalled request and distinguishes the owned timeout from caller cancellation", async () => {
+    vi.useFakeTimers();
+    fetchMock.mockImplementation((_input, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener(
+          "abort",
+          () => reject(new DOMException("Timed out.", "AbortError")),
+          { once: true },
+        );
+      }),
+    );
+
+    const request = apiRequest("/health").catch((reason: unknown) => reason);
+    await vi.advanceTimersByTimeAsync(API_REQUEST_TIMEOUT_MS);
+
+    const error = await request;
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({ code: "request_timeout", status: 0 });
+    expect(isNetworkFailure(error)).toBe(true);
   });
 
   it("normalizes a response-body stream failure as a useful network error", async () => {
