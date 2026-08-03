@@ -1,6 +1,6 @@
 # GrapeVyne
 
-GrapeVyne is a premium wine discovery and personal cellar platform. Users can create an account, discover wines through a backend wine-service abstraction, save bottles to a protected personal cellar, and manage private tasting notes, ratings, occasions, and favorites.
+GrapeVyne is a premium wine discovery and personal cellar platform. Users can create an account, discover wines through a backend wine-service abstraction, save bottles to a protected personal cellar, record private tasting memories, and build an explainable personal Taste Atlas.
 
 The MVP is built as a real full-stack product, not a static demo. It demonstrates a React frontend, Flask API, PostgreSQL relational database, SQLAlchemy ORM models, authentication, protected user-owned data, related resources, and full CRUD.
 
@@ -11,7 +11,7 @@ GrapeVyne helps users answer two practical questions:
 - What wine should I choose for this meal, moment, or gift?
 - Which wines have I already loved enough to remember?
 
-The signature experience is **Open Cellar**, a premium visual interface where saved bottles are grouped into smart shelves such as Favorites, Recently Tried, Best for Steak, Best for Date Night, Rare Vintages, and Gifts / Celebrations.
+The signature experience is **Open Cellar**, a premium visual interface where persisted bottles are organized into truthful data-derived views such as Recently Added, Favorites, Highest Rated, Date Night, Dinner Pairings, Celebrations, Wishlist, and Buy Again.
 
 ## Tech Stack
 
@@ -34,9 +34,12 @@ The signature experience is **Open Cellar**, a premium visual interface where sa
 - CRUD for cellar entries:
   - create saved bottle
   - read cellar list and detail
-  - update notes, rating, occasion, favorite
+  - update notes, rating, occasion, favorite, tags, and status
+  - record a memory title, tasted date, location, pairing, companions, and a tri-state buy-again answer
   - delete saved bottle
-- Open Cellar visual shelves with selected-bottle detail panel
+- Data-derived Cellar shelves plus an accessible all-bottles view and selected-bottle memory editor
+- Private, deterministic Taste Atlas with empty, limited, and active states
+- One explainable adjacent-catalog suggestion when the signed-in evidence and six-record catalog support it
 - Loading, empty, error, success, and validation states
 - Toast feedback for key user actions
 
@@ -50,6 +53,7 @@ GRAPEVYNE/
       routes/      Flask API blueprints
       services/    Wine and cellar service layers
       utils/       validation and response helpers
+    migrations/    Alembic/Flask-Migrate revision history
   frontend/
     src/
       api/         fetch client
@@ -58,7 +62,7 @@ GRAPEVYNE/
       pages/       route-level views
       styles/      global design system
   docs/
-    screenshots/   presentation screenshot placeholders
+    screenshots/   prompt-by-prompt browser verification captures
 ```
 
 ## Database Schema
@@ -120,6 +124,12 @@ Stores private user-owned cellar data.
 - `occasion`
 - `status`
 - `saved_at`
+- `memory_title` (nullable, 160 characters)
+- `tasted_on` (nullable date)
+- `location` (nullable, 240 characters)
+- `pairing` (nullable, 240 characters)
+- `opened_with` (nullable, 240 characters)
+- `would_buy_again` (nullable boolean)
 - `created_at`
 - `updated_at`
 
@@ -154,6 +164,7 @@ GET  /api/auth/me
 ```text
 GET /api/wines/search?query=steak
 GET /api/wines/:externalWineId
+GET /api/wines/recommendations?query=steak&limit=6
 ```
 
 The frontend never calls an external wine API directly. It calls Flask, and Flask delegates to `WineService`.
@@ -169,6 +180,16 @@ DELETE /api/cellar/:entryId
 ```
 
 All cellar endpoints require authentication.
+
+### Private Taste Profile
+
+```text
+GET /api/profile/taste
+```
+
+The current Flask session is the only identity input. The response is computed per request
+from bounded structured cellar signals, is marked `private, no-store`, and never returns
+free-form memories or internal row identifiers.
 
 ## Setup Instructions
 
@@ -196,6 +217,10 @@ Backend runs at:
 http://localhost:5000
 ```
 
+`init-db` explicitly applies the tracked Flask-Migrate history; application import and
+startup never create or alter tables. Existing unversioned Prompt 07 databases need the
+reviewed stamp-and-upgrade procedure in `docs/v2/08-migration-and-rollback.md`.
+
 ### 2. Frontend
 
 ```bash
@@ -220,19 +245,17 @@ http://localhost:5173
 5. Save the bottle to your cellar.
 6. Open Cellar.
 7. Select a bottle from a shelf.
-8. Edit rating, occasion, notes, and favorite status.
-9. Delete the bottle if needed.
-10. Log out and confirm protected routes redirect to login.
+8. Edit the private memory, structured tasting fields, rating, occasion, tags, and favorite status.
+9. Open Profile to inspect the owner-scoped Taste Atlas and its readable list alternative.
+10. Delete the bottle and confirm its evidence leaves the profile.
+11. Log out and confirm protected routes redirect to login.
 
 ## Screenshots
 
-Add presentation screenshots here:
-
-- `docs/screenshots/home.png`
-- `docs/screenshots/discover.png`
-- `docs/screenshots/wine-detail.png`
-- `docs/screenshots/open-cellar.png`
-- `docs/screenshots/profile.png`
+Prompt 08 browser evidence is under `docs/screenshots/prompt-08/`; it includes the private
+Cellar and memory editor, all three Taste Profile states, the readable Atlas alternative,
+two-account isolation, public demo disclosures, error handling, responsive views, and
+reduced-motion behavior. Earlier prompt captures remain in their own directories.
 
 ## Full-Stack Rubric Signals
 
@@ -252,10 +275,7 @@ Add presentation screenshots here:
 - Real wine API provider integration
 - Advanced cellar search/filter/sort
 - Pairing assistant by meal and occasion
-- Taste profile analytics
-- Wishlist and buy-again status
 - More cinematic Open Cellar transitions
 - Mobile camera label capture
 - Restaurant and gift modes
 - Inventory quantity tracking
-

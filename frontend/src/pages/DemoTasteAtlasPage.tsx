@@ -45,7 +45,7 @@ export default function DemoTasteAtlasPage() {
             </ButtonLink>
           </div>
         }
-        description="This page does not query a profile endpoint, predict your taste, or read authenticated cellar data. Full personal Taste Atlas computation remains a later engine phase."
+        description="This page does not query the private Taste Profile endpoint, predict your taste, or read authenticated cellar data. Sign in to build a separate owner-scoped Atlas from your persisted cellar."
         eyebrow="Demo boundary"
         title="ILLUSTRATIVE PATTERNS—NOT A VISITOR PROFILE"
         tone="demo"

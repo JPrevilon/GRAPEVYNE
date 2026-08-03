@@ -18,10 +18,17 @@ import type {
 
 export interface CellarEntryChanges {
   favorite?: boolean;
+  location?: string | null;
+  memoryTitle?: string | null;
   notes?: string | null;
   occasion?: string | null;
+  openedWith?: string | null;
+  pairing?: string | null;
   status?: CellarStatus;
+  tags?: string[];
+  tastedOn?: string | null;
   userRating?: number | null;
+  wouldBuyAgain?: boolean | null;
 }
 
 export interface CellarWineInput {
@@ -129,10 +136,19 @@ function cellarChangesPayload(
   const payload: CellarEntryChanges = {};
 
   if (input.favorite !== undefined) payload.favorite = input.favorite;
+  if (input.location !== undefined) payload.location = input.location;
+  if (input.memoryTitle !== undefined) payload.memoryTitle = input.memoryTitle;
   if (input.notes !== undefined) payload.notes = input.notes;
   if (input.occasion !== undefined) payload.occasion = input.occasion;
+  if (input.openedWith !== undefined) payload.openedWith = input.openedWith;
+  if (input.pairing !== undefined) payload.pairing = input.pairing;
   if (input.status !== undefined) payload.status = input.status;
+  if (input.tags !== undefined) payload.tags = [...input.tags];
+  if (input.tastedOn !== undefined) payload.tastedOn = input.tastedOn;
   if (input.userRating !== undefined) payload.userRating = input.userRating;
+  if (input.wouldBuyAgain !== undefined) {
+    payload.wouldBuyAgain = input.wouldBuyAgain;
+  }
 
   return payload;
 }

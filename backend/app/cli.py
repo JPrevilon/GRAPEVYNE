@@ -1,4 +1,7 @@
+from pathlib import Path
+
 import click
+from flask_migrate import upgrade
 
 from app.extensions import db
 from app.models import Wine
@@ -46,13 +49,15 @@ SEED_WINES = [
     },
 ]
 
+MIGRATIONS_DIRECTORY = Path(__file__).resolve().parents[1] / "migrations"
+
 
 def register_cli_commands(app):
     @app.cli.command("init-db")
     def init_db():
-        """Create database tables for local development."""
-        db.create_all()
-        click.echo("Database tables created.")
+        """Apply tracked database migrations for local development."""
+        upgrade(directory=str(MIGRATIONS_DIRECTORY), revision="head")
+        click.echo("Database migrations applied.")
 
     @app.cli.command("seed-demo-data")
     def seed_demo_data():
@@ -73,4 +78,3 @@ def register_cli_commands(app):
 
         db.session.commit()
         click.echo(f"Seeded {created_count} demo wines.")
-

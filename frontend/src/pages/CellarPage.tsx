@@ -12,11 +12,10 @@ import {
   updateCellarEntry,
 } from "@/api/cellar";
 import { isAbortError, isAuthenticationRequired } from "@/api/client";
-import { RECOMMENDATION_QUERY_RESOURCE } from "@/api/recommendationQueryKeys";
 import DirectoryHeading from "@/components/typography/DirectoryHeading";
 import { DIRECTORY_PAGE_HEADINGS } from "@/components/typography/directoryHeadingPresets";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { TextInput } from "@/components/ui/FormControls";
+import { FilterChip, SelectControl, TextInput } from "@/components/ui/FormControls";
 import { PageShell } from "@/components/ui/PageShell";
 import {
   EmptyState,
@@ -27,6 +26,14 @@ import {
 import CellarDetailPanel from "@/features/cellar/components/CellarDetailPanel";
 import CellarShelf from "@/features/cellar/components/CellarShelf";
 import { cellarEntryTriggerId } from "@/features/cellar/components/cellarPresentation";
+import { invalidatePrivateCellarDerivations } from "@/features/cellar/cellarMutationInvalidation";
+import {
+  buildCellarGroups,
+  type CellarGroupId,
+  type CellarSortId,
+  type CellarViewMode,
+  sortCellarEntries,
+} from "@/features/cellar/cellarOrganization";
 import { privateQueryKey } from "@/features/auth/privateQueryKeys";
 import { useAuth } from "@/features/auth/useAuth";
 import type { CellarEntry, CellarListResult } from "@/types/domain";
@@ -50,6 +57,12 @@ function searchableWineFields(entry: CellarEntry) {
     entry.wine.region,
     entry.wine.country,
     entry.wine.vintage,
+    entry.memoryTitle,
+    entry.location,
+    entry.pairing,
+    entry.openedWith,
+    entry.notes,
+    ...entry.tags,
   ]
     .filter(Boolean)
     .join(" ")
@@ -78,6 +91,9 @@ export default function CellarPage() {
   const queryClient = useQueryClient();
   const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [groupId, setGroupId] = useState<CellarGroupId>("all");
+  const [sortId, setSortId] = useState<CellarSortId>("recent");
+  const [viewMode, setViewMode] = useState<CellarViewMode>("list");
   const userId = user?.id;
   const activeUserId = useRef(userId);
   const activeAuthStatus = useRef(authStatus);
@@ -159,9 +175,7 @@ export default function CellarPage() {
             }
           : current,
       );
-      void queryClient.invalidateQueries({
-        queryKey: privateQueryKey(ownerId, RECOMMENDATION_QUERY_RESOURCE),
-      });
+      void invalidatePrivateCellarDerivations(queryClient, ownerId);
     },
   });
 
@@ -197,16 +211,17 @@ export default function CellarPage() {
             }
           : current,
       );
-      void queryClient.invalidateQueries({
-        queryKey: privateQueryKey(ownerId, RECOMMENDATION_QUERY_RESOURCE),
-      });
-      setSelectedEntryId(null);
+      void invalidatePrivateCellarDerivations(queryClient, ownerId);
+      setSelectedEntryId((current) => current === deletedId ? null : current);
     },
   });
 
   useEffect(() => {
     setSelectedEntryId(null);
     setSearchQuery("");
+    setGroupId("all");
+    setSortId("recent");
+    setViewMode("list");
   }, [userId]);
 
   const entries = useMemo(
@@ -216,21 +231,31 @@ export default function CellarPage() {
       ),
     [cellarQuery.data?.entries],
   );
+  const groups = useMemo(() => buildCellarGroups(entries), [entries]);
+  const activeGroup = groups.find((group) => group.id === groupId) ?? groups[0];
   const normalizedSearch = searchQuery.trim().toLocaleLowerCase();
   const visibleEntries = useMemo(
-    () =>
-      normalizedSearch
-        ? entries.filter((entry) => searchableWineFields(entry).includes(normalizedSearch))
-        : entries,
-    [entries, normalizedSearch],
+    () => {
+      const groupedEntries = activeGroup?.entries ?? [];
+      const searchedEntries = normalizedSearch
+        ? groupedEntries.filter((entry) =>
+            searchableWineFields(entry).includes(normalizedSearch),
+          )
+        : groupedEntries;
+
+      return sortCellarEntries(searchedEntries, sortId);
+    },
+    [activeGroup, normalizedSearch, sortId],
   );
   const duplicateCount = useMemo(() => repeatedWineCount(entries), [entries]);
   const selectedEntry =
     entries.find((entry) => entry.id === selectedEntryId) ?? null;
-  const isMutating =
+  const selectedEntryIsMutating =
     authStatus !== "ready" ||
-    updateMutation.isPending ||
-    deleteMutation.isPending;
+    (updateMutation.isPending &&
+      updateMutation.variables?.entryId === selectedEntryId) ||
+    (deleteMutation.isPending &&
+      deleteMutation.variables?.entryId === selectedEntryId);
 
   async function handleUpdate(entryId: number, changes: CellarEntryChanges) {
     if (userId === undefined) {
@@ -304,6 +329,11 @@ export default function CellarPage() {
 
   function handleSearchChange(value: string) {
     setSearchQuery(value);
+    setSelectedEntryId(null);
+  }
+
+  function handleGroupChange(nextGroupId: CellarGroupId) {
+    setGroupId(nextGroupId);
     setSelectedEntryId(null);
   }
 
@@ -388,7 +418,9 @@ export default function CellarPage() {
             description="Wines will appear here only after the cellar API confirms a save for this account."
             eyebrow="Private cellar · Live account data"
             title="YOUR CELLAR IS READY FOR ITS FIRST BOTTLE"
-          />
+          >
+            <p>Your tasting memories are private to your account.</p>
+          </EmptyState>
         </div>
       </PageShell>
     );
@@ -418,6 +450,10 @@ export default function CellarPage() {
           />
         ) : null}
 
+        <p className="gv-cellar-privacy">
+          Your tasting memories are private to your account.
+        </p>
+
         <section aria-label="Search saved bottles" className="gv-cellar-toolbar">
           <TextInput
             autoComplete="off"
@@ -429,8 +465,62 @@ export default function CellarPage() {
             value={searchQuery}
           />
           <p aria-live="polite" className="gv-cellar-toolbar__result-count" role="status">
-            Showing {visibleEntries.length} of {entries.length} saved {entries.length === 1 ? "bottle" : "bottles"}.
+            Showing {visibleEntries.length} of {activeGroup?.entries.length ?? 0} in {activeGroup?.label ?? "All bottles"}; {entries.length} total.
           </p>
+        </section>
+
+        <section aria-labelledby="cellar-organization-title" className="gv-cellar-organization">
+          <div>
+            <p className="gv-eyebrow">Cellar organization</p>
+            <h2 id="cellar-organization-title">PERSISTED GROUPS</h2>
+            <p>Only groups supported by your saved fields appear here.</p>
+          </div>
+          <div
+            aria-label="Choose a cellar group"
+            className="gv-cellar-group-filters"
+            role="group"
+          >
+            {groups.map((group) => (
+              <FilterChip
+                active={activeGroup?.id === group.id}
+                key={group.id}
+                onClick={() => handleGroupChange(group.id)}
+              >
+                {group.label} · {group.entries.length}
+              </FilterChip>
+            ))}
+          </div>
+          <div className="gv-cellar-view-controls">
+            <SelectControl
+              label="Sort bottles"
+              onChange={(value) => setSortId(value as CellarSortId)}
+              options={[
+                { label: "Recently added", value: "recent" },
+                { label: "Highest rated", value: "rating" },
+                { label: "Recently tasted", value: "tasted" },
+                { label: "Wine name", value: "wine-name" },
+              ]}
+              value={sortId}
+            />
+            <div aria-label="Bottle display" role="group">
+              <Button
+                aria-pressed={viewMode === "list"}
+                onClick={() => setViewMode("list")}
+                size="compact"
+                variant={viewMode === "list" ? "secondary" : "text"}
+              >
+                List
+              </Button>
+              <Button
+                aria-pressed={viewMode === "grid"}
+                onClick={() => setViewMode("grid")}
+                size="compact"
+                variant={viewMode === "grid" ? "secondary" : "text"}
+              >
+                Grid
+              </Button>
+            </div>
+          </div>
         </section>
 
         {visibleEntries.length === 0 ? (
@@ -447,14 +537,16 @@ export default function CellarPage() {
         ) : (
           <div className="gv-cellar-layout">
             <CellarShelf
-              disabled={isMutating}
+              disabled={authStatus !== "ready"}
               entries={visibleEntries}
+              groupLabel={activeGroup?.label}
               onSelect={(entry) => setSelectedEntryId(entry.id)}
               selectedEntryId={selectedEntryId}
+              viewMode={viewMode}
             />
             <CellarDetailPanel
               entry={selectedEntry}
-              isMutating={isMutating}
+              isMutating={selectedEntryIsMutating}
               onClose={handleClosePanel}
               onDelete={handleDelete}
               onUpdate={handleUpdate}

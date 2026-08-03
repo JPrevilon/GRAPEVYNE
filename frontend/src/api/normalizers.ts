@@ -15,8 +15,10 @@ import type {
   RecommendationResponse,
   RecommendationResult,
   TasteProfile,
-  TasteProfileCluster,
-  TasteProfileWineId,
+  TasteProfileCatalog,
+  TasteProfileState,
+  TasteSignal,
+  TasteSignalDimension,
   User,
   Wine,
   WineDetailResult,
@@ -65,6 +67,23 @@ const RECOMMENDATION_NOVELTY_VALUES = new Set([
   "familiar",
   "adventurous",
 ] as const);
+
+const TASTE_PROFILE_STATES = new Set<TasteProfileState>([
+  "empty",
+  "limited",
+  "active",
+]);
+
+const TASTE_SIGNAL_DIMENSIONS = new Set<TasteSignalDimension>([
+  "category",
+  "varietal",
+  "place",
+  "flavor",
+  "structure",
+  "occasion",
+]);
+
+const TASTE_ADJACENT_CONFIDENCE = new Set(["medium", "limited"] as const);
 
 export class ApiContractError extends TypeError {
   constructor(message: string) {
@@ -172,6 +191,43 @@ function requiredBoolean(value: unknown, label: string): boolean {
   return value;
 }
 
+function nullableBoolean(value: unknown, label: string): boolean | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  return requiredBoolean(value, label);
+}
+
+function nullableDateString(value: unknown, label: string): string | null {
+  const normalized = nullableString(value, label);
+
+  if (normalized === null) {
+    return null;
+  }
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(normalized);
+
+  if (!match) {
+    throw new ApiContractError(`${label} must be an ISO calendar date.`);
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() + 1 !== month ||
+    date.getUTCDate() !== day
+  ) {
+    throw new ApiContractError(`${label} must be a valid calendar date.`);
+  }
+
+  return normalized;
+}
+
 function requiredStringList(value: unknown, label: string): string[] {
   return requiredArray(value, label).map((item, index) =>
     requiredString(item, `${label}[${index}]`),
@@ -266,14 +322,6 @@ function cellarStatus(value: unknown): CellarStatus {
   }
 
   return value as CellarStatus;
-}
-
-function tasteProfileWineId(value: unknown, label: string): TasteProfileWineId {
-  if (typeof value === "string") {
-    return value;
-  }
-
-  return integer(value, label);
 }
 
 export function normalizeUser(value: unknown): User {
@@ -395,6 +443,24 @@ export function normalizeCellarEntry(value: unknown): CellarEntry {
     tags: stringList(input.tags, "cellarEntry.tags"),
     occasion: nullableString(input.occasion, "cellarEntry.occasion"),
     status: cellarStatus(input.status),
+    memoryTitle: nullableString(
+      firstPresent(input, ["memoryTitle", "memory_title"]),
+      "cellarEntry.memoryTitle",
+    ),
+    tastedOn: nullableDateString(
+      firstPresent(input, ["tastedOn", "tasted_on"]),
+      "cellarEntry.tastedOn",
+    ),
+    location: nullableString(input.location, "cellarEntry.location"),
+    pairing: nullableString(input.pairing, "cellarEntry.pairing"),
+    openedWith: nullableString(
+      firstPresent(input, ["openedWith", "opened_with"]),
+      "cellarEntry.openedWith",
+    ),
+    wouldBuyAgain: nullableBoolean(
+      firstPresent(input, ["wouldBuyAgain", "would_buy_again"]),
+      "cellarEntry.wouldBuyAgain",
+    ),
     savedAt: requiredString(
       firstPresent(input, ["savedAt", "saved_at"]),
       "cellarEntry.savedAt",
@@ -733,21 +799,43 @@ export function normalizeRecommendationResponse(
   };
 }
 
-function normalizeTasteCluster(value: unknown, index: number): TasteProfileCluster {
-  const input = objectValue(value, `tasteProfile.clusters[${index}]`);
+function normalizeTasteSignal(value: unknown, index: number, collection: string): TasteSignal {
+  const label = `tasteProfile.${collection}[${index}]`;
+  const input = objectValue(value, label);
 
   return {
-    id: requiredString(input.id, `tasteProfile.clusters[${index}].id`),
-    label: requiredString(input.label, `tasteProfile.clusters[${index}].label`),
-    weight: finiteNumber(input.weight, `tasteProfile.clusters[${index}].weight`),
-    wineIds: requiredArray(
-      firstPresent(input, ["wineIds", "wine_ids"]),
-      `tasteProfile.clusters[${index}].wineIds`,
-    ).map((wineId, wineIndex) =>
-      tasteProfileWineId(
-        wineId,
-        `tasteProfile.clusters[${index}].wineIds[${wineIndex}]`,
-      ),
+    id: requiredString(input.id, `${label}.id`),
+    dimension: controlledString(
+      input.dimension,
+      TASTE_SIGNAL_DIMENSIONS,
+      `${label}.dimension`,
+    ),
+    label: requiredString(input.label, `${label}.label`),
+    score: boundedNumber(input.score, `${label}.score`, 0, 100),
+    evidenceCount: nonNegativeInteger(
+      input.evidenceCount,
+      `${label}.evidenceCount`,
+    ),
+    summary: requiredString(input.summary, `${label}.summary`),
+  };
+}
+
+function normalizeTasteCatalog(value: unknown): TasteProfileCatalog {
+  const input = objectValue(value, "tasteProfile.catalog");
+
+  return {
+    provider: requiredString(input.provider, "tasteProfile.catalog.provider"),
+    candidateCount: nonNegativeInteger(
+      input.candidateCount,
+      "tasteProfile.catalog.candidateCount",
+    ),
+    isDemonstrationCatalog: requiredBoolean(
+      input.isDemonstrationCatalog,
+      "tasteProfile.catalog.isDemonstrationCatalog",
+    ),
+    limitations: requiredString(
+      input.limitations,
+      "tasteProfile.catalog.limitations",
     ),
   };
 }
@@ -755,50 +843,127 @@ function normalizeTasteCluster(value: unknown, index: number): TasteProfileClust
 export function normalizeTasteProfile(value: unknown): TasteProfile {
   const outer = objectValue(value, "tasteProfile");
   const input = isJsonObject(outer.profile) ? outer.profile : outer;
-  const rawPriceRange = requiredArray(
-    firstPresent(input, ["typicalPriceRange", "typical_price_range"]),
-    "tasteProfile.typicalPriceRange",
-  );
+  const evidence = objectValue(input.evidence, "tasteProfile.evidence");
+  const rawPriceRange = input.observedPriceRange;
+  const rawSuggestion = input.adjacentSuggestion;
 
-  if (rawPriceRange.length !== 2) {
+  if (rawPriceRange === undefined) {
     throw new ApiContractError(
-      "tasteProfile.typicalPriceRange must contain exactly two numbers.",
+      "tasteProfile.observedPriceRange must be an object or null.",
     );
   }
 
-  const minimumPrice = rawPriceRange[0];
-  const maximumPrice = rawPriceRange[1];
+  if (rawSuggestion === undefined) {
+    throw new ApiContractError(
+      "tasteProfile.adjacentSuggestion must be an object or null.",
+    );
+  }
+
+  const observedPriceRange =
+    rawPriceRange === null
+      ? null
+      : (() => {
+          const price = objectValue(rawPriceRange, "tasteProfile.observedPriceRange");
+          const minimumCents = nonNegativeInteger(
+            price.minimumCents,
+            "tasteProfile.observedPriceRange.minimumCents",
+          );
+          const maximumCents = nonNegativeInteger(
+            price.maximumCents,
+            "tasteProfile.observedPriceRange.maximumCents",
+          );
+
+          if (minimumCents > maximumCents) {
+            throw new ApiContractError(
+              "tasteProfile.observedPriceRange minimum cannot exceed its maximum.",
+            );
+          }
+
+          return {
+            minimumCents,
+            maximumCents,
+            sampleSize: nonNegativeInteger(
+              price.sampleSize,
+              "tasteProfile.observedPriceRange.sampleSize",
+            ),
+          };
+        })();
+
+  const adjacentSuggestion =
+    rawSuggestion === null
+      ? null
+      : (() => {
+          const suggestion = objectValue(
+            rawSuggestion,
+            "tasteProfile.adjacentSuggestion",
+          );
+          const wine = normalizeWine(suggestion.wine);
+
+          if (!wine.externalWineId) {
+            throw new ApiContractError(
+              "tasteProfile.adjacentSuggestion.wine.externalWineId must be a string.",
+            );
+          }
+
+          return {
+            wine: { ...wine, externalWineId: wine.externalWineId },
+            reasons: requiredStringList(
+              suggestion.reasons,
+              "tasteProfile.adjacentSuggestion.reasons",
+            ),
+            confidence: controlledString(
+              suggestion.confidence,
+              TASTE_ADJACENT_CONFIDENCE,
+              "tasteProfile.adjacentSuggestion.confidence",
+            ),
+            disclosure: requiredString(
+              suggestion.disclosure,
+              "tasteProfile.adjacentSuggestion.disclosure",
+            ),
+          };
+        })();
 
   return {
-    headline: requiredString(input.headline, "tasteProfile.headline"),
+    state: controlledString(
+      input.state,
+      TASTE_PROFILE_STATES,
+      "tasteProfile.state",
+    ),
+    algorithmVersion: requiredString(
+      input.algorithmVersion,
+      "tasteProfile.algorithmVersion",
+    ),
     summary: requiredString(input.summary, "tasteProfile.summary"),
-    primaryStyles: stringList(
-      firstPresent(input, ["primaryStyles", "primary_styles"]),
-      "tasteProfile.primaryStyles",
+    evidence: {
+      totalCellarEntries: nonNegativeInteger(
+        evidence.totalCellarEntries,
+        "tasteProfile.evidence.totalCellarEntries",
+      ),
+      meaningfulEntries: nonNegativeInteger(
+        evidence.meaningfulEntries,
+        "tasteProfile.evidence.meaningfulEntries",
+      ),
+      distinctCanonicalWines: nonNegativeInteger(
+        evidence.distinctCanonicalWines,
+        "tasteProfile.evidence.distinctCanonicalWines",
+      ),
+      signalCount: nonNegativeInteger(
+        evidence.signalCount,
+        "tasteProfile.evidence.signalCount",
+      ),
+    },
+    signals: requiredArray(input.signals, "tasteProfile.signals").map(
+      (signal, index) => normalizeTasteSignal(signal, index, "signals"),
     ),
-    preferredRegions: stringList(
-      firstPresent(input, ["preferredRegions", "preferred_regions"]),
-      "tasteProfile.preferredRegions",
+    lowerAffinitySignals: requiredArray(
+      input.lowerAffinitySignals,
+      "tasteProfile.lowerAffinitySignals",
+    ).map((signal, index) =>
+      normalizeTasteSignal(signal, index, "lowerAffinitySignals"),
     ),
-    commonFlavorNotes: stringList(
-      firstPresent(input, ["commonFlavorNotes", "common_flavor_notes"]),
-      "tasteProfile.commonFlavorNotes",
-    ),
-    typicalPriceRange: [
-      finiteNumber(minimumPrice, "tasteProfile.typicalPriceRange[0]"),
-      finiteNumber(maximumPrice, "tasteProfile.typicalPriceRange[1]"),
-    ],
-    occasions: stringList(input.occasions, "tasteProfile.occasions"),
-    explorationGaps: stringList(
-      firstPresent(input, ["explorationGaps", "exploration_gaps"]),
-      "tasteProfile.explorationGaps",
-    ),
-    suggestedBranch: requiredString(
-      firstPresent(input, ["suggestedBranch", "suggested_branch"]),
-      "tasteProfile.suggestedBranch",
-    ),
-    clusters: requiredArray(input.clusters, "tasteProfile.clusters").map(
-      normalizeTasteCluster,
-    ),
+    observedPriceRange,
+    adjacentSuggestion,
+    catalog: normalizeTasteCatalog(input.catalog),
+    disclosure: requiredString(input.disclosure, "tasteProfile.disclosure"),
   };
 }

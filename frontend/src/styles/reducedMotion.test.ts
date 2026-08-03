@@ -75,5 +75,8 @@ describe("Prompt 03 reduced-motion contract", () => {
     expect(neutralizedTransformRule).toContain(
       '.gv-demo-bottle[aria-pressed="true"]',
     );
+    expect(reducedMotionCss).toMatch(
+      /\.gv-taste-node\s*{\s*transition:\s*none;/,
+    );
   });
 });

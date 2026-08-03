@@ -107,14 +107,20 @@ const savedEntry: CellarEntry = {
   createdAt: "2026-08-02T12:00:00+00:00",
   favorite: false,
   id: 91,
+  location: null,
+  memoryTitle: null,
   notes: null,
   occasion: null,
+  openedWith: null,
+  pairing: null,
   savedAt: "2026-08-02T12:00:00+00:00",
   status: "saved",
   tags: [],
+  tastedOn: null,
   updatedAt: "2026-08-02T12:00:00+00:00",
   userId: user.id,
   userRating: null,
+  wouldBuyAgain: null,
   wine: wine({
     createdAt: "2026-08-02T12:00:00+00:00",
     externalApiId: EXTERNAL_WINE_ID,
@@ -547,7 +553,7 @@ describe("WineDetailPage", () => {
     expect(mockedSaveWineToCellar).not.toHaveBeenCalled();
   });
 
-  it("keeps save pending until backend confirmation, then invalidates only the user's private cellar and recommendations", async () => {
+  it("keeps save pending until backend confirmation, then invalidates the owner's private derivations", async () => {
     const pendingSave = deferred<CellarEntry>();
     mockedSaveWineToCellar.mockReturnValue(pendingSave.promise);
     const { invalidateQueries, queryClient } = renderDetail();
@@ -581,9 +587,12 @@ describe("WineDetailPage", () => {
       queryKey: ["private", user.id, "cellar"],
     });
     expect(invalidateQueries).toHaveBeenNthCalledWith(2, {
+      queryKey: ["private", user.id, "taste-profile"],
+    });
+    expect(invalidateQueries).toHaveBeenNthCalledWith(3, {
       queryKey: ["private", user.id, "wine-recommendations"],
     });
-    expect(invalidateQueries).toHaveBeenCalledTimes(2);
+    expect(invalidateQueries).toHaveBeenCalledTimes(3);
     expect(
       queryClient.getMutationCache().getAll()[0]?.options.mutationKey,
     ).toEqual(["private", user.id, "cellar", "save", EXTERNAL_WINE_ID]);
@@ -607,12 +616,15 @@ describe("WineDetailPage", () => {
       pendingSave.resolve(savedEntry);
       await pendingSave.promise;
     });
-    await waitFor(() => expect(invalidateQueries).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(invalidateQueries).toHaveBeenCalledTimes(3));
 
     expect(invalidateQueries).toHaveBeenNthCalledWith(1, {
       queryKey: ["private", user.id, "cellar"],
     });
     expect(invalidateQueries).toHaveBeenNthCalledWith(2, {
+      queryKey: ["private", user.id, "taste-profile"],
+    });
+    expect(invalidateQueries).toHaveBeenNthCalledWith(3, {
       queryKey: ["private", user.id, "wine-recommendations"],
     });
     expect(showToast).not.toHaveBeenCalled();
@@ -632,7 +644,7 @@ describe("WineDetailPage", () => {
       pendingSave.resolve(savedEntry);
       await pendingSave.promise;
     });
-    await waitFor(() => expect(invalidateQueries).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(invalidateQueries).toHaveBeenCalledTimes(3));
 
     rerenderAuth(authValue({ isLoading: true, status: "loading" }));
     await act(async () => {

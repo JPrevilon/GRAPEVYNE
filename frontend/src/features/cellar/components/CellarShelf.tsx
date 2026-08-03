@@ -1,4 +1,5 @@
 import { SectionHeading } from "@/components/ui/PageShell";
+import type { CellarViewMode } from "@/features/cellar/cellarOrganization";
 import type { CellarEntry } from "@/types/domain";
 
 import CellarBottleCard from "./CellarBottleCard";
@@ -6,15 +7,19 @@ import CellarBottleCard from "./CellarBottleCard";
 interface CellarShelfProps {
   disabled?: boolean;
   entries: CellarEntry[];
+  groupLabel?: string;
   onSelect: (entry: CellarEntry) => void;
   selectedEntryId: number | null;
+  viewMode?: CellarViewMode;
 }
 
 export default function CellarShelf({
   disabled = false,
   entries,
+  groupLabel = "All bottles",
   onSelect,
   selectedEntryId,
+  viewMode = "list",
 }: CellarShelfProps) {
   return (
     <section aria-labelledby="live-cellar-list-title" className="gv-cellar-shelf">
@@ -24,13 +29,13 @@ export default function CellarShelf({
             {entries.length} {entries.length === 1 ? "bottle" : "bottles"}
           </span>
         }
-        description="Newest saves appear first. Choose a bottle to review or edit its persisted cellar fields."
+        description="Choose a bottle to review or edit its persisted private tasting memory."
         eyebrow="Live account data"
         id="live-cellar-list-title"
-        title="SAVED BOTTLES"
+        title={groupLabel.toLocaleUpperCase()}
       />
 
-      <ul className="gv-cellar-shelf__list">
+      <ul className="gv-cellar-shelf__list" data-view={viewMode}>
         {entries.map((entry, index) => (
           <li key={entry.id}>
             <CellarBottleCard

@@ -14,9 +14,9 @@ import {
   isAbortError,
   isAuthenticationRequired,
 } from "@/api/client";
-import { RECOMMENDATION_QUERY_RESOURCE } from "@/api/recommendationQueryKeys";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/useToast.js";
+import { invalidatePrivateCellarDerivations } from "@/features/cellar/cellarMutationInvalidation";
 import { privateQueryKey } from "@/features/auth/privateQueryKeys";
 import { useAuth } from "@/features/auth/useAuth";
 import type { Wine } from "@/types/domain";
@@ -121,17 +121,7 @@ export default function SaveWineControl({
         ownerId: savingUserId,
       });
 
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: privateQueryKey(savingUserId, "cellar"),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: privateQueryKey(
-            savingUserId,
-            RECOMMENDATION_QUERY_RESOURCE,
-          ),
-        }),
-      ]);
+      await invalidatePrivateCellarDerivations(queryClient, savingUserId);
 
       if (
         !isMounted.current ||

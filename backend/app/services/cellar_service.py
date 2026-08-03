@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 from sqlalchemy.exc import IntegrityError
@@ -50,8 +51,15 @@ class CellarService:
             notes=self._clean_optional_string(payload.get("notes")),
             user_rating=payload.get("userRating"),
             favorite=bool(payload.get("favorite", False)),
+            tags=list(payload.get("tags", [])),
             occasion=self._clean_optional_string(payload.get("occasion")),
             status=payload.get("status", "saved"),
+            memory_title=self._clean_optional_string(payload.get("memoryTitle")),
+            tasted_on=self._date_value(payload.get("tastedOn")),
+            location=self._clean_optional_string(payload.get("location")),
+            pairing=self._clean_optional_string(payload.get("pairing")),
+            opened_with=self._clean_optional_string(payload.get("openedWith")),
+            would_buy_again=payload.get("wouldBuyAgain"),
         )
 
         db.session.add(entry)
@@ -85,8 +93,33 @@ class CellarService:
         if "occasion" in payload:
             entry.occasion = self._clean_optional_string(payload.get("occasion"))
 
+        if "tags" in payload:
+            entry.tags = list(payload.get("tags", []))
+
         if "status" in payload:
             entry.status = payload.get("status")
+
+        if "memoryTitle" in payload:
+            entry.memory_title = self._clean_optional_string(
+                payload.get("memoryTitle")
+            )
+
+        if "tastedOn" in payload:
+            entry.tasted_on = self._date_value(payload.get("tastedOn"))
+
+        if "location" in payload:
+            entry.location = self._clean_optional_string(payload.get("location"))
+
+        if "pairing" in payload:
+            entry.pairing = self._clean_optional_string(payload.get("pairing"))
+
+        if "openedWith" in payload:
+            entry.opened_with = self._clean_optional_string(
+                payload.get("openedWith")
+            )
+
+        if "wouldBuyAgain" in payload:
+            entry.would_buy_again = payload.get("wouldBuyAgain")
 
         db.session.commit()
         return entry
@@ -199,3 +232,11 @@ class CellarService:
 
         cleaned = value.strip()
         return cleaned or None
+
+    @staticmethod
+    def _date_value(value):
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str) and value:
+            return date.fromisoformat(value)
+        return None

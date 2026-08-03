@@ -88,11 +88,16 @@ describe("API normalizers", () => {
       created_at: "2026-08-01T12:00:00+00:00",
       favorite: true,
       id: 9,
+      location: "Brooklyn",
+      memory_title: "A dinner worth remembering",
       notes: "Open with dinner.",
       occasion: "Anniversary",
+      opened_with: "Friends",
+      pairing: "Short ribs",
       saved_at: "2026-08-01T12:00:00+00:00",
       status: "buy_again",
       tags: ["dinner"],
+      tasted_on: "2026-07-31",
       updated_at: "2026-08-02T12:00:00+00:00",
       user_id: 3,
       user_rating: 5,
@@ -102,12 +107,18 @@ describe("API normalizers", () => {
         id: 22,
       },
       wine_id: 22,
+      would_buy_again: false,
     });
 
     expect(entry).toMatchObject({
       id: 9,
+      memoryTitle: "A dinner worth remembering",
+      openedWith: "Friends",
+      pairing: "Short ribs",
       status: "buy_again",
+      tastedOn: "2026-07-31",
       userId: 3,
+      wouldBuyAgain: false,
       wineId: 22,
     });
     expect(entry.wine.id).toBe(22);
@@ -129,28 +140,52 @@ describe("API normalizers", () => {
   it("normalizes only supplied Taste Profile claims", () => {
     const profile = normalizeTasteProfile({
       profile: {
-        clusters: [
+        adjacentSuggestion: null,
+        algorithmVersion: "taste-profile-v1",
+        catalog: {
+          candidateCount: 6,
+          isDemonstrationCatalog: true,
+          limitations: "Limited demonstration catalog.",
+          provider: "mock",
+        },
+        disclosure: "Based only on recorded cellar history.",
+        evidence: {
+          distinctCanonicalWines: 2,
+          meaningfulEntries: 2,
+          signalCount: 4,
+          totalCellarEntries: 2,
+        },
+        lowerAffinitySignals: [],
+        observedPriceRange: {
+          maximumCents: 9500,
+          minimumCents: 3500,
+          sampleSize: 2,
+        },
+        signals: [
           {
             id: "cabernet",
+            dimension: "varietal",
+            evidenceCount: 2,
             label: "Cabernet",
-            weight: 0.9,
-            wine_ids: [22],
+            score: 90,
+            summary: "A strong observed varietal signal.",
           },
         ],
-        common_flavor_notes: ["cassis"],
-        exploration_gaps: ["sparkling"],
-        headline: "Structured reds",
-        occasions: ["dinner"],
-        preferred_regions: ["Napa Valley"],
-        primary_styles: ["Cabernet Sauvignon"],
-        suggested_branch: "Northern Rhone Syrah",
+        state: "active",
         summary: "Your saved wines lean toward structured reds.",
-        typical_price_range: [35, 95],
       },
     });
 
-    expect(profile.typicalPriceRange).toEqual([35, 95]);
-    expect(profile.clusters[0]?.wineIds).toEqual([22]);
+    expect(profile.observedPriceRange).toEqual({
+      maximumCents: 9500,
+      minimumCents: 3500,
+      sampleSize: 2,
+    });
+    expect(profile.signals[0]).toMatchObject({
+      dimension: "varietal",
+      id: "cabernet",
+      score: 90,
+    });
   });
 
   it("rejects unsupported cellar statuses instead of substituting one", () => {
@@ -166,5 +201,25 @@ describe("API normalizers", () => {
         wineId: 3,
       }),
     ).toThrow(ApiContractError);
+  });
+
+  it("rejects malformed memory dates and non-boolean tri-state values", () => {
+    const baseEntry = {
+      favorite: false,
+      id: 1,
+      savedAt: "2026-08-01T12:00:00+00:00",
+      status: "tasted",
+      tags: [],
+      userId: 2,
+      wine: camelWine,
+      wineId: 3,
+    };
+
+    expect(() =>
+      normalizeCellarEntry({ ...baseEntry, tastedOn: "2026-02-30" }),
+    ).toThrow("must be a valid calendar date");
+    expect(() =>
+      normalizeCellarEntry({ ...baseEntry, wouldBuyAgain: "yes" }),
+    ).toThrow("must be a boolean");
   });
 });

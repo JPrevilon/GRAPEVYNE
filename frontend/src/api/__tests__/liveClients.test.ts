@@ -40,16 +40,22 @@ const rawEntry = {
   createdAt: "2026-08-02T12:00:00+00:00",
   favorite: false,
   id: 19,
+  location: "Brooklyn",
+  memoryTitle: "A quiet dinner",
   notes: null,
   occasion: null,
+  openedWith: "Friends",
+  pairing: "Mushroom risotto",
   savedAt: "2026-08-02T12:00:00+00:00",
   status: "saved",
-  tags: [],
+  tags: ["savory", "dinner"],
+  tastedOn: "2026-08-01",
   updatedAt: "2026-08-02T12:00:00+00:00",
   userId: 7,
   userRating: null,
   wine: { ...rawWine, externalApiId: "service-pinot-2021", id: 11 },
   wineId: 11,
+  wouldBuyAgain: true,
 };
 
 beforeEach(() => {
@@ -111,7 +117,13 @@ describe("owner-safe cellar client", () => {
 
     await expect(getCellarEntries(controller.signal)).resolves.toMatchObject({
       count: 1,
-      entries: [{ id: 19, userId: 7 }],
+      entries: [{
+        id: 19,
+        memoryTitle: "A quiet dinner",
+        tastedOn: "2026-08-01",
+        userId: 7,
+        wouldBuyAgain: true,
+      }],
     });
     await expect(getCellarEntry(19, controller.signal)).resolves.toMatchObject({
       id: 19,
@@ -176,6 +188,48 @@ describe("owner-safe cellar client", () => {
     });
     expect(mockedApiRequest).toHaveBeenNthCalledWith(2, "/cellar/19", {
       body: JSON.stringify({ favorite: true }),
+      headers: { "X-Grapevyne-Expected-User-Id": "7" },
+      method: "PATCH",
+    });
+  });
+
+  it("forwards every supported tasting-memory PATCH field without renaming its JSON contract", async () => {
+    mockedApiRequest.mockResolvedValue({ data: { entry: rawEntry } });
+
+    await updateCellarEntry(
+      19,
+      {
+        favorite: true,
+        location: "Brooklyn",
+        memoryTitle: "A quiet dinner",
+        notes: "Cherry and earth.",
+        occasion: "Dinner",
+        openedWith: "Friends",
+        pairing: "Mushroom risotto",
+        status: "tasted",
+        tags: ["savory", "dinner"],
+        tastedOn: "2026-08-01",
+        userRating: 5,
+        wouldBuyAgain: false,
+      },
+      7,
+    );
+
+    expect(mockedApiRequest).toHaveBeenCalledWith("/cellar/19", {
+      body: JSON.stringify({
+        favorite: true,
+        location: "Brooklyn",
+        memoryTitle: "A quiet dinner",
+        notes: "Cherry and earth.",
+        occasion: "Dinner",
+        openedWith: "Friends",
+        pairing: "Mushroom risotto",
+        status: "tasted",
+        tags: ["savory", "dinner"],
+        tastedOn: "2026-08-01",
+        userRating: 5,
+        wouldBuyAgain: false,
+      }),
       headers: { "X-Grapevyne-Expected-User-Id": "7" },
       method: "PATCH",
     });

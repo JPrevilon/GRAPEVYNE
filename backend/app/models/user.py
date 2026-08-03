@@ -16,7 +16,7 @@ class User(TimestampMixin, db.Model):
         "CellarEntry",
         back_populates="user",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="select",
     )
 
     def set_password(self, password):
@@ -33,4 +33,3 @@ class User(TimestampMixin, db.Model):
             "createdAt": serialize_datetime(self.created_at),
             "updatedAt": serialize_datetime(self.updated_at),
         }
-

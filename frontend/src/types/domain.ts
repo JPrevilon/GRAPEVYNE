@@ -52,6 +52,12 @@ export interface CellarEntry {
   tags: string[];
   occasion: string | null;
   status: CellarStatus;
+  memoryTitle: string | null;
+  tastedOn: string | null;
+  location: string | null;
+  pairing: string | null;
+  openedWith: string | null;
+  wouldBuyAgain: boolean | null;
   savedAt: string;
   createdAt: string | null;
   updatedAt: string | null;
@@ -155,26 +161,63 @@ export interface RecommendationResponse {
   results: RecommendationResult[];
 }
 
-export type TasteProfileWineId = number | string;
+export type TasteProfileState = "empty" | "limited" | "active";
 
-export interface TasteProfileCluster {
+export type TasteSignalDimension =
+  | "category"
+  | "varietal"
+  | "place"
+  | "flavor"
+  | "structure"
+  | "occasion";
+
+export interface TasteSignal {
   id: string;
+  dimension: TasteSignalDimension;
   label: string;
-  weight: number;
-  wineIds: TasteProfileWineId[];
+  score: number;
+  evidenceCount: number;
+  summary: string;
+}
+
+export interface TasteEvidenceSummary {
+  totalCellarEntries: number;
+  meaningfulEntries: number;
+  distinctCanonicalWines: number;
+  signalCount: number;
+}
+
+export interface TasteObservedPriceRange {
+  minimumCents: number;
+  maximumCents: number;
+  sampleSize: number;
+}
+
+export interface TasteAdjacentSuggestion {
+  wine: Wine & { externalWineId: string };
+  reasons: string[];
+  confidence: "medium" | "limited";
+  disclosure: string;
+}
+
+export interface TasteProfileCatalog {
+  provider: string;
+  candidateCount: number;
+  isDemonstrationCatalog: boolean;
+  limitations: string;
 }
 
 export interface TasteProfile {
-  headline: string;
+  state: TasteProfileState;
+  algorithmVersion: string;
   summary: string;
-  primaryStyles: string[];
-  preferredRegions: string[];
-  commonFlavorNotes: string[];
-  typicalPriceRange: [number, number];
-  occasions: string[];
-  explorationGaps: string[];
-  suggestedBranch: string;
-  clusters: TasteProfileCluster[];
+  evidence: TasteEvidenceSummary;
+  signals: TasteSignal[];
+  lowerAffinitySignals: TasteSignal[];
+  observedPriceRange: TasteObservedPriceRange | null;
+  adjacentSuggestion: TasteAdjacentSuggestion | null;
+  catalog: TasteProfileCatalog;
+  disclosure: string;
 }
 
 export interface WineSearchResult {

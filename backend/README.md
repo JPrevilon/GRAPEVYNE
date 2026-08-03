@@ -15,6 +15,11 @@ flask --app app seed-demo-data
 flask --app app run --debug
 ```
 
+`init-db` runs `flask db upgrade` against the tracked history. It is an explicit command;
+creating or serving the Flask app does not mutate the schema. For a fresh database,
+existing unversioned database, production rollout, current-revision check, and rollback,
+follow [`docs/v2/08-migration-and-rollback.md`](../docs/v2/08-migration-and-rollback.md).
+
 The health check is available at:
 
 ```text
@@ -32,6 +37,23 @@ GET  /api/auth/me
 
 Authentication uses Flask's signed, HTTP-only session cookie. Frontend requests
 should include credentials.
+
+## Private Cellar and Taste Profile Endpoints
+
+```text
+GET    /api/cellar
+POST   /api/cellar
+GET    /api/cellar/:entryId
+PATCH  /api/cellar/:entryId
+DELETE /api/cellar/:entryId
+GET    /api/profile/taste
+```
+
+All require the signed Flask session and derive ownership from it. The six nullable memory
+columns are `memory_title`, `tasted_on`, `location`, `pairing`, `opened_with`, and
+`would_buy_again`. The profile endpoint is read-only, accepts no query parameters, returns
+`Cache-Control: private, no-store` and `Vary: Cookie`, and omits row IDs and free-form
+memory fields. See [`docs/v2/08-taste-profile-api-contract.md`](../docs/v2/08-taste-profile-api-contract.md).
 
 ## Tests
 

@@ -69,6 +69,7 @@ export interface SelectOption {
 interface SelectControlProps
   extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "onChange"> {
   description?: string;
+  error?: string;
   label: string;
   onChange: (value: string) => void;
   options: SelectOption[];
@@ -76,6 +77,7 @@ interface SelectControlProps
 
 export function SelectControl({
   description,
+  error,
   id,
   label,
   onChange,
@@ -85,6 +87,7 @@ export function SelectControl({
   const generatedId = useId();
   const selectId = id ?? generatedId;
   const descriptionId = description ? `${selectId}-description` : undefined;
+  const errorId = error ? `${selectId}-error` : undefined;
 
   return (
     <div className="gv-field gv-field--select">
@@ -96,7 +99,8 @@ export function SelectControl({
       ) : null}
       <select
         {...props}
-        aria-describedby={descriptionId}
+        aria-describedby={describedBy(descriptionId, errorId)}
+        aria-invalid={Boolean(error) || undefined}
         id={selectId}
         onChange={(event) => onChange(event.target.value)}
       >
@@ -106,6 +110,11 @@ export function SelectControl({
           </option>
         ))}
       </select>
+      {error ? (
+        <p className="gv-field__error" id={errorId} role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

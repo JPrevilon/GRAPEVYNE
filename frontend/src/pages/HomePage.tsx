@@ -52,6 +52,7 @@ const cellarCapabilities = [
   "Celebrations",
   "Wishlist",
   "Buy again",
+  "Tasted dates, places, and pairings",
   "Private tasting notes",
 ] as const;
 
@@ -248,8 +249,8 @@ function TasteChapter() {
   return (
     <div className="gv-story-copy gv-story-copy--taste">
       <p className="gv-story-lede">
-        Your Taste Atlas begins with bottles you actually save and rate. Over time,
-        patterns can make a growing collection easier to understand.
+        Your Taste Atlas begins with bottles you actually taste, rate, favorite, or
+        mark for another pour. Persisted behavior—not account demographics—forms each branch.
       </p>
       <div aria-label="Illustrative taste vocabulary" className="gv-taste-orbit">
         {tasteSignals.map((signal) => (
@@ -257,7 +258,8 @@ function TasteChapter() {
         ))}
       </div>
       <p className="gv-story-disclosure">
-        Illustrative vocabulary only—not a personal profile or calculated result.
+        This public vocabulary remains illustrative. Your protected Profile derives
+        its own deterministic signals from your private cellar.
       </p>
     </div>
   );
@@ -267,8 +269,8 @@ function PortalChapter() {
   return (
     <div className="gv-story-copy gv-story-copy--portal">
       <p className="gv-story-lede">
-        Keep saved bottles, ratings, occasions, favorites, and private notes tied to
-        your account—not to this marketing page.
+        Keep saved bottles, ratings, occasions, favorites, tasting dates, pairings,
+        and private memories tied to your account—not to this marketing page.
       </p>
       <div className="gv-story-actions">
         <AuthCellarAction />
@@ -361,9 +363,8 @@ function AtlasChapter() {
         <span>Curious pours</span>
       </div>
       <p className="gv-story-disclosure">
-        Demonstration only. These clusters show how an early profile may appear after
-        enough real cellar activity exists. The full personalized Taste Atlas remains
-        future work.
+        Demonstration only. The protected Profile route now provides an accessible,
+        owner-scoped Taste Atlas grounded in the signed-in user’s recorded cellar history.
       </p>
       <div className="gv-story-actions">
         <ButtonLink to="/demo/taste-atlas" variant="secondary">
@@ -422,8 +423,9 @@ function FinaleChapter() {
             accessible navigation, responsive final media, and a persistent React Three
             Fiber WebGL bottle built from local desktop and mobile GLB models. Capability
             checks and reduced-motion preferences retain the CSS bottle fallback when
-            needed. Discover now includes a deterministic explainable recommendation
-            engine; the full personalized Taste Atlas remains future work.
+            needed. Persisted private tasting memories now support a deterministic,
+            owner-scoped Taste Profile and accessible Taste Atlas, while Discover uses
+            the existing explainable recommendation engine.
           </p>
         </div>
       </details>

@@ -1,49 +1,27 @@
 import {
   CalendarDays,
-  Check,
   Heart,
   MapPin,
-  Save,
   Star,
   Trash2,
   Wine,
   X,
 } from "lucide-react";
-import {
-  type ChangeEvent,
-  type FormEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { CellarEntryChanges } from "@/api/cellar";
 import { isAbortError } from "@/api/client";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { SelectControl, TextInput } from "@/components/ui/FormControls";
 import { SidePanel } from "@/components/ui/SidePanel";
 import { useToast } from "@/components/ui/useToast.js";
 import { WineVisual } from "@/components/wine/WineBottleFallback";
-import type { CellarEntry, CellarStatus } from "@/types/domain";
-import { validateCellarForm } from "@/utils/formValidation.js";
+import type { CellarEntry } from "@/types/domain";
 
+import CellarMemoryEditor from "./CellarMemoryEditor";
 import {
   CELLAR_STATUS_LABELS,
   formatCellarSavedDate,
 } from "./cellarPresentation";
-
-const RATING_OPTIONS = [
-  { label: "Unrated", value: "" },
-  { label: "1 — Not for me", value: "1" },
-  { label: "2 — Fine", value: "2" },
-  { label: "3 — Good", value: "3" },
-  { label: "4 — Excellent", value: "4" },
-  { label: "5 — Cellar favorite", value: "5" },
-];
-
-const STATUS_OPTIONS = (
-  Object.entries(CELLAR_STATUS_LABELS) as Array<[CellarStatus, string]>
-).map(([value, label]) => ({ label, value }));
 
 interface ToastApi {
   showToast: (toast: {
@@ -51,14 +29,6 @@ interface ToastApi {
     title: string;
     tone?: "error" | "success";
   }) => void;
-}
-
-interface CellarFormState {
-  favorite: boolean;
-  notes: string;
-  occasion: string;
-  status: CellarStatus;
-  userRating: string;
 }
 
 interface CellarDetailPanelProps {
@@ -72,51 +42,40 @@ interface CellarDetailPanelProps {
   ) => Promise<CellarEntry>;
 }
 
-interface CellarEntryEditorProps extends Omit<CellarDetailPanelProps, "entry"> {
-  entry: CellarEntry;
+function formatTastedDate(value: string | null): string | null {
+  if (!value) return null;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "long",
+    timeZone: "UTC",
+  }).format(parsed);
 }
 
-type EditorStatus = "deleting" | "idle" | "saved" | "saving";
-
-function formState(entry: CellarEntry): CellarFormState {
-  return {
-    favorite: entry.favorite,
-    notes: entry.notes ?? "",
-    occasion: entry.occasion ?? "",
-    status: entry.status,
-    userRating: entry.userRating === null ? "" : String(entry.userRating),
-  };
+function messageFrom(error: unknown) {
+  return error instanceof Error ? error.message : "Could not remove this bottle.";
 }
 
-function isCellarStatus(value: string): value is CellarStatus {
-  return Object.prototype.hasOwnProperty.call(CELLAR_STATUS_LABELS, value);
-}
-
-function messageFrom(error: unknown, fallback: string) {
-  return error instanceof Error ? error.message : fallback;
-}
-
-function CellarEntryEditor({
+function CellarEntryDetail({
   entry,
   isMutating = false,
   onClose,
   onDelete,
   onUpdate,
-}: CellarEntryEditorProps) {
+}: CellarDetailPanelProps & { entry: CellarEntry }) {
   const { showToast } = useToast() as unknown as ToastApi;
-  const [formData, setFormData] = useState<CellarFormState>(() => formState(entry));
-  const [status, setStatus] = useState<EditorStatus>("idle");
-  const [errorMessage, setErrorMessage] = useState("");
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const confirmDeleteRef = useRef<HTMLButtonElement>(null);
-  const isMounted = useRef(false);
   const removeButtonRef = useRef<HTMLButtonElement>(null);
-  const isBusy = isMutating || status === "saving" || status === "deleting";
+  const isMounted = useRef(false);
+  const isBusy = isMutating || isDeleting;
   const headingId = `cellar-entry-${entry.id}-title`;
-  const editorHeadingId = `cellar-entry-${entry.id}-editor-title`;
-  const feedbackId = `cellar-entry-${entry.id}-feedback`;
-  const notesDescriptionId = `cellar-entry-${entry.id}-notes-description`;
+  const deleteFeedbackId = `cellar-entry-${entry.id}-delete-feedback`;
   const savedDate = formatCellarSavedDate(entry.savedAt);
+  const tastedDate = formatTastedDate(entry.tastedOn);
   const origin = [entry.wine.region, entry.wine.country].filter(Boolean).join(", ");
   const detailPath = entry.wine.externalWineId
     ? `/wines/${encodeURIComponent(entry.wine.externalWineId)}`
@@ -124,107 +83,17 @@ function CellarEntryEditor({
 
   useEffect(() => {
     isMounted.current = true;
-
     return () => {
       isMounted.current = false;
     };
   }, []);
 
   useEffect(() => {
-    if (isConfirmingDelete) {
-      confirmDeleteRef.current?.focus();
-    }
+    if (isConfirmingDelete) confirmDeleteRef.current?.focus();
   }, [isConfirmingDelete]);
 
-  function markChanged() {
-    setStatus("idle");
-    setErrorMessage("");
-  }
-
-  function handleInputChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    const { name, value } = event.target;
-    const nextValue =
-      event.target instanceof HTMLInputElement && event.target.type === "checkbox"
-        ? event.target.checked
-        : value;
-    setFormData((current) => ({
-      ...current,
-      [name]: nextValue,
-    }));
-    markChanged();
-  }
-
-  function handleRatingChange(value: string) {
-    setFormData((current) => ({ ...current, userRating: value }));
-    markChanged();
-  }
-
-  function handleStatusChange(value: string) {
-    if (!isCellarStatus(value)) {
-      return;
-    }
-
-    setFormData((current) => ({ ...current, status: value }));
-    markChanged();
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setErrorMessage("");
-
-    const validationError = validateCellarForm(formData);
-
-    if (validationError) {
-      setStatus("idle");
-      setErrorMessage(validationError);
-      showToast({
-        message: validationError,
-        title: "Check the cellar entry",
-        tone: "error",
-      });
-      return;
-    }
-
-    setStatus("saving");
-
-    try {
-      const updatedEntry = await onUpdate(entry.id, {
-        favorite: formData.favorite,
-        notes: formData.notes || null,
-        occasion: formData.occasion || null,
-        status: formData.status,
-        userRating: formData.userRating ? Number(formData.userRating) : null,
-      });
-
-      if (!isMounted.current) {
-        return;
-      }
-
-      setFormData(formState(updatedEntry));
-      setStatus("saved");
-      showToast({
-        message: `${entry.wine.name} was updated.`,
-        title: "Bottle updated",
-      });
-    } catch (error) {
-      if (!isMounted.current) {
-        return;
-      }
-
-      if (isAbortError(error)) {
-        setStatus("idle");
-        return;
-      }
-
-      const message = messageFrom(error, "Could not update this bottle.");
-      setStatus("idle");
-      setErrorMessage(message);
-      showToast({ message, title: "Update failed", tone: "error" });
-    }
-  }
-
   function beginDelete() {
-    setErrorMessage("");
+    setDeleteError("");
     setIsConfirmingDelete(true);
   }
 
@@ -234,33 +103,26 @@ function CellarEntryEditor({
   }
 
   async function confirmDelete() {
-    setStatus("deleting");
-    setErrorMessage("");
+    setIsDeleting(true);
+    setDeleteError("");
 
     try {
       await onDelete(entry.id);
-
-      if (!isMounted.current) {
-        return;
-      }
-
+      if (!isMounted.current) return;
       showToast({
         message: `${entry.wine.name} was removed from your cellar.`,
         title: "Bottle removed",
       });
     } catch (error) {
-      if (!isMounted.current) {
-        return;
-      }
-
+      if (!isMounted.current) return;
       if (isAbortError(error)) {
-        setStatus("idle");
+        setIsDeleting(false);
         return;
       }
 
-      const message = messageFrom(error, "Could not remove this bottle.");
-      setStatus("idle");
-      setErrorMessage(message);
+      const message = messageFrom(error);
+      setIsDeleting(false);
+      setDeleteError(message);
       showToast({ message, title: "Remove failed", tone: "error" });
     }
   }
@@ -291,7 +153,9 @@ function CellarEntryEditor({
           />
         </div>
         <div>
-          {entry.wine.varietal ? (
+          {entry.memoryTitle ? (
+            <p className="gv-eyebrow gv-eyebrow--data">{entry.memoryTitle}</p>
+          ) : entry.wine.varietal ? (
             <p className="gv-eyebrow gv-eyebrow--data">{entry.wine.varietal}</p>
           ) : null}
           <h2 id={headingId}>{entry.wine.name}</h2>
@@ -300,47 +164,24 @@ function CellarEntryEditor({
       </div>
 
       <dl className="gv-cellar-detail__facts">
-        <div>
-          <dt>Cellar status</dt>
-          <dd>{CELLAR_STATUS_LABELS[entry.status]}</dd>
-        </div>
-        {origin ? (
-          <div>
-            <dt><MapPin aria-hidden="true" size={14} />Origin</dt>
-            <dd>{origin}</dd>
-          </div>
-        ) : null}
-        {entry.wine.vintage ? (
-          <div>
-            <dt>Vintage</dt>
-            <dd>{entry.wine.vintage}</dd>
-          </div>
-        ) : null}
-        {entry.userRating !== null ? (
-          <div>
-            <dt><Star aria-hidden="true" size={14} />Personal rating</dt>
-            <dd>{entry.userRating}/5</dd>
-          </div>
-        ) : null}
-        {entry.favorite ? (
-          <div>
-            <dt><Heart aria-hidden="true" size={14} />Favorite</dt>
-            <dd>Yes</dd>
-          </div>
-        ) : null}
-        {savedDate ? (
-          <div>
-            <dt><CalendarDays aria-hidden="true" size={14} />Saved</dt>
-            <dd>{savedDate}</dd>
-          </div>
-        ) : null}
+        <div><dt>Cellar status</dt><dd>{CELLAR_STATUS_LABELS[entry.status]}</dd></div>
+        {origin ? <div><dt><MapPin aria-hidden="true" size={14} />Origin</dt><dd>{origin}</dd></div> : null}
+        {entry.wine.vintage ? <div><dt>Vintage</dt><dd>{entry.wine.vintage}</dd></div> : null}
+        {entry.userRating !== null ? <div><dt><Star aria-hidden="true" size={14} />Personal rating</dt><dd>{entry.userRating}/5</dd></div> : null}
+        {entry.favorite ? <div><dt><Heart aria-hidden="true" size={14} />Favorite</dt><dd>Yes</dd></div> : null}
+        {savedDate ? <div><dt><CalendarDays aria-hidden="true" size={14} />Saved</dt><dd>{savedDate}</dd></div> : null}
+        {tastedDate ? <div><dt>Tasted</dt><dd><time dateTime={entry.tastedOn ?? undefined}>{tastedDate}</time></dd></div> : null}
+        {entry.location ? <div><dt>Location</dt><dd>{entry.location}</dd></div> : null}
+        {entry.pairing ? <div><dt>Pairing</dt><dd>{entry.pairing}</dd></div> : null}
+        {entry.openedWith ? <div><dt>Opened with</dt><dd>{entry.openedWith}</dd></div> : null}
+        {entry.wouldBuyAgain !== null ? <div><dt>Would buy again</dt><dd>{entry.wouldBuyAgain ? "Yes" : "No"}</dd></div> : null}
       </dl>
 
       {entry.tags.length > 0 ? (
         <div className="gv-cellar-detail__tags">
           <p className="gv-eyebrow">Saved tags</p>
           <div className="gv-tag-list">
-            {entry.tags.map((tag, index) => <span key={`${tag}-${index}`}>{tag}</span>)}
+            {entry.tags.map((tag) => <span key={tag.toLocaleLowerCase()}>{tag}</span>)}
           </div>
         </div>
       ) : null}
@@ -351,149 +192,51 @@ function CellarEntryEditor({
         </ButtonLink>
       ) : null}
 
-      <form
-        aria-busy={isBusy || undefined}
-        aria-describedby={errorMessage ? feedbackId : undefined}
-        aria-labelledby={editorHeadingId}
-        className="gv-cellar-editor"
-        onSubmit={(event) => void handleSubmit(event)}
-      >
-        <div className="gv-cellar-editor__heading">
-          <p className="gv-eyebrow">Private fields</p>
-          <h3 id={editorHeadingId}>EDIT YOUR CELLAR ENTRY</h3>
-          <p>Only these persisted account fields will be changed.</p>
-        </div>
+      <CellarMemoryEditor
+        entry={entry}
+        isMutating={isBusy}
+        onUpdate={onUpdate}
+      />
 
-        {errorMessage ? (
-          <p className="gv-inline-feedback gv-inline-feedback--error" id={feedbackId} role="alert">
-            {errorMessage}
+      <section aria-labelledby={`cellar-entry-${entry.id}-remove-title`} className="gv-cellar-remove">
+        <p className="gv-eyebrow">Cellar management</p>
+        <h3 id={`cellar-entry-${entry.id}-remove-title`}>REMOVE THIS BOTTLE</h3>
+        {deleteError ? (
+          <p className="gv-inline-feedback gv-inline-feedback--error" id={deleteFeedbackId} role="alert">
+            {deleteError}
           </p>
         ) : null}
-        {status === "saved" ? (
-          <p className="gv-inline-feedback gv-inline-feedback--success" role="status">
-            <Check aria-hidden="true" size={16} />
-            Changes saved to your private cellar.
-          </p>
-        ) : null}
-
-        <div className="gv-cellar-editor__grid">
-          <SelectControl
-            disabled={isBusy}
-            label="Personal rating"
-            onChange={handleRatingChange}
-            options={RATING_OPTIONS}
-            value={formData.userRating}
-          />
-          <SelectControl
-            disabled={isBusy}
-            label="Cellar status"
-            onChange={handleStatusChange}
-            options={STATUS_OPTIONS}
-            value={formData.status}
-          />
-        </div>
-
-        <TextInput
-          description={`${formData.occasion.length} of 160 characters`}
-          disabled={isBusy}
-          label="Occasion"
-          maxLength={160}
-          name="occasion"
-          onChange={handleInputChange}
-          placeholder="Dinner, gift, celebration…"
-          value={formData.occasion}
-        />
-
-        <div className="gv-field">
-          <label htmlFor={`cellar-entry-${entry.id}-notes`}>Private tasting note</label>
-          <p className="gv-field__description" id={notesDescriptionId}>
-            {formData.notes.length} of 4000 characters
-          </p>
-          <textarea
-            aria-describedby={notesDescriptionId}
-            disabled={isBusy}
-            id={`cellar-entry-${entry.id}-notes`}
-            maxLength={4000}
-            name="notes"
-            onChange={handleInputChange}
-            placeholder="What did you taste, and would you return to it?"
-            rows={6}
-            value={formData.notes}
-          />
-        </div>
-
-        <label className="gv-checkbox">
-          <input
-            checked={formData.favorite}
-            disabled={isBusy}
-            name="favorite"
-            onChange={handleInputChange}
-            type="checkbox"
-          />
-          <span>Mark as favorite</span>
-        </label>
-
-        <div className="gv-cellar-editor__actions">
-          <Button
-            busyLabel="Saving changes…"
-            disabled={isBusy || isConfirmingDelete}
-            isBusy={status === "saving"}
-            type="submit"
-            variant="primary"
-          >
-            <Save aria-hidden="true" size={17} />
-            Save changes
+        {!isConfirmingDelete ? (
+          <Button disabled={isBusy} onClick={beginDelete} ref={removeButtonRef} variant="danger">
+            <Trash2 aria-hidden="true" size={17} />
+            Remove bottle
           </Button>
-
-          {!isConfirmingDelete ? (
-            <Button
-              disabled={isBusy}
-              onClick={beginDelete}
-              ref={removeButtonRef}
-              variant="danger"
-            >
-              <Trash2 aria-hidden="true" size={17} />
-              Remove bottle
-            </Button>
-          ) : (
-            <div className="gv-cellar-delete-confirmation" role="alert">
-              <p>
-                Remove <strong>{entry.wine.name}</strong>? This cannot be undone.
-              </p>
-              <div>
-                <Button
-                  busyLabel="Removing bottle…"
-                  isBusy={status === "deleting"}
-                  onClick={() => void confirmDelete()}
-                  ref={confirmDeleteRef}
-                  variant="danger"
-                >
-                  Confirm removal
-                </Button>
-                <Button
-                  disabled={isBusy}
-                  onClick={cancelDelete}
-                  variant="text"
-                >
-                  Cancel
-                </Button>
-              </div>
+        ) : (
+          <div className="gv-cellar-delete-confirmation" role="alert">
+            <p>Remove <strong>{entry.wine.name}</strong>? This cannot be undone.</p>
+            <div>
+              <Button
+                busyLabel="Removing bottle…"
+                isBusy={isDeleting}
+                onClick={() => void confirmDelete()}
+                ref={confirmDeleteRef}
+                variant="danger"
+              >
+                Confirm removal
+              </Button>
+              <Button disabled={isBusy} onClick={cancelDelete} variant="text">
+                Cancel
+              </Button>
             </div>
-          )}
-        </div>
-      </form>
+          </div>
+        )}
+      </section>
     </SidePanel>
   );
 }
 
-export default function CellarDetailPanel({
-  entry,
-  isMutating = false,
-  onClose,
-  onDelete,
-  onUpdate,
-}: CellarDetailPanelProps) {
-  if (!entry) {
+export default function CellarDetailPanel(props: CellarDetailPanelProps) {
+  if (!props.entry) {
     return (
       <SidePanel
         className="gv-cellar-detail gv-cellar-detail--empty"
@@ -502,19 +245,10 @@ export default function CellarDetailPanel({
       >
         <Wine aria-hidden="true" size={28} />
         <h2 id="live-cellar-detail-empty-title">SELECT A BOTTLE</h2>
-        <p>Choose a saved bottle to inspect and edit its private cellar fields.</p>
+        <p>Choose a saved bottle to inspect and edit its private tasting memory.</p>
       </SidePanel>
     );
   }
 
-  return (
-    <CellarEntryEditor
-      entry={entry}
-      isMutating={isMutating}
-      key={entry.id}
-      onClose={onClose}
-      onDelete={onDelete}
-      onUpdate={onUpdate}
-    />
-  );
+  return <CellarEntryDetail {...props} entry={props.entry} key={props.entry.id} />;
 }

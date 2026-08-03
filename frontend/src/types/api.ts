@@ -52,6 +52,10 @@ export interface CellarEntryData {
   entry: unknown;
 }
 
+export interface TasteProfileData {
+  profile: unknown;
+}
+
 export interface DeletedCellarEntryData {
   deletedId: unknown;
 }

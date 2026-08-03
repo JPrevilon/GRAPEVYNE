@@ -29,7 +29,7 @@ class Wine(TimestampMixin, db.Model):
     cellar_entries = db.relationship(
         "CellarEntry",
         back_populates="wine",
-        lazy="selectin",
+        lazy="select",
     )
 
     def to_dict(self):

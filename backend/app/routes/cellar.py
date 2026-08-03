@@ -1,4 +1,6 @@
 import math
+import re
+from datetime import date
 
 from flask import Blueprint, request
 
@@ -20,7 +22,20 @@ MAX_EXPECTED_USER_ID = 2_147_483_647
 MAX_EXPECTED_USER_ID_DIGITS = len(str(MAX_EXPECTED_USER_ID))
 
 CELLAR_MUTABLE_FIELDS = frozenset(
-    {"favorite", "notes", "occasion", "status", "userRating"}
+    {
+        "favorite",
+        "location",
+        "memoryTitle",
+        "notes",
+        "occasion",
+        "openedWith",
+        "pairing",
+        "status",
+        "tags",
+        "tastedOn",
+        "userRating",
+        "wouldBuyAgain",
+    }
 )
 CELLAR_CREATE_FIELDS = CELLAR_MUTABLE_FIELDS | {"externalWineId", "wine"}
 OWNERSHIP_FIELDS = frozenset(
@@ -63,6 +78,15 @@ WINE_STRING_LIMITS = {
     "vintage": 40,
     "winery": 255,
 }
+CELLAR_OPTIONAL_STRING_LIMITS = {
+    "memoryTitle": 160,
+    "location": 240,
+    "pairing": 240,
+    "openedWith": 240,
+}
+MAX_CELLAR_TAGS = 12
+MAX_CELLAR_TAG_LENGTH = 40
+ISO_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 def validate_cellar_create_payload(payload):
@@ -223,6 +247,84 @@ def validate_cellar_update_payload(
             errors["occasion"] = "Occasion must be text."
         elif len(occasion) > 160:
             errors["occasion"] = "Occasion must be 160 characters or fewer."
+
+    for field, max_length in CELLAR_OPTIONAL_STRING_LIMITS.items():
+        if field not in payload or payload.get(field) is None:
+            continue
+
+        value = payload.get(field)
+        if not isinstance(value, str):
+            errors[field] = "Field must be text or null."
+            continue
+
+        cleaned = value.strip()
+        payload[field] = cleaned or None
+        if len(cleaned) > max_length:
+            errors[field] = f"Field must be {max_length} characters or fewer."
+
+    if "tastedOn" in payload:
+        tasted_on = payload.get("tastedOn")
+        if tasted_on in (None, ""):
+            payload["tastedOn"] = None
+        elif not isinstance(tasted_on, str) or not ISO_DATE_PATTERN.fullmatch(
+            tasted_on
+        ):
+            errors["tastedOn"] = "Tasted date must use YYYY-MM-DD format."
+        else:
+            try:
+                parsed_date = date.fromisoformat(tasted_on)
+            except ValueError:
+                errors["tastedOn"] = "Tasted date must be a valid calendar date."
+            else:
+                if parsed_date > date.today():
+                    errors["tastedOn"] = "Tasted date cannot be in the future."
+                else:
+                    payload["tastedOn"] = parsed_date
+
+    if "wouldBuyAgain" in payload:
+        would_buy_again = payload.get("wouldBuyAgain")
+        if would_buy_again is not None and not isinstance(
+            would_buy_again, bool
+        ):
+            errors["wouldBuyAgain"] = (
+                "Would buy again must be true, false, or null."
+            )
+
+    if "tags" in payload:
+        tags = payload.get("tags")
+        if not isinstance(tags, list):
+            errors["tags"] = "Tags must be a list."
+        elif len(tags) > MAX_CELLAR_TAGS:
+            errors["tags"] = f"Use no more than {MAX_CELLAR_TAGS} tags."
+        else:
+            normalized_tags = []
+            seen_tags = set()
+            for index, tag in enumerate(tags):
+                detail_key = f"tags[{index}]"
+                if not isinstance(tag, str):
+                    errors[detail_key] = "Tag must be text."
+                    continue
+
+                cleaned_tag = tag.strip()
+                if not cleaned_tag:
+                    errors[detail_key] = "Tag cannot be blank."
+                    continue
+                if len(cleaned_tag) > MAX_CELLAR_TAG_LENGTH:
+                    errors[detail_key] = (
+                        f"Tag must be {MAX_CELLAR_TAG_LENGTH} characters or fewer."
+                    )
+                    continue
+
+                normalized_key = cleaned_tag.casefold()
+                if normalized_key in seen_tags:
+                    errors["tags"] = "Tags must be unique."
+                    continue
+
+                seen_tags.add(normalized_key)
+                normalized_tags.append(cleaned_tag)
+
+            if not any(key.startswith("tags") for key in errors):
+                payload["tags"] = normalized_tags
 
     if "status" in payload and payload.get("status") not in CELLAR_STATUSES:
         errors["status"] = "Status is not supported."

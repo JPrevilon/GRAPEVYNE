@@ -77,14 +77,20 @@ function createEntry(overrides: EntryOverrides = {}): CellarEntry {
     createdAt: "2026-01-01T00:00:00Z",
     favorite: false,
     id: 91,
+    location: null,
+    memoryTitle: null,
     notes: null,
     occasion: null,
+    openedWith: null,
+    pairing: null,
     savedAt: "2026-01-01T00:00:00Z",
     status: "saved",
     tags: [],
+    tastedOn: null,
     updatedAt: "2026-01-01T00:00:00Z",
     userId: 42,
     userRating: null,
+    wouldBuyAgain: null,
     wineId: wine.id as number,
     ...entryOverrides,
     wine,
@@ -119,6 +125,22 @@ function renderCellar() {
 
 function entryButton(name = "Live Session Merlot") {
   return screen.getByRole("button", { name: new RegExp(name, "i") });
+}
+
+function expectPrivateDerivationsInvalidated(
+  invalidateQueries: unknown,
+  ownerId = 42,
+) {
+  expect(invalidateQueries).toHaveBeenCalledTimes(3);
+  expect(invalidateQueries).toHaveBeenCalledWith({
+    queryKey: ["private", ownerId, "cellar"],
+  });
+  expect(invalidateQueries).toHaveBeenCalledWith({
+    queryKey: ["private", ownerId, "taste-profile"],
+  });
+  expect(invalidateQueries).toHaveBeenCalledWith({
+    queryKey: ["private", ownerId, "wine-recommendations"],
+  });
 }
 
 beforeEach(() => {
@@ -312,17 +334,173 @@ describe("protected live cellar", () => {
     expect(document.getElementById("cellar-entry-92-trigger")).toBeInTheDocument();
   });
 
+  it("renders every persisted memory value in accessible controls after a fresh server read", async () => {
+    mocks.getCellarEntries.mockResolvedValue({
+      count: 1,
+      entries: [
+        createEntry({
+          favorite: true,
+          location: "Brooklyn",
+          memoryTitle: "The quiet anniversary pour",
+          notes: "Silky cherry, earth, and cedar.",
+          occasion: "Anniversary",
+          openedWith: "Sam",
+          pairing: "Mushroom risotto",
+          status: "tasted",
+          tags: ["savory", "old world"],
+          tastedOn: "2026-07-31",
+          userRating: 4,
+          wouldBuyAgain: false,
+        }),
+      ],
+    });
+
+    renderCellar();
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Live Session Merlot/i }),
+    );
+
+    expect(screen.getByLabelText("Memory title")).toHaveValue(
+      "The quiet anniversary pour",
+    );
+    expect(screen.getByLabelText("Tasted date")).toHaveValue("2026-07-31");
+    expect(screen.getByLabelText("Location")).toHaveValue("Brooklyn");
+    expect(screen.getByLabelText("Pairing")).toHaveValue("Mushroom risotto");
+    expect(screen.getByLabelText("Opened with")).toHaveValue("Sam");
+    expect(screen.getByLabelText("Personal rating")).toHaveValue("4");
+    expect(screen.getByLabelText("Cellar status")).toHaveValue("tasted");
+    expect(screen.getByLabelText("Occasion")).toHaveValue("Anniversary");
+    expect(screen.getByLabelText("Tags")).toHaveValue("savory, old world");
+    expect(screen.getByLabelText("Private tasting note")).toHaveValue(
+      "Silky cherry, earth, and cedar.",
+    );
+    expect(screen.getByRole("radio", { name: "No" })).toBeChecked();
+    expect(screen.getByLabelText("Mark as favorite")).toBeChecked();
+    expect(
+      screen.getAllByText("Your tasting memories are private to your account."),
+    ).toHaveLength(2);
+  });
+
+  it("renders saved markup-like memory text inertly instead of executing it", async () => {
+    const memoryTitle = '<img src=x onerror="alert(1)">';
+    const notes = '<script>alert("private note")</script>';
+    mocks.getCellarEntries.mockResolvedValue({
+      count: 1,
+      entries: [createEntry({ memoryTitle, notes })],
+    });
+
+    const view = renderCellar();
+
+    expect(await screen.findByText(memoryTitle)).toBeInTheDocument();
+    expect(view.container.querySelector("script")).not.toBeInTheDocument();
+    expect(view.container.querySelector("img[onerror]")).not.toBeInTheDocument();
+
+    fireEvent.click(entryButton());
+
+    expect(screen.getByLabelText("Memory title")).toHaveValue(memoryTitle);
+    expect(screen.getByLabelText("Private tasting note")).toHaveValue(notes);
+    expect(view.container.querySelector("script")).not.toBeInTheDocument();
+    expect(view.container.querySelector("img[onerror]")).not.toBeInTheDocument();
+  });
+
+  it("preserves the explicit buy-again tri-state in the editor", async () => {
+    mocks.getCellarEntries.mockResolvedValue({
+      count: 1,
+      entries: [createEntry({ wouldBuyAgain: null })],
+    });
+
+    renderCellar();
+    fireEvent.click(await screen.findByRole("button", { name: /Live Session Merlot/i }));
+
+    const unanswered = screen.getByRole("radio", { name: "Not answered" });
+    const yes = screen.getByRole("radio", { name: "Yes" });
+    const no = screen.getByRole("radio", { name: "No" });
+    expect(unanswered).toBeChecked();
+
+    fireEvent.click(no);
+    expect(no).toBeChecked();
+    expect(unanswered).not.toBeChecked();
+
+    fireEvent.click(yes);
+    expect(yes).toBeChecked();
+    expect(no).not.toBeChecked();
+
+    fireEvent.click(unanswered);
+    expect(unanswered).toBeChecked();
+  });
+
+  it("rejects a future tasting date inline without issuing a PATCH", async () => {
+    mocks.getCellarEntries.mockResolvedValue({
+      count: 1,
+      entries: [createEntry()],
+    });
+
+    renderCellar();
+    fireEvent.click(await screen.findByRole("button", { name: /Live Session Merlot/i }));
+    fireEvent.change(screen.getByLabelText("Tasted date"), {
+      target: { value: "2099-01-01" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save tasting memory" }));
+
+    expect(
+      await screen.findByText("Tasted date cannot be in the future."),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Tasted date")).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    expect(mocks.updateCellarEntry).not.toHaveBeenCalled();
+    expect(screen.queryByText("Tasting memory saved")).not.toBeInTheDocument();
+  });
+
+  it("keeps grid/list controls semantic and restores focus when details close", async () => {
+    mocks.getCellarEntries.mockResolvedValue({
+      count: 1,
+      entries: [createEntry()],
+    });
+
+    const view = renderCellar();
+    const bottleButton = await screen.findByRole("button", {
+      name: /Live Session Merlot/i,
+    });
+    const listButton = screen.getByRole("button", { name: "List" });
+    const gridButton = screen.getByRole("button", { name: "Grid" });
+    expect(listButton).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(gridButton);
+    expect(gridButton).toHaveAttribute("aria-pressed", "true");
+    expect(
+      view.container.querySelector(".gv-cellar-shelf__list"),
+    ).toHaveAttribute("data-view", "grid");
+
+    fireEvent.click(bottleButton);
+    expect(bottleButton).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Close details" }));
+
+    await waitFor(() => expect(bottleButton).toHaveFocus());
+    expect(bottleButton).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("opens the controlled side panel and sends exact PATCH fields with busy and success feedback", async () => {
     const entry = createEntry();
     const updatedEntry = createEntry({
       favorite: true,
+      location: "Brooklyn",
+      memoryTitle: "The anniversary pour",
       notes: "Black cherry and cedar.",
       occasion: "Anniversary dinner",
+      openedWith: "Sam and Jo",
+      pairing: "Mushroom risotto",
       status: "tasted",
+      tags: ["savory", "old world"],
+      tastedOn: "2026-07-31",
       userRating: 5,
+      wouldBuyAgain: true,
     });
     let resolveUpdate: ((value: CellarEntry) => void) | undefined;
-    mocks.getCellarEntries.mockResolvedValue({ count: 1, entries: [entry] });
+    mocks.getCellarEntries
+      .mockResolvedValueOnce({ count: 1, entries: [entry] })
+      .mockResolvedValue({ count: 1, entries: [updatedEntry] });
     mocks.updateCellarEntry.mockReturnValue(
       new Promise<CellarEntry>((resolve) => {
         resolveUpdate = resolve;
@@ -341,6 +519,21 @@ describe("protected live cellar", () => {
       screen.getByRole("complementary", { name: "Live Session Merlot" }),
     ).toBeInTheDocument();
 
+    fireEvent.change(screen.getByLabelText("Memory title"), {
+      target: { value: "The anniversary pour" },
+    });
+    fireEvent.change(screen.getByLabelText("Tasted date"), {
+      target: { value: "2026-07-31" },
+    });
+    fireEvent.change(screen.getByLabelText("Location"), {
+      target: { value: "Brooklyn" },
+    });
+    fireEvent.change(screen.getByLabelText("Pairing"), {
+      target: { value: "Mushroom risotto" },
+    });
+    fireEvent.change(screen.getByLabelText("Opened with"), {
+      target: { value: "Sam and Jo" },
+    });
     fireEvent.change(screen.getByLabelText("Personal rating"), {
       target: { value: "5" },
     });
@@ -353,20 +546,31 @@ describe("protected live cellar", () => {
     fireEvent.change(screen.getByLabelText("Private tasting note"), {
       target: { value: "Black cherry and cedar." },
     });
+    fireEvent.change(screen.getByLabelText("Tags"), {
+      target: { value: "savory, old world" },
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "Yes" }));
     fireEvent.click(screen.getByLabelText("Mark as favorite"));
-    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save tasting memory" }));
 
-    expect(screen.getByRole("button", { name: "Saving changes…" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Saving memory…" })).toBeDisabled();
     expect(screen.getByLabelText("Occasion")).toBeDisabled();
     await waitFor(() =>
       expect(mocks.updateCellarEntry).toHaveBeenCalledWith(
         91,
         {
           favorite: true,
+          location: "Brooklyn",
+          memoryTitle: "The anniversary pour",
           notes: "Black cherry and cedar.",
           occasion: "Anniversary dinner",
+          openedWith: "Sam and Jo",
+          pairing: "Mushroom risotto",
           status: "tasted",
+          tags: ["savory", "old world"],
+          tastedOn: "2026-07-31",
           userRating: 5,
+          wouldBuyAgain: true,
         },
         42,
       ),
@@ -381,11 +585,8 @@ describe("protected live cellar", () => {
     expect(
       await screen.findByText("Changes saved to your private cellar."),
     ).toBeInTheDocument();
-    expect(screen.getByText("Bottle updated")).toBeInTheDocument();
-    expect(invalidateQueries).toHaveBeenCalledOnce();
-    expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["private", 42, "wine-recommendations"],
-    });
+    expect(screen.getByText("Tasting memory saved")).toBeInTheDocument();
+    await waitFor(() => expectPrivateDerivationsInvalidated(invalidateQueries));
   });
 
   it("keeps server-confirmed cellar data unchanged when PATCH fails", async () => {
@@ -401,7 +602,7 @@ describe("protected live cellar", () => {
       await screen.findByRole("button", { name: /Live Session Merlot/i }),
     );
     fireEvent.click(screen.getByLabelText("Mark as favorite"));
-    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save tasting memory" }));
 
     await waitFor(() => {
       expect(
@@ -410,7 +611,7 @@ describe("protected live cellar", () => {
         ),
       ).toHaveLength(2);
     });
-    expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Save tasting memory" })).toBeEnabled();
     expect(screen.getByText("Update failed")).toBeInTheDocument();
     expect(entry.favorite).toBe(false);
     expect(invalidateQueries).not.toHaveBeenCalled();
@@ -420,7 +621,9 @@ describe("protected live cellar", () => {
     const entry = createEntry();
     const updatedEntry = createEntry({ favorite: true });
     let resolveUpdate: ((value: CellarEntry) => void) | undefined;
-    mocks.getCellarEntries.mockResolvedValue({ count: 1, entries: [entry] });
+    mocks.getCellarEntries
+      .mockResolvedValueOnce({ count: 1, entries: [entry] })
+      .mockResolvedValue({ count: 1, entries: [updatedEntry] });
     mocks.updateCellarEntry.mockReturnValue(
       new Promise<CellarEntry>((resolve) => {
         resolveUpdate = resolve;
@@ -432,7 +635,7 @@ describe("protected live cellar", () => {
       await screen.findByRole("button", { name: /Live Session Merlot/i }),
     );
     fireEvent.click(screen.getByLabelText("Mark as favorite"));
-    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save tasting memory" }));
     await waitFor(() => expect(mocks.updateCellarEntry).toHaveBeenCalledOnce());
 
     mocks.authStatus = "loading";
@@ -444,7 +647,7 @@ describe("protected live cellar", () => {
       await Promise.resolve();
     });
 
-    expect(screen.queryByText("Bottle updated")).not.toBeInTheDocument();
+    expect(screen.queryByText("Tasting memory saved")).not.toBeInTheDocument();
     expect(
       queryClient.getQueryData<{ entries: CellarEntry[] }>([
         "private",
@@ -470,12 +673,12 @@ describe("protected live cellar", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: /Live Session Merlot/i }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save tasting memory" }));
 
     await waitFor(() => {
       expect(mocks.handleAuthenticationRequired).toHaveBeenCalledWith(42);
     });
-    expect(screen.queryByText("Bottle updated")).not.toBeInTheDocument();
+    expect(screen.queryByText("Tasting memory saved")).not.toBeInTheDocument();
   });
 
   it("rejects a PATCH response owned by another user before cache or success feedback", async () => {
@@ -493,12 +696,12 @@ describe("protected live cellar", () => {
       await screen.findByRole("button", { name: /Live Session Merlot/i }),
     );
     fireEvent.click(screen.getByLabelText("Mark as favorite"));
-    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save tasting memory" }));
 
     await waitFor(() => {
       expect(mocks.handleAuthenticationRequired).toHaveBeenCalledWith(42);
     });
-    expect(screen.queryByText("Bottle updated")).not.toBeInTheDocument();
+    expect(screen.queryByText("Tasting memory saved")).not.toBeInTheDocument();
     expect(
       queryClient.getQueryData<{ entries: CellarEntry[] }>([
         "private",
@@ -511,7 +714,9 @@ describe("protected live cellar", () => {
   it("requires inline confirmation before DELETE and reports the resulting empty state", async () => {
     const entry = createEntry();
     let resolveDelete: ((value: number) => void) | undefined;
-    mocks.getCellarEntries.mockResolvedValue({ count: 1, entries: [entry] });
+    mocks.getCellarEntries
+      .mockResolvedValueOnce({ count: 1, entries: [entry] })
+      .mockResolvedValue({ count: 0, entries: [] });
     mocks.deleteCellarEntry.mockReturnValue(
       new Promise<number>((resolve) => {
         resolveDelete = resolve;
@@ -553,16 +758,15 @@ describe("protected live cellar", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("Bottle removed")).toBeInTheDocument();
-    expect(invalidateQueries).toHaveBeenCalledOnce();
-    expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["private", 42, "wine-recommendations"],
-    });
+    await waitFor(() => expectPrivateDerivationsInvalidated(invalidateQueries));
   });
 
   it("reconciles a confirmed DELETE but suppresses its toast during revalidation", async () => {
     const entry = createEntry();
     let resolveDelete: ((value: number) => void) | undefined;
-    mocks.getCellarEntries.mockResolvedValue({ count: 1, entries: [entry] });
+    mocks.getCellarEntries
+      .mockResolvedValueOnce({ count: 1, entries: [entry] })
+      .mockResolvedValue({ count: 0, entries: [] });
     mocks.deleteCellarEntry.mockReturnValue(
       new Promise<number>((resolve) => {
         resolveDelete = resolve;

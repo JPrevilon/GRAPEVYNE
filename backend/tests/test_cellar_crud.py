@@ -328,7 +328,7 @@ def test_create_and_patch_reject_unknown_or_identity_fields(
     )
     unknown_patch = client.patch(
         f"/api/cellar/{entry_id}",
-        json={"tags": ["private"]},
+        json={"unrecognizedMemoryField": "private"},
     )
     empty_patch = client.patch(f"/api/cellar/{entry_id}", json={})
 
@@ -336,7 +336,7 @@ def test_create_and_patch_reject_unknown_or_identity_fields(
     assert "authenticated session" in create_error["details"]["user_id"]
     patch_error = error_assertion(forged_patch, 400, "validation_error")
     assert "authenticated session" in patch_error["details"]["ownerId"]
-    assert "tags" in error_assertion(
+    assert "unrecognizedMemoryField" in error_assertion(
         unknown_patch, 400, "validation_error"
     )["details"]
     assert "payload" in error_assertion(

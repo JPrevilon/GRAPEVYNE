@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "../../api/client";
 import { RECOMMENDATION_QUERY_RESOURCE } from "../../api/recommendationQueryKeys";
+import { TASTE_PROFILE_QUERY_RESOURCE } from "../../api/tasteProfileQueryKeys";
 import {
   getCurrentUser,
   login as loginRequest,
@@ -900,6 +901,10 @@ describe("AuthProvider", () => {
         ["first user's personalized recommendation"],
       );
       queryClient.setQueryData(
+        privateQueryKey(testUser.id, TASTE_PROFILE_QUERY_RESOURCE),
+        { summary: "first user's private profile" },
+      );
+      queryClient.setQueryData(
         ["public", "wine-search", "pinot"],
         ["public bottle"],
       );
@@ -919,6 +924,11 @@ describe("AuthProvider", () => {
           "steak night",
           6,
         ),
+      ),
+    ).toBeUndefined();
+    expect(
+      queryClient.getQueryData(
+        privateQueryKey(testUser.id, TASTE_PROFILE_QUERY_RESOURCE),
       ),
     ).toBeUndefined();
     expect(
@@ -950,6 +960,10 @@ describe("AuthProvider", () => {
         ),
         ["private recommendation"],
       );
+      queryClient.setQueryData(
+        privateQueryKey(testUser.id, TASTE_PROFILE_QUERY_RESOURCE),
+        { summary: "private Taste Profile" },
+      );
       queryClient.setQueryData(["public", "wine", 4], "public bottle");
       queryClient.setQueryData(
         ["public", RECOMMENDATION_QUERY_RESOURCE, "oysters", 6],
@@ -980,6 +994,11 @@ describe("AuthProvider", () => {
           "oysters",
           6,
         ),
+      ),
+    ).toBeUndefined();
+    expect(
+      queryClient.getQueryData(
+        privateQueryKey(testUser.id, TASTE_PROFILE_QUERY_RESOURCE),
       ),
     ).toBeUndefined();
     expect(queryClient.getQueryData(["public", "wine", 4])).toBe(

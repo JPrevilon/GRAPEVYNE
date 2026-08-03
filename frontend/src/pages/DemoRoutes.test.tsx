@@ -12,8 +12,10 @@ const cellarApi = vi.hoisted(() => ({
   saveWineToCellar: vi.fn(),
   updateCellarEntry: vi.fn(),
 }));
+const profileApi = vi.hoisted(() => ({ getTasteProfile: vi.fn() }));
 
 vi.mock("@/api/cellar", () => cellarApi);
+vi.mock("@/api/profile", () => profileApi);
 
 function renderDemo(page: "atlas" | "cellar") {
   return render(
@@ -44,10 +46,12 @@ function expectNoPrivateCellarCalls() {
   Object.values(cellarApi).forEach((apiCall) => {
     expect(apiCall).not.toHaveBeenCalled();
   });
+  expect(profileApi.getTasteProfile).not.toHaveBeenCalled();
 }
 
 beforeEach(() => {
   Object.values(cellarApi).forEach((apiCall) => apiCall.mockReset());
+  profileApi.getTasteProfile.mockReset();
 });
 
 afterEach(cleanup);
@@ -82,7 +86,6 @@ describe("public demonstration routes", () => {
     ).toBeInTheDocument();
     expectNoPrivateCellarCalls();
   });
-
   it("keeps the demo Taste Atlas explicitly fixture-derived and links to real routes", () => {
     renderDemo("atlas");
 
@@ -93,7 +96,7 @@ describe("public demonstration routes", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/does not query a profile endpoint, predict your taste, or read authenticated cellar data/i),
+      screen.getByText(/does not query the private Taste Profile endpoint, predict your taste, or read authenticated cellar data/i),
     ).toBeInTheDocument();
     expectRealProductCtas();
     expect(

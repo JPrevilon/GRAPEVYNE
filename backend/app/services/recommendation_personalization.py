@@ -1,7 +1,7 @@
 from collections import Counter
 from dataclasses import dataclass, field
 
-from app.models import CellarEntry, Wine
+from app.services.taste_signal_service import OwnerTasteSignalService
 from app.services.wine_service import WineService
 
 
@@ -37,6 +37,7 @@ class RecommendationPersonalizationService:
 
     def __init__(self, wine_service=None):
         self.wine_service = wine_service or WineService()
+        self.signal_service = OwnerTasteSignalService(self.wine_service.source)
 
     def anonymous_snapshot(self):
         return PreferenceSnapshot(
@@ -49,23 +50,7 @@ class RecommendationPersonalizationService:
         )
 
     def for_user(self, user_id, candidates=None):
-        rows = (
-            CellarEntry.query.with_entities(
-                CellarEntry.user_rating,
-                CellarEntry.favorite,
-                CellarEntry.status,
-                CellarEntry.occasion,
-                Wine.source,
-                Wine.external_api_id,
-            )
-            .join(Wine, CellarEntry.wine_id == Wine.id)
-            .filter(
-                CellarEntry.user_id == user_id,
-                Wine.source == self.wine_service.source,
-            )
-            .order_by(Wine.external_api_id.asc())
-            .all()
-        )
+        rows = self.signal_service.recommendation_rows_for_user(user_id)
         candidate_records = (
             candidates
             if candidates is not None

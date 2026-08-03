@@ -292,10 +292,10 @@ describe("HomePage scroll story", () => {
       ).getByText("Fresh & mineral"),
     ).toBeInTheDocument();
     expect(container.textContent).not.toMatch(/\d+\s*%/);
-    expect(container.textContent).toMatch(/full personalized Taste Atlas remains future work/i);
+    expect(container.textContent).toMatch(/protected Profile route now provides an accessible, owner-scoped Taste Atlas/i);
   });
 
-  it("keeps the engineering disclosure factual about implemented engines and deferred Taste Atlas", () => {
+  it("keeps the engineering disclosure factual about implemented private memories and engines", () => {
     renderHome();
 
     expect(
@@ -305,7 +305,7 @@ describe("HomePage scroll story", () => {
       screen.getByText(/local desktop and mobile GLB models/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Discover now includes a deterministic explainable recommendation engine/i),
+      screen.getByText(/Persisted private tasting memories now support a deterministic/i),
     ).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent(
       "A recommendation engine and personalized Taste Atlas remain future work.",

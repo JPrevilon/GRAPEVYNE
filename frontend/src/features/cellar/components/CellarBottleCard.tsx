@@ -1,4 +1,4 @@
-import { CalendarDays, Heart, Star } from "lucide-react";
+import { CalendarDays, Check, Heart, Star } from "lucide-react";
 
 import { WineVisual } from "@/components/wine/WineBottleFallback";
 import type { CellarEntry } from "@/types/domain";
@@ -56,6 +56,9 @@ export default function CellarBottleCard({
           <span className="gv-eyebrow gv-eyebrow--data">{wine.varietal}</span>
         ) : null}
         <strong>{wine.name}</strong>
+        {entry.memoryTitle ? (
+          <span className="gv-cellar-bottle__memory-title">{entry.memoryTitle}</span>
+        ) : null}
         {wine.winery ? <span>{wine.winery}</span> : null}
         {origin ? <span>{origin}</span> : null}
       </span>
@@ -72,6 +75,12 @@ export default function CellarBottleCard({
           <span>
             <Heart aria-hidden="true" size={14} />
             Favorite
+          </span>
+        ) : null}
+        {entry.wouldBuyAgain === true || entry.status === "buy_again" ? (
+          <span>
+            <Check aria-hidden="true" size={14} />
+            Buy again
           </span>
         ) : null}
         {savedDate ? (
