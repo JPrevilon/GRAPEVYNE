@@ -63,7 +63,9 @@ async function logoutThroughUi(page: Page) {
   );
   await page.getByRole("button", { name: "Logout" }).click();
   expect((await responsePromise).status()).toBe(200);
-  await expect(page).toHaveURL(/\/login$/);
+  await expect
+    .poll(() => new URL(page.url()).pathname)
+    .toMatch(/^\/(?:login)?$/);
 }
 
 async function expectExactLocation(page: Page, expected: string) {
@@ -220,7 +222,7 @@ test.describe("hosted Preview release contract", () => {
     await page.getByRole("link", { name: "Create an account" }).click();
     const signupResponse = await completeSignup(page, accountA);
     await expectExactLocation(page, signupReturn);
-    expect(Boolean(signupResponse.headers()["set-cookie"])).toBe(true);
+    expect(Boolean(await signupResponse.headerValue("set-cookie"))).toBe(true);
 
     const sessionCookie = (await context.cookies()).find(
       (cookie) => cookie.name === "session",

@@ -103,6 +103,9 @@ export default defineConfig({
   timeout: 45_000,
   use: {
     baseURL,
+    // Vercel's supported automation header prevents its feedback toolbar from
+    // injecting third-party scripts into the application under test.
+    extraHTTPHeaders: hostedPreview ? { "x-vercel-skip-toolbar": "1" } : undefined,
     screenshot: "only-on-failure",
     storageState: hostedStorageState,
     // Hosted state can contain a short-lived protection cookie. Never retain

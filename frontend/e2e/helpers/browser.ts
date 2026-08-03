@@ -25,8 +25,8 @@ export function monitorPageIssues(page: Page): PageIssueMonitor {
     if (message.type() === "error") {
       const location = message.location();
       const anonymousSessionProbe =
-        message.text().includes("401 (UNAUTHORIZED)") &&
-        location.url.includes("/api/auth/me");
+        /\b401\b/.test(message.text()) &&
+        /\/api\/auth\/me(?:[?#]|$)/.test(location.url);
 
       if (anonymousSessionProbe) return;
       issues.push(`console.error: ${message.text()}`);
