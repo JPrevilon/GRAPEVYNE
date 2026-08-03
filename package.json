@@ -1,0 +1,7 @@
+{
+  "name": "grapevyne-deployment",
+  "private": true,
+  "engines": {
+    "node": "20.x"
+  }
+}

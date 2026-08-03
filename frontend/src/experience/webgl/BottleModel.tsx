@@ -372,7 +372,11 @@ export default function BottleModel({
   onRendered,
   tier,
 }: BottleModelProps) {
-  const { scene: cachedScene } = useGLTF(BOTTLE_MODEL_PATHS[tier]);
+  const { scene: cachedScene } = useGLTF(
+    BOTTLE_MODEL_PATHS[tier],
+    false,
+    false,
+  );
   const labelSources = useTexture([
     ACTIVE_LABEL_PATHS.front,
     ACTIVE_LABEL_PATHS.back,

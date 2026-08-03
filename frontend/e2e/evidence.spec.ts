@@ -118,14 +118,14 @@ test("capture Chromium release evidence", async ({ page }, testInfo) => {
   await capture(page, "11-forced-colors-high-contrast.png");
 
   await page.emulateMedia({ forcedColors: "none", reducedMotion: "reduce" });
-  await page.route("**/assets/NotFoundPage-*.js", (route) => route.abort("failed"));
+  await page.route("**/build/NotFoundPage-*.js", (route) => route.abort("failed"));
   await page.goto("/forced-application-error");
   await expect(
     page.getByRole("heading", { name: "THIS PAGE COULD NOT BE OPENED" }),
   ).toBeVisible();
   await capture(page, "12-application-error-fallback.png");
 
-  await page.unroute("**/assets/NotFoundPage-*.js");
+  await page.unroute("**/build/NotFoundPage-*.js");
   await page.reload();
   await expect(
     page.getByRole("heading", { name: "THIS PAGE IS NOT IN THE DIRECTORY" }),

@@ -186,7 +186,11 @@ describe("BottleModel runtime ownership", () => {
       />,
     );
 
-    expect(dreiMock.useGLTF).toHaveBeenCalledWith(BOTTLE_MODEL_PATHS.high);
+    expect(dreiMock.useGLTF).toHaveBeenCalledWith(
+      BOTTLE_MODEL_PATHS.high,
+      false,
+      false,
+    );
     expect(dreiMock.useTexture).toHaveBeenCalledWith([
       BOTTLE_LABEL_PATHS.red,
       ACTIVE_LABEL_PATHS.back,
@@ -381,7 +385,11 @@ describe("BottleModel runtime ownership", () => {
       />,
     );
 
-    expect(dreiMock.useGLTF).toHaveBeenCalledWith(BOTTLE_MODEL_PATHS.standard);
+    expect(dreiMock.useGLTF).toHaveBeenCalledWith(
+      BOTTLE_MODEL_PATHS.standard,
+      false,
+      false,
+    );
     expect(dreiMock.useTexture).toHaveBeenCalledWith([
       ACTIVE_LABEL_PATHS.front,
       ACTIVE_LABEL_PATHS.back,
@@ -436,7 +444,11 @@ describe("BottleModel runtime ownership", () => {
         />,
       ),
     ).toThrow("desktop GLB failed to load");
-    expect(dreiMock.useGLTF).toHaveBeenCalledWith(BOTTLE_MODEL_PATHS.high);
+    expect(dreiMock.useGLTF).toHaveBeenCalledWith(
+      BOTTLE_MODEL_PATHS.high,
+      false,
+      false,
+    );
     expect(dreiMock.useTexture).not.toHaveBeenCalled();
   });
 });

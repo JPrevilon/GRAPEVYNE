@@ -1,281 +1,194 @@
-# GrapeVyne
+# GRAPEVYNE — From Vine to Memory
 
-GrapeVyne is a premium wine discovery and personal cellar platform. Users can create an account, discover wines through a backend wine-service abstraction, save bottles to a protected personal cellar, record private tasting memories, and build an explainable personal Taste Atlas.
+GRAPEVYNE is a cinematic wine-discovery and private-cellar product. It helps someone find a bottle for a meal, moment, or mood, understand why it matches, and keep every bottle worth remembering as a private tasting memory.
 
-The MVP is built as a real full-stack product, not a static demo. It demonstrates a React frontend, Flask API, PostgreSQL relational database, SQLAlchemy ORM models, authentication, protected user-owned data, related resources, and full CRUD.
+> **Verified Preview:** pending the Prompt 10A Vercel Preview deployment. This label will link only after the branch Preview and its dedicated database have passed hosted verification; it is not a Production URL.
 
-## Product Overview
+![GRAPEVYNE cinematic discovery hero](docs/screenshots/prompt-09a/01-hero-desktop-after-cls-fix.png)
 
-GrapeVyne helps users answer two practical questions:
+## Product
 
-- What wine should I choose for this meal, moment, or gift?
-- Which wines have I already loved enough to remember?
+- Natural-language catalog discovery and deterministic, explainable recommendations
+- Source-backed wine detail routes with match signals and pairing context
+- Signed-in, owner-scoped Cellar with full create/read/update/delete behavior
+- Tasting memories for the date, place, pairing, companions, notes, rating, status, favorite, and buy-again decision
+- Private Taste Profile and accessible Taste Atlas with empty, limited, and active states
+- Public, read-only Cellar and Taste Atlas demonstrations
+- A nine-chapter “From Vine to Memory” homepage with local cinematic media
+- A local WebGL bottle, high/standard model tiers, and a tested software-renderer fallback
+- Responsive layouts, keyboard support, reduced motion, and readable alternatives to visual data
 
-The signature experience is **Open Cellar**, a premium visual interface where persisted bottles are organized into truthful data-derived views such as Recently Added, Favorites, Highest Rated, Date Night, Dinner Pairings, Celebrations, Wishlist, and Buy Again.
+The current catalog contains six deliberately transparent demonstration records. It proves search, scoring, explainability, personalization, and ownership behavior; it is not represented as a comprehensive commercial wine catalog.
 
-## Tech Stack
+## Architecture
 
-- Frontend: React, Vite, React Router, Lucide icons
-- Backend: Flask, Flask-CORS, Flask-SQLAlchemy, Flask-Migrate
-- Database: PostgreSQL
-- ORM: SQLAlchemy
-- Auth: Flask signed HTTP-only session cookies
-- External API strategy: backend `WineService` abstraction using mock data until a real wine API key is available
+```text
+Browser (one HTTPS origin)
+  ├── /                 Vite 6 + React 18 + TypeScript
+  ├── /build/*          content-hashed frontend bundles
+  ├── /assets/*         local video, posters, models, labels, and brand assets
+  └── /api/*            Flask 3 Vercel Function
+                           └── dedicated PostgreSQL database
+```
 
-## MVP Features
+The browser always requests relative `/api` paths with credentials included. The hosted topology uses one Vercel project and one public origin—there is no browser-visible secondary API origin.
 
-- Signup, login, logout, and current-user session restore
-- Protected `/cellar` and `/profile` routes
-- Backend-mediated wine discovery search
-- Wine detail pages
-- Save discovered wines to a personal cellar
-- Cached local `Wine` records created from external/mock wine data
-- User-owned `CellarEntry` records
-- CRUD for cellar entries:
-  - create saved bottle
-  - read cellar list and detail
-  - update notes, rating, occasion, favorite, tags, and status
-  - record a memory title, tasted date, location, pairing, companions, and a tri-state buy-again answer
-  - delete saved bottle
-- Data-derived Cellar shelves plus an accessible all-bottles view and selected-bottle memory editor
-- Private, deterministic Taste Atlas with empty, limited, and active states
-- One explainable adjacent-catalog suggestion when the signed-in evidence and six-record catalog support it
-- Loading, empty, error, success, and validation states
-- Toast feedback for key user actions
+### Frontend
 
-## Project Structure
+Vite, React, TypeScript, React Router, TanStack Query, GSAP, Framer Motion, Lenis, React Three Fiber, Drei, and Three.js. Route modules and the WebGL experience remain lazy-loaded, while approved media/model/label/font files are local and checksum-verified.
+
+### Backend
+
+Flask application factory, Flask-SQLAlchemy, Flask-Migrate/Alembic, psycopg 3, and PostgreSQL. `backend/app` remains the only backend source of truth; `api/index.py` is a thin WSGI deployment adapter and never starts a development server, migrates, or seeds on import.
+
+### Security and privacy
+
+- Signed Flask sessions with `HttpOnly`, `Secure` in hosted environments, and `SameSite=Lax`
+- Fixed session expiry without refresh-on-read
+- Exact trusted origins and credentialed CORS; no wildcard origin
+- unsafe-request Origin and Fetch Metadata checks
+- User identity comes only from the signed session
+- Every private Cellar query is owner-scoped
+- Private auth, Cellar, profile, and personalized responses use `private, no-store` and `Vary: Cookie`
+- Account switching clears private frontend query state
+- No free-form private memories are returned by public catalog or recommendation endpoints
+- Preview and Production use separate secrets and separate PostgreSQL resources
+
+## Repository
 
 ```text
 GRAPEVYNE/
+  api/index.py             Vercel WSGI adapter
   backend/
     app/
-      models/      SQLAlchemy models
-      routes/      Flask API blueprints
-      services/    Wine and cellar service layers
-      utils/       validation and response helpers
-    migrations/    Alembic/Flask-Migrate revision history
+      models/              SQLAlchemy models
+      routes/              Flask API blueprints
+      services/            search, recommendation, Cellar, and taste logic
+    migrations/            reviewed Alembic history (0001 and 0002)
+    tests/                 API, ownership, security, and PostgreSQL tests
   frontend/
+    public/                local production media and WebGL assets
     src/
-      api/         fetch client
-      components/  layout, routing, shared UI
-      features/    auth, wines, cellar
-      pages/       route-level views
-      styles/      global design system
+      api/                 typed same-origin client and normalizers
+      components/          layout, navigation, routing, and shared UI
+      experience/          scroll story, media, motion, and WebGL
+      pages/               lazy route-level views
+    e2e/                   Playwright journeys and quality gates
   docs/
-    screenshots/   prompt-by-prompt browser verification captures
+    screenshots/           browser evidence
+    v2/                    architecture, migration, quality, and release reports
+  vercel.json              stable one-project Preview configuration
 ```
 
-## Database Schema
-
-### User
-
-Stores account identity and authentication data.
-
-- `id`
-- `name`
-- `email`
-- `password_hash`
-- `created_at`
-- `updated_at`
-
-Relationship:
-
-- User has many `CellarEntry` records.
-
-### Wine
-
-Stores cached wine metadata from the wine service layer.
-
-- `id`
-- `external_api_id`
-- `source`
-- `name`
-- `winery`
-- `varietal`
-- `region`
-- `country`
-- `vintage`
-- `description`
-- `image_url`
-- `average_rating`
-- `price_cents`
-- `created_at`
-- `updated_at`
-
-Relationship:
-
-- Wine has many `CellarEntry` records.
-
-Constraint:
-
-- Unique `source + external_api_id`.
-
-### CellarEntry
-
-Stores private user-owned cellar data.
-
-- `id`
-- `user_id`
-- `wine_id`
-- `user_rating`
-- `notes`
-- `favorite`
-- `tags`
-- `occasion`
-- `status`
-- `saved_at`
-- `memory_title` (nullable, 160 characters)
-- `tasted_on` (nullable date)
-- `location` (nullable, 240 characters)
-- `pairing` (nullable, 240 characters)
-- `opened_with` (nullable, 240 characters)
-- `would_buy_again` (nullable boolean)
-- `created_at`
-- `updated_at`
-
-Relationships:
-
-- CellarEntry belongs to one User.
-- CellarEntry belongs to one Wine.
-
-Ownership rule:
-
-- Every cellar query filters by authenticated `user_id`.
-
-## API Endpoints
-
-### Health
+## API contract
 
 ```text
-GET /api/health
-```
+GET    /api/health
 
-### Auth
+POST   /api/auth/signup
+POST   /api/auth/login
+POST   /api/auth/logout
+GET    /api/auth/me
 
-```text
-POST /api/auth/signup
-POST /api/auth/login
-POST /api/auth/logout
-GET  /api/auth/me
-```
+GET    /api/wines/search?query=steak
+GET    /api/wines/recommendations?query=bold%20red%20for%20steak
+GET    /api/wines/:externalWineId
 
-### Wines
-
-```text
-GET /api/wines/search?query=steak
-GET /api/wines/:externalWineId
-GET /api/wines/recommendations?query=steak&limit=6
-```
-
-The frontend never calls an external wine API directly. It calls Flask, and Flask delegates to `WineService`.
-
-### Cellar
-
-```text
 GET    /api/cellar
 POST   /api/cellar
 GET    /api/cellar/:entryId
 PATCH  /api/cellar/:entryId
 DELETE /api/cellar/:entryId
+
+GET    /api/profile/taste
 ```
 
-All cellar endpoints require authentication.
+Successful responses use a `data` envelope; errors use a single `error` envelope with a stable code and message. The frontend does not call an external wine provider directly.
 
-### Private Taste Profile
+## Local setup
 
-```text
-GET /api/profile/taste
-```
+The accepted CI baseline uses Node `20.19.6` and Python `3.12.12`. Vercel guarantees the supported Node `20.x` and Python `3.12` runtime lines and reports the actual patch versions in build logs.
 
-The current Flask session is the only identity input. The response is computed per request
-from bounded structured cellar signals, is marked `private, no-store`, and never returns
-free-form memories or internal row identifiers.
-
-## Setup Instructions
-
-### 1. Backend
+### PostgreSQL and Flask
 
 ```bash
 cd backend
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+python -m pip install -r requirements.txt -r requirements-dev.txt
 cp .env.example .env
+python -m flask --app app db upgrade
+python -m flask --app app db current
+python -m flask --app app run --debug
 ```
 
-Create a PostgreSQL database named `grapevyne`, or update `DATABASE_URL` in `backend/.env`.
+Create a local PostgreSQL database and set `DATABASE_URL` in the untracked `backend/.env`. Importing or starting the application never creates, migrates, or seeds a database. Optional local demonstration seeding remains an explicit CLI action.
 
-```bash
-flask --app app init-db
-flask --app app seed-demo-data
-flask --app app run --debug
-```
-
-Backend runs at:
-
-```text
-http://localhost:5000
-```
-
-`init-db` explicitly applies the tracked Flask-Migrate history; application import and
-startup never create or alter tables. Existing unversioned Prompt 07 databases need the
-reviewed stamp-and-upgrade procedure in `docs/v2/08-migration-and-rollback.md`.
-
-### 2. Frontend
+### Vite and React
 
 ```bash
 cd frontend
-npm install
+npm ci
 cp .env.example .env
 npm run dev
 ```
 
-Frontend runs at:
+Vite serves `http://localhost:5173` and proxies relative `/api` requests to local Flask at `http://127.0.0.1:5000`.
+
+## Environment-variable names
+
+Values are never committed. Backend runtime names are:
 
 ```text
-http://localhost:5173
+FLASK_ENV
+DATABASE_URL
+DEPLOYMENT_DATABASE_SENTINEL
+SECRET_KEY
+FRONTEND_ORIGINS
+SESSION_COOKIE_NAME
+SESSION_COOKIE_DOMAIN
+SESSION_COOKIE_SECURE
+SESSION_LIFETIME_DAYS
+TRUST_PROXY_HEADERS
 ```
 
-## Demo Flow
+`VITE_API_BASE_URL` is an optional local frontend override; hosted browser code keeps the default relative `/api`. Vercel supplies trusted system metadata such as `VERCEL`, `VERCEL_ENV`, `VERCEL_URL`, `VERCEL_BRANCH_URL`, and `VERCEL_PROJECT_PRODUCTION_URL`. No backend secret uses a `VITE_` prefix.
 
-1. Open the app.
-2. Create an account.
-3. Search for a wine in Discover, for example `steak`, `salmon`, `gift`, or `champagne`.
-4. Open a wine detail page.
-5. Save the bottle to your cellar.
-6. Open Cellar.
-7. Select a bottle from a shelf.
-8. Edit the private memory, structured tasting fields, rating, occasion, tags, and favorite status.
-9. Open Profile to inspect the owner-scoped Taste Atlas and its readable list alternative.
-10. Delete the bottle and confirm its evidence leaves the profile.
-11. Log out and confirm protected routes redirect to login.
+Preview database migrations are explicit and use the provider’s direct/unpooled connection when supplied. Request-time application traffic uses the pooled Preview connection. Production migration and promotion are intentionally deferred to Prompt 10B.
 
-## Screenshots
+## Quality gates
 
-Prompt 08 browser evidence is under `docs/screenshots/prompt-08/`; it includes the private
-Cellar and memory editor, all three Taste Profile states, the readable Atlas alternative,
-two-account isolation, public demo disclosures, error handling, responsive views, and
-reduced-motion behavior. Earlier prompt captures remain in their own directories.
+```bash
+cd frontend
+npm run verify:assets
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run verify:bundle
+npm run test:e2e:chromium
+npm run test:e2e:cross-browser
+npm run test:a11y
+npm run test:visual
+npm run test:performance
+npm audit
 
-## Full-Stack Rubric Signals
+cd ../backend
+python -m pip check
+python -m compileall app tests
+python -m pytest
+python -m pip_audit
+python -m bandit -q --severity-level medium -r app
+```
 
-- React frontend: route-based UI in `frontend/src/pages`
-- Flask backend: application factory in `backend/app/__init__.py`
-- PostgreSQL database: configured through `DATABASE_URL`
-- SQLAlchemy ORM: models in `backend/app/models`
-- Authentication: session auth routes in `backend/app/routes/auth.py`
-- Protected data: cellar routes require login and filter by `user_id`
-- Related resources: User, Wine, CellarEntry
-- CRUD: cellar create/read/update/delete endpoints and UI
-- External API readiness: `WineService` can be swapped from mock data to a real wine provider
-- Documentation readiness: setup, schema, API, and demo flow included
+GitHub Actions repeats the frontend, backend, PostgreSQL migration, Chromium, Firefox, and WebKit gates with immutable action and database-image pins. The explicit hosted mode additionally verifies that its target is a READY Vercel **Preview** before it can run.
 
-## Future Features
+Physical iPhone Safari, physical Mac Safari, and VoiceOver remain honest manual gates for Prompt 10B; automated WebKit and Axe coverage do not masquerade as those physical checks.
 
-- Real wine API provider integration
-- Advanced cellar search/filter/sort
-- Pairing assistant by meal and occasion
-- More cinematic Open Cellar transitions
-- Mobile camera label capture
-- Restaurant and gift modes
-- Inventory quantity tracking
+## Evidence
+
+| Discovery | Private tasting memory | Active Taste Profile |
+| --- | --- | --- |
+| ![Discovery route](docs/screenshots/prompt-09a/05-discover.png) | ![Cellar memory editor](docs/screenshots/prompt-09a/06-cellar-memory-editor.png) | ![Active Taste Profile](docs/screenshots/prompt-09a/07-active-taste-profile.png) |
+
+Detailed accepted evidence is recorded in `docs/v2/quality-report.md` and the Prompt 09A release-remediation reports. Prompt 10A adds the real hosted topology, Preview environment contract, public Preview evidence, and manual-review package without merging or creating a Production deployment.

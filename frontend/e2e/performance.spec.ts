@@ -428,7 +428,7 @@ test("lazy Home loading reserves the viewport before its route chunk resolves", 
   const heldRoute = new Promise<void>((resolve) => {
     releaseRoute = resolve;
   });
-  await page.route("**/assets/HomePage-*.js", async (route) => {
+  await page.route("**/build/HomePage-*.js", async (route) => {
     await heldRoute;
     await route.continue();
   });

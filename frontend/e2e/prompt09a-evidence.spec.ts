@@ -103,7 +103,7 @@ test("capture Prompt 09A release-blocker evidence", async ({ page }, testInfo) =
   await recordedBranches.scrollIntoViewIfNeeded();
   await capture(page, "07-active-taste-profile.png");
 
-  await page.route("**/assets/NotFoundPage-*.js", (route) =>
+  await page.route("**/build/NotFoundPage-*.js", (route) =>
     route.abort("failed"),
   );
   await page.goto("/prompt-09a-forced-application-error");
@@ -112,7 +112,7 @@ test("capture Prompt 09A release-blocker evidence", async ({ page }, testInfo) =
   ).toBeVisible();
   await capture(page, "08-error-boundary-recovery.png");
 
-  await page.unroute("**/assets/NotFoundPage-*.js");
+  await page.unroute("**/build/NotFoundPage-*.js");
   await page.reload();
   await expect(
     page.getByRole("heading", { name: "THIS PAGE IS NOT IN THE DIRECTORY" }),

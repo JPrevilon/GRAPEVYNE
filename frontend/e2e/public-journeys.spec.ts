@@ -48,7 +48,7 @@ test("@smoke public routes remain usable in every desktop engine", async ({
   ).toBeVisible();
   await expect(page.getByRole("searchbox", { name: "Search wines" })).toBeVisible();
 
-  await page.goto("/address-that-does-not-exist");
+  await page.goto("/an-intentional-404");
   await expect(
     page.getByRole("heading", {
       level: 1,
