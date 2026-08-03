@@ -1,6 +1,6 @@
 # Prompt 10A deployment topology
 
-Status: deployment-preparation architecture. Hosted identifiers and measured results are recorded in `10a-hosted-preview-report.md` after the Preview is verified.
+Status: **verified Preview architecture**. Hosted identifiers and measured results are recorded in `10a-hosted-preview-report.md`.
 
 ## Decision
 
@@ -61,7 +61,7 @@ The API mapping uses one exact `/api` rule plus one unnamed nested-path capture 
 - The dedicated Preview database receives the same marker as its PostgreSQL database comment over the direct connection. The provisioned Neon role can set that owner-controlled comment without elevated parameter privileges or an untracked schema object. Hosted health queries `shobj_description` for the current database and returns `503` without exposing database details when the value is absent, mismatched, or unavailable.
 - Hosted-E2E cleanup is an explicit CLI operation guarded by the same Preview marker. It can remove only `e2e-%@example.test` users and their dependent Cellar entries; it never creates a public cleanup endpoint.
 
-The Function region is selected only after the database region is known. No region is guessed in source configuration.
+The verified Preview places both the Python Function and dedicated Neon database in `iad1` (Washington, D.C.). The Function bundle is 11.64 MB. Region selection followed database provisioning; no Production region was selected or changed.
 
 ## Origin, session, and cache boundary
 

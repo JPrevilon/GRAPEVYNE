@@ -19,7 +19,9 @@ This document records names and trust boundaries only. It intentionally contains
 
 Flask fixes `SESSION_COOKIE_HTTPONLY=true`, `SESSION_COOKIE_SAMESITE=Lax`, `SESSION_REFRESH_EACH_REQUEST=false`, `SQLALCHEMY_TRACK_MODIFICATIONS=false`, `TESTING=false`, and `DEBUG=false` in hosted production mode. These invariants are not loosened by environment values.
 
-The provider may expose a separate direct/unpooled database variable. Its actual injected name is recorded in the hosted report after provisioning. It is used only for explicit Preview Alembic commands and is not selected by request-time application code.
+Neon exposes the separate direct/unpooled connection as `DATABASE_URL_UNPOOLED`. It is used only for explicit Preview Alembic, database-identity, and guarded cleanup commands and is not selected by request-time application code. Request traffic uses the pooled `DATABASE_URL`.
+
+The provisioned resource is the Preview-only Neon `free_v3` resource `grapevyne-preview` in `iad1`. Vercel targets all provider-injected `POSTGRES_*`, `PG*`, and `NEON_PROJECT_ID` names to Preview only. Production has no configured application or provider environment variables from Prompt 10A.
 
 ## Vercel system metadata
 
@@ -84,7 +86,7 @@ After securely pulling Preview variables into an ignored temporary environment, 
 Before deployment, export one unique non-secret marker with a `grapevyne-preview-` prefix as `DEPLOYMENT_DATABASE_SENTINEL` in the Vercel Preview environment. Install that exact marker in the dedicated Preview database using its direct/unpooled connection only:
 
 ```bash
-psql "$GRAPEVYNE_PREVIEW_DIRECT_DATABASE_URL" \
+psql "$GRAPEVYNE_PREVIEW_DATABASE_URL" \
   --set=ON_ERROR_STOP=1 \
   --set=sentinel="$DEPLOYMENT_DATABASE_SENTINEL" <<'SQL'
 SELECT pg_catalog.shobj_description(database.oid, 'pg_database') IS NULL

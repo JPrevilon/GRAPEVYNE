@@ -2,7 +2,7 @@
 
 GRAPEVYNE is a cinematic wine-discovery and private-cellar product. It helps someone find a bottle for a meal, moment, or mood, understand why it matches, and keep every bottle worth remembering as a private tasting memory.
 
-> **Verified Preview:** pending the Prompt 10A Vercel Preview deployment. This label will link only after the branch Preview and its dedicated database have passed hosted verification; it is not a Production URL.
+> **Verified Preview:** [open the protected GRAPEVYNE branch Preview](https://grapevyne-joshuaprevilon13-7141-joshuaprevilon13-7141s-projects.vercel.app). This is a Vercel **Preview**, not the Production URL; the project owner may need to sign in to Vercel because Deployment Protection remains enabled.
 
 ![GRAPEVYNE cinematic discovery hero](docs/screenshots/prompt-09a/01-hero-desktop-after-cls-fix.png)
 
@@ -52,7 +52,7 @@ Flask application factory, Flask-SQLAlchemy, Flask-Migrate/Alembic, psycopg 3, a
 - Private auth, Cellar, profile, and personalized responses use `private, no-store` and `Vary: Cookie`
 - Account switching clears private frontend query state
 - No free-form private memories are returned by public catalog or recommendation endpoints
-- Preview and Production use separate secrets and separate PostgreSQL resources
+- The deployment contract requires Preview and Production to use separate secrets and separate PostgreSQL resources; Prompt 10A configures Preview only
 
 ## Repository
 
@@ -189,6 +189,6 @@ Physical iPhone Safari, physical Mac Safari, and VoiceOver remain honest manual 
 
 | Discovery | Private tasting memory | Active Taste Profile |
 | --- | --- | --- |
-| ![Discovery route](docs/screenshots/prompt-09a/05-discover.png) | ![Cellar memory editor](docs/screenshots/prompt-09a/06-cellar-memory-editor.png) | ![Active Taste Profile](docs/screenshots/prompt-09a/07-active-taste-profile.png) |
+| ![Hosted discovery route](docs/screenshots/prompt-10a/04-discovery-desktop-1440x900.png) | ![Hosted Cellar memory editor](docs/screenshots/prompt-10a/09-tasting-memory-editor-empty-note-desktop-1440x900.png) | ![Hosted active Taste Profile](docs/screenshots/prompt-10a/10-active-taste-profile-desktop-1440x900.png) |
 
-Detailed accepted evidence is recorded in `docs/v2/quality-report.md` and the Prompt 09A release-remediation reports. Prompt 10A adds the real hosted topology, Preview environment contract, public Preview evidence, and manual-review package without merging or creating a Production deployment.
+Detailed accepted evidence is recorded in `docs/v2/quality-report.md`, the Prompt 09A release-remediation reports, and the [Prompt 10A hosted Preview report](docs/v2/10a-hosted-preview-report.md). The [manual Preview checklist](docs/v2/10a-preview-manual-review-checklist.md) keeps physical Safari and screen-reader review explicit and unclaimed. Prompt 10A does not merge the pull request or create a Production deployment.

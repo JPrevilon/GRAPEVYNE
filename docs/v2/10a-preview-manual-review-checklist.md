@@ -1,6 +1,6 @@
 # GRAPEVYNE Preview manual review checklist
 
-Preview URL: pending verified stable branch Preview link.
+Preview URL: [verified protected branch Preview](https://grapevyne-joshuaprevilon13-7141-joshuaprevilon13-7141s-projects.vercel.app). This is not Production; the project owner may need to sign in to Vercel because Deployment Protection remains enabled.
 
 These checks are intentionally **not marked passed** by automated Chromium, Firefox, WebKit, or Axe results. Complete them against the verified Prompt 10A Preview before Prompt 10B.
 
