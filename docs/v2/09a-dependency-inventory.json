@@ -1,0 +1,635 @@
+{
+  "schemaVersion": 1,
+  "auditDate": "2026-08-03",
+  "phase": "Prompt 09A",
+  "branch": "feat/grapevyne-cinematic-v2",
+  "acceptedPrompt09Commit": "14f7e4cb85d585d6da1e153c3882da4549f6e4fa",
+  "method": {
+    "node": "20.19.6",
+    "npm": "10.8.2",
+    "python": "3.12.12",
+    "pipAudit": "2.10.1",
+    "npmCommands": [
+      "npm audit --json",
+      "npm audit --omit=dev --json",
+      "npm outdated --json",
+      "npm ls --all"
+    ],
+    "pythonCommands": [
+      "python -m pip check",
+      "python -m pip list --outdated --format=json",
+      "pip-audit --format=json"
+    ],
+    "cachePolicy": "All npm registry, install, and audit operations used writable disposable storage outside the repository. /Volumes/LaCie/.npm-cache was not accessed.",
+    "evidencePolicy": "Raw scanner output remains in disposable, untracked temporary storage. This file is the reviewed, value-safe machine-readable inventory.",
+    "finalInventoryResults": {
+      "npmAuditFull": "exit 1 as expected for 2 moderate package entries; 0 low, high, or critical",
+      "npmAuditOmitDev": "exit 1 as expected for the same 2 moderate package entries; 0 low, high, or critical",
+      "npmOutdated": "exit 1 as expected; 29 packages have newer published lines, retained where unrelated or incompatible with this focused remediation",
+      "npmLsAll": "exit 0; complete installed graph serialized with no dependency problem reported",
+      "pipCheck": "exit 0; no broken requirements",
+      "pipAudit": "exit 0; 0 vulnerability records across 51 installed packages"
+    }
+  },
+  "summary": {
+    "npm": {
+      "baselineFullTreePackageEntries": {
+        "info": 0,
+        "low": 1,
+        "moderate": 5,
+        "high": 4,
+        "critical": 0,
+        "total": 10
+      },
+      "baselineOmitDevPackageEntries": {
+        "info": 0,
+        "low": 1,
+        "moderate": 5,
+        "high": 2,
+        "critical": 0,
+        "total": 8
+      },
+      "baselineIndividualAdvisories": 16,
+      "finalFullTreePackageEntries": {
+        "info": 0,
+        "low": 0,
+        "moderate": 2,
+        "high": 0,
+        "critical": 0,
+        "total": 2
+      },
+      "finalOmitDevPackageEntries": {
+        "info": 0,
+        "low": 0,
+        "moderate": 2,
+        "high": 0,
+        "critical": 0,
+        "total": 2
+      },
+      "finalIndividualAdvisories": 3,
+      "explanation": "npm counts affected package entries, including direct packages that inherit transitive findings. The baseline 10 entries map to 16 individual advisories; the two final entries map to three React Router advisories."
+    },
+    "python": {
+      "baselineScannerRecords": 8,
+      "baselineAffectedPackages": 4,
+      "baselineUniqueVulnerabilities": 7,
+      "finalScannerRecords": 0,
+      "finalAffectedPackages": 0,
+      "explanation": "The live Prompt 09A scan added the newly reported pytest record to Prompt 09's seven-row baseline. PYSEC-2024-71 and PYSEC-2024-260 are mutually aliased records for one Flask-Cors PNA vulnerability, but both scanner rows are retained below."
+    },
+    "releaseTarget": {
+      "critical": 0,
+      "high": 0,
+      "knownExploitableRuntimeModerate": 0,
+      "decision": "passed locally with three documented, non-reachable React Router residual advisories"
+    }
+  },
+  "directDependencyChanges": {
+    "npm": [
+      {
+        "package": "@react-three/drei",
+        "beforeDeclared": "9.114.3",
+        "beforeResolved": "9.114.3",
+        "afterDeclared": "9.122.0",
+        "afterResolved": "9.122.0",
+        "scopeAfter": "runtime",
+        "reason": "Safe React 18 / R3F 8-compatible minor update removes the vulnerable uuid@9.0.1 dependency path."
+      },
+      {
+        "package": "react-router-dom",
+        "beforeDeclared": "^6.26.1",
+        "beforeResolved": "6.30.3",
+        "afterDeclared": "6.30.4",
+        "afterResolved": "6.30.4",
+        "scopeAfter": "runtime",
+        "reason": "Exact patch resolves GHSA-2j2x-hqr9-3h42 while preserving the accepted v6 BrowserRouter contract."
+      },
+      {
+        "package": "vite",
+        "beforeDeclared": "^5.4.2",
+        "beforeResolved": "5.4.21",
+        "afterDeclared": "6.4.3",
+        "afterResolved": "6.4.3",
+        "scopeAfter": "development",
+        "reason": "Reviewed same-tool major update is Node 20-compatible and clears all reported Vite, esbuild, and PostCSS high/moderate paths; the package is also corrected from runtime to development scope."
+      },
+      {
+        "package": "@vitejs/plugin-react",
+        "beforeDeclared": "^4.3.1",
+        "beforeResolved": "4.7.0",
+        "afterDeclared": "4.7.0",
+        "afterResolved": "4.7.0",
+        "scopeAfter": "development",
+        "reason": "Pins the already resolved compatible version exactly and corrects this build plugin from runtime to development scope."
+      }
+    ],
+    "python": [
+      {
+        "package": "Flask",
+        "before": "3.0.3",
+        "after": "3.1.3",
+        "scope": "runtime",
+        "reason": "Fixes incomplete Vary: Cookie behavior for session access."
+      },
+      {
+        "package": "Flask-Cors",
+        "before": "4.0.1",
+        "after": "6.0.5",
+        "scope": "runtime",
+        "reason": "Fixes Private Network Access defaults and all reported case, regex-priority, and plus-normalization path matching issues."
+      },
+      {
+        "package": "python-dotenv",
+        "before": "1.0.1",
+        "after": "1.2.2",
+        "scope": "runtime",
+        "reason": "Fixes symlink following in dotenv writer helpers."
+      },
+      {
+        "package": "pytest",
+        "before": "8.4.2",
+        "after": "9.0.3",
+        "scope": "development",
+        "reason": "Fixes the predictable UNIX temporary-directory vulnerability reported during the live Prompt 09A scan."
+      }
+    ]
+  },
+  "transitiveRemediations": [
+    {
+      "package": "@babel/core",
+      "before": "7.29.0",
+      "after": "7.29.7"
+    },
+    {
+      "package": "brace-expansion",
+      "before": "1.1.14",
+      "after": "1.1.18"
+    },
+    {
+      "package": "esbuild",
+      "before": "0.21.5",
+      "after": "0.25.12"
+    },
+    {
+      "package": "js-yaml",
+      "before": "4.1.1",
+      "after": "4.3.1"
+    },
+    {
+      "package": "postcss",
+      "before": "8.5.10",
+      "after": "8.5.25"
+    },
+    {
+      "package": "uuid",
+      "before": "9.0.1",
+      "after": null,
+      "note": "Removed from the installed tree by @react-three/drei 9.122.0."
+    }
+  ],
+  "unchangedCompatibilityAnchors": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "@react-three/fiber": "8.17.10",
+    "three": "0.169.0"
+  },
+  "npmAdvisories": [
+    {
+      "package": "@babel/core",
+      "installedVersionBefore": "7.29.0",
+      "installedVersionAfter": "7.29.7",
+      "identifier": "GHSA-4x5r-pxfx-6jf8",
+      "url": "https://github.com/advisories/GHSA-4x5r-pxfx-6jf8",
+      "severity": "low",
+      "directOrTransitive": "transitive",
+      "runtimeOrDevelopmentOnly": "development-only; it appeared in the baseline npm production tree because @vitejs/plugin-react was misclassified as a runtime dependency",
+      "dependencyPath": "root > @vitejs/plugin-react@4.7.0 > @babel/core@7.29.0",
+      "affectedVersionRange": "<=7.29.0",
+      "firstFixedVersion": "7.29.6",
+      "reachability": "Only the local/CI React transform and source-map pipeline invokes Babel. It is not emitted into the browser application; attacker-controlled build input was not found.",
+      "proposedRemediation": "Resolve @babel/core above 7.29.0 through the reviewed plugin/tooling lockfile and move the plugin to development scope.",
+      "finalStatus": "resolved at 7.29.7"
+    },
+    {
+      "package": "brace-expansion",
+      "installedVersionBefore": "1.1.14",
+      "installedVersionAfter": "1.1.18",
+      "identifier": "GHSA-3jxr-9vmj-r5cp",
+      "url": "https://github.com/advisories/GHSA-3jxr-9vmj-r5cp",
+      "severity": "high",
+      "directOrTransitive": "transitive",
+      "runtimeOrDevelopmentOnly": "development-only",
+      "dependencyPath": "root > eslint@9.39.4 > minimatch@3.1.5 > brace-expansion@1.1.14",
+      "affectedVersionRange": "<1.1.16",
+      "firstFixedVersion": "1.1.16",
+      "reachability": "Only lint/config glob matching reaches this package. Public requests do not supply brace patterns, but malicious repository input could consume CI resources.",
+      "proposedRemediation": "Refresh the compatible transitive lockfile resolution to at least 1.1.16.",
+      "finalStatus": "resolved at 1.1.18"
+    },
+    {
+      "package": "brace-expansion",
+      "installedVersionBefore": "1.1.14",
+      "installedVersionAfter": "1.1.18",
+      "identifier": "GHSA-mh99-v99m-4gvg",
+      "url": "https://github.com/advisories/GHSA-mh99-v99m-4gvg",
+      "severity": "high",
+      "directOrTransitive": "transitive",
+      "runtimeOrDevelopmentOnly": "development-only",
+      "dependencyPath": "root > eslint@9.39.4 > minimatch@3.1.5 > brace-expansion@1.1.14",
+      "affectedVersionRange": "<1.1.17",
+      "firstFixedVersion": "1.1.17",
+      "reachability": "Only lint/config glob matching reaches this package. Public requests do not supply brace patterns, but malicious repository input could trigger memory exhaustion in CI.",
+      "proposedRemediation": "Refresh the compatible transitive lockfile resolution to at least 1.1.17.",
+      "finalStatus": "resolved at 1.1.18"
+    },
+    {
+      "package": "esbuild",
+      "installedVersionBefore": "0.21.5",
+      "installedVersionAfter": "0.25.12",
+      "identifier": "GHSA-67mh-4wv8-2f99",
+      "url": "https://github.com/advisories/GHSA-67mh-4wv8-2f99",
+      "severity": "moderate",
+      "directOrTransitive": "transitive",
+      "runtimeOrDevelopmentOnly": "development-only; it appeared in the baseline npm production tree through the misclassified Vite dependency",
+      "dependencyPath": "root > vite@5.4.21 > esbuild@0.21.5",
+      "affectedVersionRange": "<=0.24.2",
+      "firstFixedVersion": "0.25.0",
+      "reachability": "The affected service is Vite's development server, not the deployed static browser bundle. No public dev-server deployment is configured.",
+      "proposedRemediation": "Upgrade Vite to a compatible release resolving esbuild at 0.25.0 or newer and classify Vite as development-only.",
+      "finalStatus": "resolved at 0.25.12"
+    },
+    {
+      "package": "js-yaml",
+      "installedVersionBefore": "4.1.1",
+      "installedVersionAfter": "4.3.1",
+      "identifier": "GHSA-h67p-54hq-rp68",
+      "url": "https://github.com/advisories/GHSA-h67p-54hq-rp68",
+      "severity": "moderate",
+      "directOrTransitive": "transitive",
+      "runtimeOrDevelopmentOnly": "development-only",
+      "dependencyPath": "root > eslint@9.39.4 > @eslint/eslintrc@3.3.5 > js-yaml@4.1.1",
+      "affectedVersionRange": ">=4.0.0 <=4.1.1",
+      "firstFixedVersion": "4.2.0",
+      "reachability": "Only tracked lint configuration is parsed; public application input is not parsed as YAML. Malicious repository YAML could still consume CI CPU.",
+      "proposedRemediation": "Refresh the compatible ESLint transitive resolution beyond 4.1.1.",
+      "finalStatus": "resolved at 4.3.1"
+    },
+    {
+      "package": "js-yaml",
+      "installedVersionBefore": "4.1.1",
+      "installedVersionAfter": "4.3.1",
+      "identifier": "GHSA-52cp-r559-cp3m",
+      "url": "https://github.com/advisories/GHSA-52cp-r559-cp3m",
+      "severity": "high",
+      "directOrTransitive": "transitive",
+      "runtimeOrDevelopmentOnly": "development-only",
+      "dependencyPath": "root > eslint@9.39.4 > @eslint/eslintrc@3.3.5 > js-yaml@4.1.1",
+      "affectedVersionRange": ">=4.0.0 <4.3.0",
+      "firstFixedVersion": "4.3.0",
+      "reachability": "Only tracked lint configuration is parsed; public application input is not parsed as YAML. Malicious repository YAML could still consume CI CPU.",
+      "proposedRemediation": "Refresh the compatible ESLint transitive resolution to at least 4.3.0.",
+      "finalStatus": "resolved at 4.3.1"
+    },
+    {
+      "package": "postcss",
+      "installedVersionBefore": "8.5.10",
+      "installedVersionAfter": "8.5.25",
+      "identifier": "GHSA-6g55-p6wh-862q",
+      "url": "https://github.com/advisories/GHSA-6g55-p6wh-862q",
+      "severity": "high",
+      "directOrTransitive": "transitive",
+      "runtimeOrDevelopmentOnly": "development-only; it appeared in the baseline npm production tree through the misclassified Vite dependency",
+      "dependencyPath": "root > vite@5.4.21 > postcss@8.5.10",
+      "affectedVersionRange": "<=8.5.11",
+      "firstFixedVersion": "8.5.12",
+      "reachability": "Only repository CSS enters the build pipeline; the application accepts no public CSS upload. A malicious sourceMappingURL in repository input could nevertheless expose build-host files.",
+      "proposedRemediation": "Upgrade the compatible Vite/PostCSS graph beyond 8.5.11.",
+      "finalStatus": "resolved at 8.5.25"
+    },
+    {
+      "package": "postcss",
+      "installedVersionBefore": "8.5.10",
+      "installedVersionAfter": "8.5.25",
+      "identifier": "GHSA-r28c-9q8g-f849",
+      "url": "https://github.com/advisories/GHSA-r28c-9q8g-f849",
+      "severity": "high",
+      "directOrTransitive": "transitive",
+      "runtimeOrDevelopmentOnly": "development-only; it appeared in the baseline npm production tree through the misclassified Vite dependency",
+      "dependencyPath": "root > vite@5.4.21 > postcss@8.5.10",
+      "affectedVersionRange": "<=8.5.17",
+      "firstFixedVersion": "8.5.18",
+      "reachability": "Only repository CSS enters the build pipeline; the application accepts no public CSS upload. A malicious previous source-map path in repository input could nevertheless expose a build-host map file.",
+      "proposedRemediation": "Upgrade the compatible Vite/PostCSS graph beyond 8.5.17.",
+      "finalStatus": "resolved at 8.5.25"
+    },
+    {
+      "package": "react-router",
+      "installedVersionBefore": "6.30.3",
+      "installedVersionAfter": "6.30.4",
+      "identifier": "GHSA-2j2x-hqr9-3h42",
+      "url": "https://github.com/advisories/GHSA-2j2x-hqr9-3h42",
+      "severity": "moderate",
+      "directOrTransitive": "transitive",
+      "runtimeOrDevelopmentOnly": "runtime",
+      "dependencyPath": "root > react-router-dom@6.30.3 > react-router@6.30.3",
+      "affectedVersionRange": ">=6.7.0 <6.30.4",
+      "firstFixedVersion": "6.30.4",
+      "reachability": "Navigation runs in the browser. Existing return-route validation rejects protocol-relative and external destinations, but the compatible patch was available and required.",
+      "proposedRemediation": "Pin react-router-dom exactly to 6.30.4 so its matching react-router dependency resolves to the patched v6 release.",
+      "finalStatus": "resolved at 6.30.4"
+    },
+    {
+      "package": "react-router",
+      "installedVersionBefore": "6.30.3",
+      "installedVersionAfter": "6.30.4",
+      "identifier": "GHSA-wrjc-x8rr-h8h6",
+      "url": "https://github.com/advisories/GHSA-wrjc-x8rr-h8h6",
+      "severity": "moderate",
+      "directOrTransitive": "transitive",
+      "runtimeOrDevelopmentOnly": "runtime",
+      "dependencyPath": "root > react-router-dom@6.30.4 > react-router@6.30.4",
+      "affectedVersionRange": ">=6.0.0 <7.18.0",
+      "firstFixedVersion": "7.18.0",
+      "reachability": "No reviewed caller passes attacker-controlled destinations directly to Link or navigate. Every dynamic post-auth destination passes isSafeInternalReturnTo, which rejects backslashes, protocol-relative URLs, CR/LF, and external URLs; focused hostile-destination tests pass.",
+      "proposedRemediation": "Retain the exact, otherwise patched v6 line with the tested destination allowlist until a React Router line without the newly introduced v7 high advisory can be migrated safely.",
+      "finalStatus": "accepted residual; present in audit, no known exploitable application path"
+    },
+    {
+      "package": "react-router",
+      "installedVersionBefore": "6.30.3",
+      "installedVersionAfter": "6.30.4",
+      "identifier": "GHSA-337j-9hxr-rhxg",
+      "url": "https://github.com/advisories/GHSA-337j-9hxr-rhxg",
+      "severity": "moderate",
+      "directOrTransitive": "transitive",
+      "runtimeOrDevelopmentOnly": "runtime package; affected feature is server-side rendering only",
+      "dependencyPath": "root > react-router-dom@6.30.4 > react-router@6.30.4",
+      "affectedVersionRange": ">=6.4.0 <7.18.0",
+      "firstFixedVersion": "7.18.0",
+      "reachability": "GrapeVyne is a client-rendered Vite BrowserRouter SPA. It has no React Router server renderer, hydration-data transport, deserializeErrors call, StaticRouterProvider, or HydratedRouter path.",
+      "proposedRemediation": "Retain the exact v6 BrowserRouter contract until a safe major is available; continue preventing SSR/hydration features from entering this deployment without a new review.",
+      "finalStatus": "accepted residual; affected SSR deserialization feature is absent"
+    },
+    {
+      "package": "react-router-dom",
+      "installedVersionBefore": "6.30.3",
+      "installedVersionAfter": "6.30.4",
+      "identifier": "GHSA-jjmj-jmhj-qwj2",
+      "url": "https://github.com/advisories/GHSA-jjmj-jmhj-qwj2",
+      "severity": "moderate",
+      "directOrTransitive": "direct",
+      "runtimeOrDevelopmentOnly": "runtime",
+      "dependencyPath": "root > react-router-dom@6.30.4",
+      "affectedVersionRange": ">=6.30.2 <=6.30.4",
+      "firstFixedVersion": "no patched v6 release; 7.13.0 on the v7 line",
+      "reachability": "The exploit requires unsafe attacker-influenced navigation. Auth return state is constructed from the current internal pathname and all dynamic destinations pass isSafeInternalReturnTo, which rejects external, protocol-relative, backslash, CR, and LF variants. Focused tests cover these cases.",
+      "proposedRemediation": "Keep the exact v6 package with the tested internal-path boundary until a v7-or-later line that resolves all router advisories is compatible and regression-proven.",
+      "finalStatus": "accepted residual; present in audit, no known exploitable application path"
+    },
+    {
+      "package": "uuid",
+      "installedVersionBefore": "9.0.1",
+      "installedVersionAfter": null,
+      "identifier": "GHSA-w5hq-g745-h8pq",
+      "url": "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
+      "severity": "moderate",
+      "directOrTransitive": "transitive",
+      "runtimeOrDevelopmentOnly": "runtime",
+      "dependencyPath": "root > @react-three/drei@9.114.3 > uuid@9.0.1",
+      "affectedVersionRange": "<11.1.1",
+      "firstFixedVersion": "11.1.1",
+      "reachability": "Application source does not import uuid or call the affected v3/v5/v6 caller-supplied buffer APIs; the path nevertheless existed in the runtime tree.",
+      "proposedRemediation": "Use the compatible @react-three/drei 9.122.0 graph, which removes uuid rather than forcing an API-incompatible transitive override.",
+      "finalStatus": "resolved; uuid removed from the installed tree"
+    },
+    {
+      "package": "vite",
+      "installedVersionBefore": "5.4.21",
+      "installedVersionAfter": "6.4.3",
+      "identifier": "GHSA-4w7w-66w2-5vf9",
+      "url": "https://github.com/advisories/GHSA-4w7w-66w2-5vf9",
+      "severity": "moderate",
+      "directOrTransitive": "direct",
+      "runtimeOrDevelopmentOnly": "development-only; it was incorrectly declared as a runtime dependency at baseline",
+      "dependencyPath": "root > vite@5.4.21",
+      "affectedVersionRange": "<=6.4.1",
+      "firstFixedVersion": "6.4.2",
+      "reachability": "The vulnerable optimized-dependency map handler belongs to the development server, which is not the deployed application. The build tool still executes in trusted CI and therefore required a fix.",
+      "proposedRemediation": "Pin the Node 20-compatible Vite 6.4.3 release and move it to development scope.",
+      "finalStatus": "resolved at 6.4.3"
+    },
+    {
+      "package": "vite",
+      "installedVersionBefore": "5.4.21",
+      "installedVersionAfter": "6.4.3",
+      "identifier": "GHSA-v6wh-96g9-6wx3",
+      "url": "https://github.com/advisories/GHSA-v6wh-96g9-6wx3",
+      "severity": "moderate",
+      "directOrTransitive": "direct",
+      "runtimeOrDevelopmentOnly": "development-only; it was incorrectly declared as a runtime dependency at baseline",
+      "dependencyPath": "root > vite@5.4.21",
+      "affectedVersionRange": "<=6.4.2",
+      "firstFixedVersion": "6.4.3",
+      "reachability": "The NTLMv2 disclosure requires Windows UNC launch-editor handling. Official verification ran on macOS/Linux-style tooling, but Windows collaborators and CI provenance still warranted remediation.",
+      "proposedRemediation": "Pin Vite 6.4.3 and move it to development scope.",
+      "finalStatus": "resolved at 6.4.3"
+    },
+    {
+      "package": "vite",
+      "installedVersionBefore": "5.4.21",
+      "installedVersionAfter": "6.4.3",
+      "identifier": "GHSA-fx2h-pf6j-xcff",
+      "url": "https://github.com/advisories/GHSA-fx2h-pf6j-xcff",
+      "severity": "high",
+      "directOrTransitive": "direct",
+      "runtimeOrDevelopmentOnly": "development-only; it was incorrectly declared as a runtime dependency at baseline",
+      "dependencyPath": "root > vite@5.4.21",
+      "affectedVersionRange": "<=6.4.2",
+      "firstFixedVersion": "6.4.3",
+      "reachability": "The filesystem-deny bypass affects the development server on Windows alternate paths. No public Vite server is configured, but the high-severity build/development path required removal.",
+      "proposedRemediation": "Pin Vite 6.4.3 and move it to development scope.",
+      "finalStatus": "resolved at 6.4.3"
+    }
+  ],
+  "pythonAdvisories": [
+    {
+      "package": "Flask",
+      "installedVersionBefore": "3.0.3",
+      "installedVersionAfter": "3.1.3",
+      "identifier": "PYSEC-2026-2151",
+      "aliases": [
+        "CVE-2026-27205",
+        "GHSA-68rp-wp8r-4726"
+      ],
+      "url": "https://github.com/advisories/GHSA-68rp-wp8r-4726",
+      "severity": "low",
+      "directOrTransitive": "direct",
+      "runtimeOrDevelopmentOnly": "runtime",
+      "dependencyPath": "root > Flask==3.0.3",
+      "affectedVersionRange": "<3.1.3",
+      "firstFixedVersion": "3.1.3",
+      "reachability": "The signed-session application reads session values and can sit behind a caching proxy. Existing private/no-store and Vary: Cookie controls reduce exposure, but do not replace the package fix.",
+      "proposedRemediation": "Pin Flask exactly to 3.1.3 and rerun session, cookie, private-cache, error-envelope, and migration coverage.",
+      "finalStatus": "resolved at 3.1.3"
+    },
+    {
+      "package": "Flask-Cors",
+      "installedVersionBefore": "4.0.1",
+      "installedVersionAfter": "6.0.5",
+      "identifier": "PYSEC-2024-71",
+      "aliases": [
+        "PYSEC-2024-260",
+        "CVE-2024-6221",
+        "GHSA-hxwh-jpp2-84pm"
+      ],
+      "url": "https://github.com/advisories/GHSA-hxwh-jpp2-84pm",
+      "severity": "high",
+      "directOrTransitive": "direct",
+      "runtimeOrDevelopmentOnly": "runtime",
+      "dependencyPath": "root > Flask-Cors==4.0.1",
+      "affectedVersionRange": "<4.0.2",
+      "firstFixedVersion": "4.0.2",
+      "reachability": "Credentialed CORS is active for exact configured origins. The old default could approve Private Network Access for an otherwise allowed origin, so origin narrowing alone was not a package-level fix.",
+      "proposedRemediation": "Upgrade to the unified exact Flask-Cors 6.0.5 target, explicitly disable Private Network Access, and cover preflight denial.",
+      "finalStatus": "resolved at 6.0.5; PNA is explicitly disabled"
+    },
+    {
+      "package": "Flask-Cors",
+      "installedVersionBefore": "4.0.1",
+      "installedVersionAfter": "6.0.5",
+      "identifier": "PYSEC-2024-260",
+      "aliases": [
+        "PYSEC-2024-71",
+        "CVE-2024-6221",
+        "GHSA-hxwh-jpp2-84pm"
+      ],
+      "url": "https://github.com/advisories/GHSA-hxwh-jpp2-84pm",
+      "severity": "high",
+      "directOrTransitive": "direct",
+      "runtimeOrDevelopmentOnly": "runtime",
+      "dependencyPath": "root > Flask-Cors==4.0.1",
+      "affectedVersionRange": "<4.0.2",
+      "firstFixedVersion": "4.0.2",
+      "reachability": "This scanner row is a withdrawn/duplicate alias of PYSEC-2024-71 rather than a second vulnerability. Its PNA behavior was reachable under the same conditions and is therefore retained rather than hidden from the row count.",
+      "proposedRemediation": "Apply the same exact Flask-Cors 6.0.5 upgrade and explicit PNA denial as the canonical record.",
+      "finalStatus": "resolved at 6.0.5; duplicate scanner row retained for accounting"
+    },
+    {
+      "package": "Flask-Cors",
+      "installedVersionBefore": "4.0.1",
+      "installedVersionAfter": "6.0.5",
+      "identifier": "PYSEC-2026-1383",
+      "aliases": [
+        "CVE-2024-6866",
+        "GHSA-43qf-4rqw-9q2g"
+      ],
+      "url": "https://github.com/advisories/GHSA-43qf-4rqw-9q2g",
+      "severity": "moderate",
+      "directOrTransitive": "direct",
+      "runtimeOrDevelopmentOnly": "runtime",
+      "dependencyPath": "root > Flask-Cors==4.0.1",
+      "affectedVersionRange": "<=5.0.1",
+      "firstFixedVersion": "6.0.0",
+      "reachability": "The app uses one exact-origin API policy, which reduces differential-policy impact, but case-insensitive resource matching could still select a policy for the wrong case-sensitive path.",
+      "proposedRemediation": "Pin Flask-Cors 6.0.5, anchor the API resource expression, and test mixed-case boundary denial.",
+      "finalStatus": "resolved at 6.0.5 with focused path-boundary regression coverage"
+    },
+    {
+      "package": "Flask-Cors",
+      "installedVersionBefore": "4.0.1",
+      "installedVersionAfter": "6.0.5",
+      "identifier": "PYSEC-2026-1384",
+      "aliases": [
+        "CVE-2024-6839",
+        "GHSA-7rxf-gvfg-47g4"
+      ],
+      "url": "https://github.com/advisories/GHSA-7rxf-gvfg-47g4",
+      "severity": "moderate",
+      "directOrTransitive": "direct",
+      "runtimeOrDevelopmentOnly": "runtime",
+      "dependencyPath": "root > Flask-Cors==4.0.1",
+      "affectedVersionRange": "<=5.0.1",
+      "firstFixedVersion": "6.0.0",
+      "reachability": "A single exact-origin API policy reduces the risk of a permissive longer regex outranking a restrictive one, but the vulnerable matcher remained in the runtime dependency.",
+      "proposedRemediation": "Pin Flask-Cors 6.0.5 and test policy precedence with anchored API and static-path controls.",
+      "finalStatus": "resolved at 6.0.5 with focused policy-precedence coverage"
+    },
+    {
+      "package": "Flask-Cors",
+      "installedVersionBefore": "4.0.1",
+      "installedVersionAfter": "6.0.5",
+      "identifier": "PYSEC-2026-1385",
+      "aliases": [
+        "CVE-2024-6844",
+        "GHSA-8vgw-p6qm-5gr7"
+      ],
+      "url": "https://github.com/advisories/GHSA-8vgw-p6qm-5gr7",
+      "severity": "moderate",
+      "directOrTransitive": "direct",
+      "runtimeOrDevelopmentOnly": "runtime",
+      "dependencyPath": "root > Flask-Cors==4.0.1",
+      "affectedVersionRange": "<=5.0.1",
+      "firstFixedVersion": "6.0.0",
+      "reachability": "The old plus-to-space normalization could select an unexpected resource policy. The app's single API policy reduced but did not remove that matcher defect.",
+      "proposedRemediation": "Pin Flask-Cors 6.0.5 and add plus-character and API-boundary CORS regressions.",
+      "finalStatus": "resolved at 6.0.5 with focused plus-path coverage"
+    },
+    {
+      "package": "pytest",
+      "installedVersionBefore": "8.4.2",
+      "installedVersionAfter": "9.0.3",
+      "identifier": "PYSEC-2026-1845",
+      "aliases": [
+        "CVE-2025-71176",
+        "GHSA-6w46-j5rx-g56g"
+      ],
+      "url": "https://github.com/advisories/GHSA-6w46-j5rx-g56g",
+      "severity": "moderate",
+      "directOrTransitive": "direct",
+      "runtimeOrDevelopmentOnly": "development-only",
+      "dependencyPath": "root > pytest==8.4.2",
+      "affectedVersionRange": "<9.0.3",
+      "firstFixedVersion": "9.0.3",
+      "reachability": "The issue is local to predictable UNIX pytest temporary directories; pytest is absent from the production runtime, but developer or shared CI hosts could be affected by another local user.",
+      "proposedRemediation": "Pin pytest exactly to 9.0.3 and rerun the complete backend and migration suites.",
+      "finalStatus": "resolved at 9.0.3"
+    },
+    {
+      "package": "python-dotenv",
+      "installedVersionBefore": "1.0.1",
+      "installedVersionAfter": "1.2.2",
+      "identifier": "PYSEC-2026-2270",
+      "aliases": [
+        "CVE-2026-28684",
+        "GHSA-mf9w-mj56-hr94"
+      ],
+      "url": "https://github.com/advisories/GHSA-mf9w-mj56-hr94",
+      "severity": "moderate",
+      "directOrTransitive": "direct",
+      "runtimeOrDevelopmentOnly": "runtime package; affected writer helpers are local tooling paths",
+      "dependencyPath": "root > python-dotenv==1.0.1",
+      "affectedVersionRange": "<1.2.2",
+      "firstFixedVersion": "1.2.2",
+      "reachability": "Reviewed application code calls load_dotenv only and does not call vulnerable set_key or unset_key symlink-following writers. The exact patch was still available and required.",
+      "proposedRemediation": "Pin python-dotenv exactly to 1.2.2 and retain read-only runtime usage.",
+      "finalStatus": "resolved at 1.2.2"
+    }
+  ],
+  "evaluatedAlternatives": [
+    {
+      "candidate": "react-router-dom 7.18.2 / react-router 7.18.2",
+      "result": "rejected",
+      "reason": "Although it resolves the three v6 moderate records, the live audit reports two high affected package entries through GHSA-qwww-vcr4-c8h2 (RSC-mode CSRF) for react-router >=7.12.0 <8.3.0. GrapeVyne does not use RSC, but adopting a new major with a high advisory would fail the explicit release target."
+    },
+    {
+      "candidate": "react-router 8.3.0",
+      "result": "not compatible",
+      "reason": "The first fix for GHSA-qwww-vcr4-c8h2 requires the React Router 8.3 line, Node >=22.22, and React/React DOM >=19.2.7; no matching react-router-dom 8.3 migration was available in the evaluated graph. That would violate the Node 20 and React 18/R3F 8 compatibility anchors."
+    },
+    {
+      "candidate": "react-router-dom 6.30.4",
+      "result": "selected",
+      "reason": "This exact patch removes the v6 protocol-relative redirect advisory and leaves only three application-unreachable moderate records, with zero high or critical entries and no framework migration."
+    }
+  ]
+}

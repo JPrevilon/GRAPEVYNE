@@ -4,7 +4,9 @@ import { disposableAccount } from "./helpers/accounts";
 import {
   cumulativeLayoutShift,
   installLayoutShiftObserver,
+  layoutShiftSamples,
   resourceNames,
+  type LayoutShiftSample,
 } from "./helpers/browser";
 import { seedActiveProfile, signupThroughPreview } from "./helpers/seed";
 
@@ -13,9 +15,16 @@ interface RuntimeMetrics {
   firstWebglFrameFromHeroMs: number | null;
   initialRequestCount: number;
   initialTransferredBytes: number;
+  layoutShifts: LayoutShiftSample[];
   lcpMs: number | null;
-  longTasks: number[];
+  longTasks: Array<{
+    attribution: string[];
+    duration: number;
+    name: string;
+    startTime: number;
+  }>;
   semanticHeroMs: number | null;
+  webglDecision: { reason: string | null; tier: string };
   webglImportToFirstFrameMs: number | null;
 }
 
@@ -24,7 +33,12 @@ async function installRuntimeObservers(page: Parameters<typeof installLayoutShif
   await page.addInitScript(() => {
     const metrics = {
       lcp: null as number | null,
-      longTasks: [] as number[],
+      longTasks: [] as Array<{
+        attribution: string[];
+        duration: number;
+        name: string;
+        startTime: number;
+      }>,
       semanticHero: null as number | null,
     };
     Object.defineProperty(window, "__grapevyneRuntimeMetrics", {
@@ -43,7 +57,36 @@ async function installRuntimeObservers(page: Parameters<typeof installLayoutShif
 
     try {
       new PerformanceObserver((list) => {
-        metrics.longTasks.push(...list.getEntries().map((entry) => entry.duration));
+        metrics.longTasks.push(
+          ...list.getEntries().map((entry) => {
+            const longTask = entry as PerformanceEntry & {
+              attribution?: Array<{
+                containerId?: string;
+                containerName?: string;
+                containerSrc?: string;
+                containerType?: string;
+                name?: string;
+              }>;
+            };
+
+            return {
+              attribution: (longTask.attribution ?? []).map((item) =>
+                [
+                  item.name,
+                  item.containerType,
+                  item.containerName,
+                  item.containerId,
+                  item.containerSrc,
+                ]
+                  .filter(Boolean)
+                  .join(":"),
+              ),
+              duration: entry.duration,
+              name: entry.name,
+              startTime: entry.startTime,
+            };
+          }),
+        );
       }).observe({ buffered: true, type: "longtask" });
     } catch {
       // Unsupported metrics remain informationally empty.
@@ -86,10 +129,26 @@ test("initial home and product routes obey resource and lifecycle budgets", asyn
     }),
   ).toBeVisible();
 
-  await page
-    .locator("[data-webgl-status='ready']")
-    .waitFor({ state: "visible", timeout: 8_000 })
-    .catch(() => undefined);
+  await page.waitForFunction(
+    () =>
+      performance.getEntriesByName("grapevyne-webgl-capability-decided")
+        .length > 0,
+  );
+  const webglDecision = await page.evaluate(() => {
+    const marks = performance.getEntriesByName(
+      "grapevyne-webgl-capability-decided",
+    ) as PerformanceMark[];
+    return marks.at(-1)?.detail as {
+      reason: string | null;
+      tier: string;
+    };
+  });
+
+  if (webglDecision.tier !== "fallback") {
+    await expect(page.locator("[data-webgl-status='ready']")).toBeVisible({
+      timeout: 8_000,
+    });
+  }
 
   const metrics = await page.evaluate(async () => {
     await new Promise((resolve) => window.setTimeout(resolve, 900));
@@ -103,7 +162,12 @@ test("initial home and product routes obey resource and lifecycle budgets", asyn
       window as Window & {
         __grapevyneRuntimeMetrics?: {
           lcp: number | null;
-          longTasks: number[];
+          longTasks: Array<{
+            attribution: string[];
+            duration: number;
+            name: string;
+            startTime: number;
+          }>;
           semanticHero: number | null;
         };
       }
@@ -133,7 +197,13 @@ test("initial home and product routes obey resource and lifecycle budgets", asyn
     };
   });
   const cls = await cumulativeLayoutShift(page);
-  const report: RuntimeMetrics = { ...metrics, cls };
+  const shifts = await layoutShiftSamples(page);
+  const report: RuntimeMetrics = {
+    ...metrics,
+    cls,
+    layoutShifts: shifts,
+    webglDecision,
+  };
   await testInfo.attach("home-runtime-metrics", {
     body: JSON.stringify(report, null, 2),
     contentType: "application/json",
@@ -141,15 +211,14 @@ test("initial home and product routes obey resource and lifecycle budgets", asyn
   console.log(`[prompt09-home-runtime] ${JSON.stringify(report)}`);
 
   expect(metrics.semanticHeroMs).not.toBeNull();
-  // CLS <= 0.10, a 500 ms long-task ceiling, and <=1.5 s to first WebGL frame
-  // remain documented soft lab targets. Parallel browser contention can
-  // inflate them, so timing samples stay informational while their shape and
-  // the resource/lifecycle contracts are hard assertions.
-  if (cls !== null) {
-    expect(Number.isFinite(cls)).toBe(true);
-    expect(cls).toBeGreaterThanOrEqual(0);
-  }
-  expect(metrics.longTasks.every((duration) => Number.isFinite(duration))).toBe(true);
+  expect(cls, "Chromium must expose a deterministic CLS sample").not.toBeNull();
+  expect(cls ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(0.1);
+  expect(
+    metrics.longTasks.every(({ duration }) => Number.isFinite(duration)),
+  ).toBe(true);
+  expect(
+    Math.max(0, ...metrics.longTasks.map(({ duration }) => duration)),
+  ).toBeLessThanOrEqual(500);
   if (metrics.firstWebglFrameFromHeroMs !== null) {
     expect(Number.isFinite(metrics.firstWebglFrameFromHeroMs)).toBe(true);
     expect(metrics.firstWebglFrameFromHeroMs).toBeGreaterThanOrEqual(0);
@@ -163,7 +232,19 @@ test("initial home and product routes obey resource and lifecycle budgets", asyn
   );
   expect(earlyNonHeroVideo).toEqual([]);
   expect(homeResources.some((name) => /\.mobile\.(?:mp4|webm)(?:$|\?)/.test(name))).toBe(false);
-  expect(await page.locator("canvas").count()).toBeLessThanOrEqual(1);
+  if (webglDecision.tier === "fallback") {
+    expect(webglDecision.reason).not.toBeNull();
+    expect(
+      homeResources.some((name) =>
+        /ExperienceCanvas|\.glb(?:$|\?)|grapevyne-label-(?:front-red|back)\.png/i.test(
+          name,
+        ),
+      ),
+    ).toBe(false);
+    await expect(page.locator("canvas")).toHaveCount(0);
+  } else {
+    expect(await page.locator("canvas").count()).toBeLessThanOrEqual(1);
+  }
 
   await page.goto("/discover");
   await expect(page.getByRole("heading", { name: "DISCOVER WINES" })).toBeVisible();
@@ -333,4 +414,44 @@ test("API timings, frame cadence, and throttled mobile readiness remain measurab
   }
 
   expect(context.pages()).toContain(page);
+});
+
+test("lazy Home loading reserves the viewport before its route chunk resolves", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "desktop-chromium",
+    "The lazy-route layout contract runs once in desktop Chromium.",
+  );
+
+  let releaseRoute: (() => void) | undefined;
+  const heldRoute = new Promise<void>((resolve) => {
+    releaseRoute = resolve;
+  });
+  await page.route("**/assets/HomePage-*.js", async (route) => {
+    await heldRoute;
+    await route.continue();
+  });
+
+  const navigation = page.goto("/");
+
+  try {
+    const reservation = page.locator(".home-route-loading-reservation");
+    await expect(reservation).toBeVisible();
+    const footerBounds = await page.locator(".gv-footer").boundingBox();
+    expect(footerBounds).not.toBeNull();
+    expect(footerBounds?.y).toBeGreaterThanOrEqual(
+      page.viewportSize()?.height ?? 900,
+    );
+  } finally {
+    releaseRoute?.();
+  }
+
+  await navigation;
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "FIND THE BOTTLE KEEP THE MEMORY",
+    }),
+  ).toBeVisible();
 });

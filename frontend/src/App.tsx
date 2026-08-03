@@ -16,15 +16,36 @@ const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
 const SignupPage = lazy(() => import("@/pages/SignupPage"));
 const WineDetailPage = lazy(() => import("@/pages/WineDetailPage"));
 
-function SuspendedRoute({ children }: { children: ReactNode }) {
-  return <Suspense fallback={<RouteLoading />}>{children}</Suspense>;
+function HomeRouteLoading() {
+  return (
+    <div className="home-route-loading-reservation">
+      <RouteLoading />
+    </div>
+  );
+}
+
+function SuspendedRoute({
+  children,
+  fallback = <RouteLoading />,
+}: {
+  children: ReactNode;
+  fallback?: ReactNode;
+}) {
+  return <Suspense fallback={fallback}>{children}</Suspense>;
 }
 
 export default function App() {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        <Route index element={<SuspendedRoute><HomePage /></SuspendedRoute>} />
+        <Route
+          index
+          element={
+            <SuspendedRoute fallback={<HomeRouteLoading />}>
+              <HomePage />
+            </SuspendedRoute>
+          }
+        />
         <Route path="/discover" element={<SuspendedRoute><DiscoverPage /></SuspendedRoute>} />
         <Route path="/wines/:wineId" element={<SuspendedRoute><WineDetailPage /></SuspendedRoute>} />
         <Route path="/demo/cellar" element={<SuspendedRoute><DemoCellarPage /></SuspendedRoute>} />

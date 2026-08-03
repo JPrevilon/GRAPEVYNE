@@ -4,6 +4,7 @@ export type WebGLFallbackReason =
   | "reduced-motion"
   | "save-data"
   | "low-capability"
+  | "software-renderer"
   | "webgl-unavailable";
 
 export type WebGLCapabilityDecision =
@@ -31,6 +32,8 @@ const LOW_CORE_COUNT = 2;
 const HIGH_MEMORY_GB = 4;
 const HIGH_CORE_COUNT = 6;
 const HIGH_TIER_MIN_WIDTH = 1024;
+const SOFTWARE_RENDERER_PATTERN =
+  /swiftshader|llvmpipe|softpipe|lavapipe|software rasterizer|microsoft basic render/i;
 
 export function selectWebGLQualityTier(
   signals: WebGLCapabilitySignals,
@@ -78,7 +81,30 @@ interface NavigatorWithCapabilityHints extends Navigator {
 }
 
 function releaseProbeContext(context: WebGLRenderingContext | WebGL2RenderingContext) {
-  context.getExtension("WEBGL_lose_context")?.loseContext();
+  try {
+    context.getExtension("WEBGL_lose_context")?.loseContext();
+  } catch {
+    // Releasing a diagnostic context must not affect the capability decision.
+  }
+}
+
+function readWebGLRenderer(
+  context: WebGLRenderingContext | WebGL2RenderingContext,
+): string | null {
+  try {
+    const debugInfo = context.getExtension("WEBGL_debug_renderer_info") as
+      | { UNMASKED_RENDERER_WEBGL: number }
+      | null;
+    const renderer = context.getParameter(
+      debugInfo?.UNMASKED_RENDERER_WEBGL ?? context.RENDERER,
+    );
+
+    return typeof renderer === "string" ? renderer : null;
+  } catch {
+    // Privacy controls may block renderer details; that is not evidence of
+    // software rendering, so the ordinary capability checks remain in force.
+    return null;
+  }
 }
 
 function probeWebGLSupport() {
@@ -97,12 +123,22 @@ function probeWebGLSupport() {
       canvas.getContext("webgl2", attributes) ??
       canvas.getContext("webgl", attributes);
 
-    if (!context) return false;
+    if (!context) {
+      return { softwareRenderer: false, webglAvailable: false };
+    }
 
-    releaseProbeContext(context);
-    return true;
+    try {
+      const renderer = readWebGLRenderer(context);
+      return {
+        softwareRenderer:
+          renderer !== null && SOFTWARE_RENDERER_PATTERN.test(renderer),
+        webglAvailable: true,
+      };
+    } finally {
+      releaseProbeContext(context);
+    }
   } catch {
-    return false;
+    return { softwareRenderer: false, webglAvailable: false };
   } finally {
     canvas.width = 1;
     canvas.height = 1;
@@ -135,8 +171,14 @@ export function inspectBrowserWebGLCapability(
 
   if (earlyDecision.tier === "fallback") return earlyDecision;
 
+  const probe = probeWebGLSupport();
+
+  if (probe.softwareRenderer) {
+    return { reason: "software-renderer", tier: "fallback" };
+  }
+
   return selectWebGLQualityTier({
     ...baseSignals,
-    webglAvailable: probeWebGLSupport(),
+    webglAvailable: probe.webglAvailable,
   });
 }

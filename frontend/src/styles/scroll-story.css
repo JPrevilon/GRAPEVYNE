@@ -628,7 +628,7 @@ html.has-scroll-smoothing body {
 }
 
 @media (min-width: 64.0625rem) {
-  .gv-story:not(.gv-story--webgl-ready) .gv-story-chapter--hero .gv-hero-bottle {
+  .gv-story .gv-story-chapter--hero .gv-hero-bottle {
     top: clamp(7rem, 20svh, 11rem);
     bottom: auto;
   }

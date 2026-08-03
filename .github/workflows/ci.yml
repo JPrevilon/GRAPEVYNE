@@ -15,24 +15,24 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: "24"
-  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20.19.6"
+  PYTHON_VERSION: "3.12.12"
 
 jobs:
   frontend:
     name: Frontend quality
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     defaults:
       run:
         working-directory: frontend
     steps:
       - name: Check out source
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -51,12 +51,14 @@ jobs:
         run: npm run build
       - name: Verify bundle budget
         run: npm run verify:bundle
-      - name: Block critical npm advisories
-        run: npm audit --audit-level=critical
+      - name: Block high or critical npm advisories
+        run: |
+          npm audit --audit-level=high
+          npm audit --omit=dev --audit-level=high
 
   backend:
     name: Backend quality
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     defaults:
       run:
@@ -65,38 +67,46 @@ jobs:
       FLASK_ENV: testing
     steps:
       - name: Check out source
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
           cache-dependency-path: |
             backend/requirements.txt
             backend/requirements-dev.txt
-      - name: Install locked backend dependencies
-        run: python -m pip install -r requirements-dev.txt
+      - name: Install locked backend dependencies and security tools
+        run: |
+          python -m pip install --upgrade pip==26.2
+          python -m pip install -r requirements-dev.txt pip-audit==2.10.1 bandit==1.8.6
       - name: Check Python dependency health
         run: python -m pip check
       - name: Run backend tests
         run: python -m pytest
       - name: Compile backend and tests
         run: python -m compileall app tests migrations
+      - name: Audit Python dependencies
+        run: python -m pip_audit
+      - name: Scan backend source
+        # Gate actionable medium/high findings. The full local Prompt 09A scan
+        # also records and adjudicates Bandit's three low-confidence literals.
+        run: python -m bandit -q --severity-level medium -r app
       - name: Verify Flask routes
         run: python -m flask --app app routes
 
   postgres:
     name: PostgreSQL migration contract
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     # This proves schema, migration, and data behavior against an ephemeral
     # loopback PostgreSQL service. It is structural CI evidence only: it does
     # not validate production networking, credentials, backups, load, or deploys.
     services:
       postgres:
-        image: postgres:18.4-alpine
+        image: postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
         env:
           POSTGRES_USER: grapevyne_ci
           POSTGRES_PASSWORD: grapevyne_ci_only
@@ -119,11 +129,11 @@ jobs:
       TEST_DATABASE_URL: postgresql+psycopg://grapevyne_ci:grapevyne_ci_only@127.0.0.1:5432/grapevyne_ci
     steps:
       - name: Check out source
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -131,7 +141,9 @@ jobs:
             backend/requirements.txt
             backend/requirements-dev.txt
       - name: Install locked backend dependencies
-        run: python -m pip install -r requirements-dev.txt
+        run: |
+          python -m pip install --upgrade pip==26.2
+          python -m pip install -r requirements-dev.txt
       - name: Upgrade fresh PostgreSQL database to head
         run: python -m flask --app app db upgrade --directory migrations head
       - name: Verify head revision and schema
@@ -170,21 +182,21 @@ jobs:
       - frontend
       - backend
       - postgres
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Check out source
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -193,7 +205,9 @@ jobs:
             backend/requirements-dev.txt
       - name: Install locked backend dependencies
         working-directory: backend
-        run: python -m pip install -r requirements-dev.txt
+        run: |
+          python -m pip install --upgrade pip==26.2
+          python -m pip install -r requirements-dev.txt
       - name: Install locked frontend dependencies
         working-directory: frontend
         run: npm ci --no-audit --no-fund
@@ -208,13 +222,13 @@ jobs:
         run: npm run test:e2e:chromium
       - name: Upload failed Chromium evidence
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: playwright-chromium-${{ github.run_attempt }}
           path: |
             frontend/test-results/html
             frontend/test-results/playwright
-          if-no-files-found: ignore
+          if-no-files-found: warn
           retention-days: 7
 
   cross-browser:
@@ -223,21 +237,21 @@ jobs:
       - frontend
       - backend
       - postgres
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Check out source
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -246,7 +260,9 @@ jobs:
             backend/requirements-dev.txt
       - name: Install locked backend dependencies
         working-directory: backend
-        run: python -m pip install -r requirements-dev.txt
+        run: |
+          python -m pip install --upgrade pip==26.2
+          python -m pip install -r requirements-dev.txt
       - name: Install locked frontend dependencies
         working-directory: frontend
         run: npm ci --no-audit --no-fund
@@ -261,11 +277,11 @@ jobs:
         run: npm run test:e2e:cross-browser
       - name: Upload failed cross-browser evidence
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: playwright-cross-browser-${{ github.run_attempt }}
           path: |
             frontend/test-results/html
             frontend/test-results/playwright
-          if-no-files-found: ignore
+          if-no-files-found: warn
           retention-days: 7

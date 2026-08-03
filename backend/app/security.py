@@ -58,7 +58,8 @@ def configure_request_security(app):
     if origins:
         CORS(
             app,
-            resources={r"/api/*": {"origins": list(origins)}},
+            resources={r"^/api(?:/.*)?$": {"origins": list(origins)}},
+            allow_private_network=False,
             supports_credentials=True,
             send_wildcard=False,
             vary_header=True,

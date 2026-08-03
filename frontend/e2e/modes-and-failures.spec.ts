@@ -7,7 +7,11 @@ import {
   type ApiEnvelope,
   type CellarEntryData,
 } from "./helpers/api";
-import { resourceNames } from "./helpers/browser";
+import {
+  forceLiveWebGLCapability,
+  forceSoftwareWebGLCapability,
+  resourceNames,
+} from "./helpers/browser";
 import {
   createCellarEntryThroughPreview,
   signupThroughPreview,
@@ -107,6 +111,50 @@ test("disabled WebGL and Save-Data retain the CSS bottle without 3D requests", a
   expect(resources.some((name) => /ExperienceCanvas|\.glb(?:$|\?)/i.test(name))).toBe(false);
 });
 
+test("software WebGL renderers retain the CSS bottle without 3D requests", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "desktop-chromium",
+    "Software-renderer fallback is simulated once in desktop Chromium.",
+  );
+
+  await forceSoftwareWebGLCapability(page);
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "FIND THE BOTTLE KEEP THE MEMORY",
+    }),
+  ).toBeVisible();
+  await page.waitForFunction(
+    () =>
+      performance.getEntriesByName("grapevyne-webgl-capability-decided")
+        .length > 0,
+  );
+
+  const decision = await page.evaluate(() => {
+    const marks = performance.getEntriesByName(
+      "grapevyne-webgl-capability-decided",
+    ) as PerformanceMark[];
+    return marks.at(-1)?.detail;
+  });
+  expect(decision).toEqual({
+    reason: "software-renderer",
+    tier: "fallback",
+  });
+  await expect(page.locator(".gv-hero-bottle")).toBeVisible();
+  await expect(page.locator("canvas")).toHaveCount(0);
+  const resources = await resourceNames(page);
+  expect(
+    resources.some((name) =>
+      /ExperienceCanvas|\.glb(?:$|\?)|grapevyne-label-(?:front-red|back)\.png/i.test(
+        name,
+      ),
+    ),
+  ).toBe(false);
+});
+
 test("a rejected autoplay falls back to the final hero poster", async ({
   page,
 }, testInfo) => {
@@ -133,6 +181,7 @@ test("live WebGL visual smoke retains one ready, nonblank bottle frame", async (
   );
   test.setTimeout(30_000);
 
+  await forceLiveWebGLCapability(page);
   await page.setViewportSize({ height: 900, width: 1440 });
   await page.goto("/");
   await expect(
@@ -141,6 +190,9 @@ test("live WebGL visual smoke retains one ready, nonblank bottle frame", async (
       name: "FIND THE BOTTLE KEEP THE MEMORY",
     }),
   ).toBeVisible();
+  const fallbackBottle = page.locator(".gv-hero-bottle");
+  const fallbackBounds = await fallbackBottle.boundingBox();
+  expect(fallbackBounds).not.toBeNull();
 
   const layer = page.locator("[data-webgl-status='ready']");
   await expect(layer).toBeVisible({ timeout: 8_000 });
@@ -151,7 +203,24 @@ test("live WebGL visual smoke retains one ready, nonblank bottle frame", async (
   expect(canvasBounds).not.toBeNull();
   expect(canvasBounds?.width).toBeGreaterThanOrEqual(1_400);
   expect(canvasBounds?.height).toBeGreaterThanOrEqual(880);
-  await expect(page.locator(".gv-hero-bottle")).toHaveCSS("opacity", "0");
+  await expect(fallbackBottle).toHaveCSS("opacity", "0");
+  const readyFallbackBounds = await fallbackBottle.boundingBox();
+  expect(readyFallbackBounds).not.toBeNull();
+  expect(Math.abs((readyFallbackBounds?.x ?? 0) - (fallbackBounds?.x ?? 0))).toBeLessThanOrEqual(1);
+  expect(Math.abs((readyFallbackBounds?.y ?? 0) - (fallbackBounds?.y ?? 0))).toBeLessThanOrEqual(1);
+  expect(readyFallbackBounds?.width).toBeCloseTo(fallbackBounds?.width ?? 0, 0);
+  expect(readyFallbackBounds?.height).toBeCloseTo(fallbackBounds?.height ?? 0, 0);
+
+  const resources = await resourceNames(page);
+  expect(
+    resources.some((name) => /grapevyne-master-bottle\.glb(?:$|\?)/.test(name)),
+  ).toBe(true);
+  expect(
+    resources.some((name) => /grapevyne-label-front-red\.png(?:$|\?)/.test(name)),
+  ).toBe(true);
+  expect(
+    resources.some((name) => /grapevyne-label-back\.png(?:$|\?)/.test(name)),
+  ).toBe(true);
 
   const screenshot = await page.screenshot({ animations: "disabled" });
   expect(screenshot.byteLength).toBeGreaterThan(100_000);
@@ -169,6 +238,7 @@ test("WebGL context loss restores the CSS fallback after one recovery attempt", 
     "Renderer lifecycle runs once in desktop Chromium.",
   );
 
+  await forceLiveWebGLCapability(page);
   await page.goto("/");
   const canvas = page.locator(".gv-webgl-experience canvas");
 

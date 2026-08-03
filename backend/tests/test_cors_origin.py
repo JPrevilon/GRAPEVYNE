@@ -1,4 +1,6 @@
 import pytest
+from flask import Flask
+from flask_cors import CORS
 
 from app import create_app
 from app.config import normalize_origin, parse_origins
@@ -128,7 +130,99 @@ def test_preflight_behavior_approves_only_the_exact_trusted_origin(secured_app):
     assert "content-type" in allowed_headers
     assert "x-grapevyne-expected-user-id" in allowed_headers
     assert "POST" in trusted.headers["Access-Control-Allow-Methods"]
+    assert "Access-Control-Allow-Private-Network" not in trusted.headers
     assert untrusted.status_code == 200
+    assert "Access-Control-Allow-Origin" not in untrusted.headers
+
+
+def test_private_network_preflight_is_explicitly_denied(secured_app):
+    client = secured_app.test_client()
+    headers = {
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Private-Network": "true",
+    }
+
+    trusted = client.options(
+        "/api/auth/signup",
+        headers={**headers, "Origin": TRUSTED_ORIGIN},
+    )
+    untrusted = client.options(
+        "/api/auth/signup",
+        headers={**headers, "Origin": UNTRUSTED_ORIGIN},
+    )
+
+    assert trusted.status_code == 200
+    assert trusted.headers["Access-Control-Allow-Origin"] == TRUSTED_ORIGIN
+    assert trusted.headers["Access-Control-Allow-Credentials"] == "true"
+    assert trusted.headers["Access-Control-Allow-Private-Network"] == "false"
+    assert "Access-Control-Allow-Origin" not in untrusted.headers
+    assert "Access-Control-Allow-Credentials" not in untrusted.headers
+    assert "Access-Control-Allow-Private-Network" not in untrusted.headers
+
+
+@pytest.mark.parametrize(
+    "path",
+    (
+        "/API/health",
+        "/apiary",
+        "/api+probe",
+        "/not-api/api/probe",
+    ),
+)
+def test_cors_resource_is_anchored_to_lowercase_api_boundary(secured_app, path):
+    response = secured_app.test_client().get(
+        path,
+        headers={"Origin": TRUSTED_ORIGIN},
+    )
+
+    assert "Access-Control-Allow-Origin" not in response.headers
+    assert "Access-Control-Allow-Credentials" not in response.headers
+    assert "Access-Control-Allow-Private-Network" not in response.headers
+
+
+def test_plus_character_is_not_normalized_to_space_for_resource_matching():
+    application = Flask(__name__)
+    application.add_url_rule("/api/a+b", view_func=lambda: "ok")
+    CORS(
+        application,
+        resources={
+            "/api/a+b": {"origins": [TRUSTED_ORIGIN]},
+            "/api/a b": {"origins": [UNTRUSTED_ORIGIN]},
+        },
+        supports_credentials=True,
+    )
+    client = application.test_client()
+
+    trusted = client.get("/api/a+b", headers={"Origin": TRUSTED_ORIGIN})
+    untrusted = client.get("/api/a+b", headers={"Origin": UNTRUSTED_ORIGIN})
+
+    assert trusted.headers["Access-Control-Allow-Origin"] == TRUSTED_ORIGIN
+    assert "Access-Control-Allow-Origin" not in untrusted.headers
+
+
+def test_static_cors_policy_beats_a_longer_generic_regex():
+    application = Flask(__name__)
+    application.add_url_rule("/api/private/data", view_func=lambda: "ok")
+    CORS(
+        application,
+        resources={
+            r"/api/private/(?:data|other)": {"origins": [UNTRUSTED_ORIGIN]},
+            "/api/private/data": {"origins": [TRUSTED_ORIGIN]},
+        },
+        supports_credentials=True,
+    )
+    client = application.test_client()
+
+    trusted = client.get(
+        "/api/private/data",
+        headers={"Origin": TRUSTED_ORIGIN},
+    )
+    untrusted = client.get(
+        "/api/private/data",
+        headers={"Origin": UNTRUSTED_ORIGIN},
+    )
+
+    assert trusted.headers["Access-Control-Allow-Origin"] == TRUSTED_ORIGIN
     assert "Access-Control-Allow-Origin" not in untrusted.headers
 
 

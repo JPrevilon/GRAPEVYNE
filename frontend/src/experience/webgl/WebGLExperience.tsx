@@ -35,8 +35,15 @@ interface IdleWindow {
 const WEBGL_IMPORT_MARK = "grapevyne-webgl-import-requested";
 const WEBGL_FIRST_FRAME_MARK = "grapevyne-webgl-first-frame";
 
-function markPerformance(name: string) {
-  if (typeof performance.mark === "function") performance.mark(name);
+function markPerformance(name: string, detail?: unknown) {
+  if (typeof performance.mark !== "function") return;
+
+  if (detail === undefined) {
+    performance.mark(name);
+    return;
+  }
+
+  performance.mark(name, { detail });
 }
 
 export default function WebGLExperience({
@@ -58,7 +65,7 @@ export default function WebGLExperience({
 
     markPerformance("grapevyne-webgl-capability-start");
     const nextDecision = inspectBrowserWebGLCapability(prefersReducedMotion);
-    markPerformance("grapevyne-webgl-capability-decided");
+    markPerformance("grapevyne-webgl-capability-decided", nextDecision);
     setDecision(nextDecision);
     setActivated(false);
     setStatus("loading");
