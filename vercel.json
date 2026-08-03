@@ -11,6 +11,8 @@
     }
   },
   "rewrites": [
+    { "source": "/api", "destination": "/api/index" },
+    { "source": "/api/(.*)", "destination": "/api/index" },
     { "source": "/discover", "destination": "/index.html" },
     { "source": "/wines/:path*", "destination": "/index.html" },
     { "source": "/demo/:path*", "destination": "/index.html" },

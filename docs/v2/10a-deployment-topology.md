@@ -42,11 +42,11 @@ This follows Vercel’s current stable [Vite SPA](https://vercel.com/docs/framew
 | `/login`, `/signup` | Vite `index.html` | Auth direct load |
 | `/cellar`, `/profile` | Vite `index.html` | Protected direct load, then signed-session routing |
 | `/an-intentional-404` | Vite `index.html` | Deliberate branded client 404 |
-| `/api/*` | Native Flask Function routing | Full original path reaches Flask |
+| `/api/*` | Internal rewrite to `/api/index` | Selects the Flask Function while the full original path and existing query string reach Flask |
 | `/build/*` | Static CDN file | Vite content hash; immutable cache |
 | `/assets/*`, `/images/*`, `/favicon.svg` | Static CDN file | Local un-hashed asset; must revalidate |
 
-The SPA rewrite is an explicit allowlist. It cannot swallow `/api`, JavaScript, CSS, fonts, video, posters, models, labels, images, or missing asset paths. Vercel’s filesystem handles real static files before rewrites.
+The API mapping uses one exact `/api` rule plus one unnamed nested-path capture and an extensionless Function destination. These select the generated Python Function without synthesizing a route-parameter query value; Vercel passes the original request path and existing browser query string to the WSGI runtime. The SPA rewrite is a separate explicit allowlist. It cannot swallow `/api`, JavaScript, CSS, fonts, video, posters, models, labels, images, or missing asset paths. Vercel’s filesystem handles real static files before rewrites.
 
 ## PostgreSQL and migrations
 

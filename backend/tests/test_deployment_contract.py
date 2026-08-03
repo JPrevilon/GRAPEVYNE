@@ -17,6 +17,10 @@ REQUIRED_SPA_SOURCES = {
     "/profile",
     "/an-intentional-404",
 }
+API_REWRITES = [
+    {"source": "/api", "destination": "/api/index"},
+    {"source": "/api/(.*)", "destination": "/api/index"},
+]
 
 
 def test_stable_single_project_vercel_contract_has_no_experimental_services():
@@ -48,10 +52,16 @@ def test_stable_single_project_vercel_contract_has_no_experimental_services():
     assert "frontend/**" in function["excludeFiles"]
     assert "docs/**" in function["excludeFiles"]
 
-    rewrite_sources = {rewrite["source"] for rewrite in configuration["rewrites"]}
+    rewrites = configuration["rewrites"]
+    assert rewrites[:2] == API_REWRITES
+    assert all("?" not in rewrite["destination"] for rewrite in rewrites[:2])
+    spa_rewrites = rewrites[2:]
+    rewrite_sources = {rewrite["source"] for rewrite in spa_rewrites}
     assert rewrite_sources == REQUIRED_SPA_SOURCES
+    assert all(rewrite["destination"] == "/index.html" for rewrite in spa_rewrites)
     assert all(not source.startswith("/api") for source in rewrite_sources)
     assert "/(.*)" not in rewrite_sources
+    assert "/:path*" not in rewrite_sources
 
 
 def test_runtime_and_cache_contracts_are_bounded_and_non_secret():
