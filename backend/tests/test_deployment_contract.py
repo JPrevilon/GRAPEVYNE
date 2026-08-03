@@ -36,8 +36,15 @@ def test_stable_single_project_vercel_contract_has_no_experimental_services():
 
     function = configuration["functions"]["api/index.py"]
     assert function["includeFiles"] == "backend/app/**"
-    assert "backend/tests/**" in function["excludeFiles"]
-    assert "backend/migrations/**" in function["excludeFiles"]
+    assert len(function["excludeFiles"]) <= 256
+    assert "README.md" in function["excludeFiles"]
+    assert "backend/{.env*" in function["excludeFiles"]
+    assert ".python-version" in function["excludeFiles"]
+    assert "requirements*.txt" in function["excludeFiles"]
+    assert "pyproject.toml" in function["excludeFiles"]
+    assert "uv.lock" in function["excludeFiles"]
+    assert "tests/**" in function["excludeFiles"]
+    assert "migrations/**" in function["excludeFiles"]
     assert "frontend/**" in function["excludeFiles"]
     assert "docs/**" in function["excludeFiles"]
 
@@ -62,9 +69,11 @@ def test_runtime_and_cache_contracts_are_bounded_and_non_secret():
         "engines": {"node": "20.x"},
     }
     assert (REPOSITORY_ROOT / ".python-version").read_text().strip() == "3.12"
-    assert (REPOSITORY_ROOT / "requirements.txt").read_text().strip() == (
-        "-r backend/requirements.txt"
+    root_requirements = (REPOSITORY_ROOT / "requirements.txt").read_text().strip()
+    backend_requirements = (
+        (REPOSITORY_ROOT / "backend" / "requirements.txt").read_text().strip()
     )
+    assert root_requirements == backend_requirements
     assert header_rules["/build/:path*"] == [
         {
             "key": "Cache-Control",

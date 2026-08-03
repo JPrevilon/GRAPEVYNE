@@ -26,10 +26,10 @@ This follows Vercel’s current stable [Vite SPA](https://vercel.com/docs/framew
 - `npm --prefix frontend ci` installs exactly the committed frontend lockfile.
 - `npm --prefix frontend run build` type-checks and builds Vite.
 - `frontend/dist` is the only public build output.
-- `requirements.txt` bridges to the exact runtime-only pins in `backend/requirements.txt`.
+- `requirements.txt` mirrors the exact runtime-only pins in `backend/requirements.txt` because Vercel's Python builder parses the root manifest directly; a deployment-contract test prevents drift.
 - `api/index.py` prepends `backend` to `sys.path` to preserve the real application’s existing `from app...` import contract, then exports exactly one production-mode Flask app.
 - The adapter does not run a server, migration, schema creation, or seed on import.
-- `includeFiles` makes `backend/app/**` explicit because the adapter adjusts `sys.path`; tests, migrations, documentation, evidence, local environments, and frontend files are excluded from the Function bundle.
+- `includeFiles` makes `backend/app/**` explicit because the adapter adjusts `sys.path`; local environment files, dependency and development manifests after packaging, tests, migrations, documentation, evidence, caches, and frontend files are excluded from the Function bundle.
 
 ## Route mapping
 

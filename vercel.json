@@ -7,7 +7,7 @@
   "functions": {
     "api/index.py": {
       "includeFiles": "backend/app/**",
-      "excludeFiles": "{.github/**,.grapevyne-v2-reference/**,backend/.venv/**,backend/migrations/**,backend/tests/**,docs/**,frontend/**,**/__pycache__/**,**/.pytest_cache/**}"
+      "excludeFiles": "{.DS_Store,README.md,.github/**,.grapevyne-v2-reference/**,backend/{.env*,.python-version,.venv/**,README.md,main.py,migrations/**,pyproject.toml,requirements*.txt,tests/**},docs/**,frontend/**,pyproject.toml,uv.lock,**/__pycache__/**,**/.pytest_cache/**}"
     }
   },
   "rewrites": [
