@@ -1,7 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { disposableAccount } from "./helpers/accounts";
 import { sameOriginApi } from "./helpers/api";
@@ -52,16 +52,60 @@ async function gotoAllowlistedRoute(
     .toBe(route);
 }
 
-async function capture(page: Page, filename: string): Promise<void> {
+async function capture(
+  page: Page,
+  filename: string,
+  focus?: Locator,
+): Promise<void> {
   await expect(page.locator("main")).toBeVisible();
+  await expect(
+    page
+      .getByRole("banner")
+      .getByRole("link", { name: "GRAPEVYNE home" }),
+  ).toBeVisible();
+  await expect(page.getByText("Checking session", { exact: true })).toHaveCount(0);
   await page.evaluate(async () => {
     await document.fonts.ready;
+    await new Promise((resolve) => window.setTimeout(resolve, 500));
     await new Promise<void>((resolve) => {
       window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => resolve());
       });
     });
   });
+
+  if (focus) {
+    await focus.evaluate((element) => {
+      const header = document.querySelector(".gv-nav");
+      const headerHeight = header?.getBoundingClientRect().height ?? 0;
+      const targetTop =
+        window.scrollY +
+        element.getBoundingClientRect().top -
+        headerHeight -
+        24;
+      window.scrollTo({ behavior: "instant", top: Math.max(0, targetTop) });
+    });
+    await expect
+      .poll(async () => {
+        const position = await focus.evaluate((element) => {
+          const header = document.querySelector(".gv-nav");
+          return {
+            bottom: element.getBoundingClientRect().bottom,
+            headerBottom: header?.getBoundingClientRect().bottom ?? 0,
+            top: element.getBoundingClientRect().top,
+            viewportHeight: window.innerHeight,
+          };
+        });
+
+        return (
+          position.top >= position.headerBottom - 1 &&
+          position.top < position.viewportHeight &&
+          position.bottom > position.headerBottom
+        );
+      })
+      .toBe(true);
+  }
+
   await page.screenshot({
     animations: "disabled",
     caret: "hide",
@@ -159,6 +203,7 @@ test.describe("hosted Prompt 10A screenshot evidence", () => {
     await capture(
       page,
       "05-explainable-recommendation-desktop-1440x900.png",
+      page.locator(".discover-results"),
     );
 
     await gotoAllowlistedRoute(page, routes.wineDetail);
@@ -221,11 +266,11 @@ test.describe("hosted Prompt 10A screenshot evidence", () => {
     ).toBeVisible();
     const privateNote = page.getByLabel("Private tasting note");
     await expect(privateNote).toHaveValue("");
-    await privateNote.scrollIntoViewIfNeeded();
     await expect(privateNote).toBeVisible();
     await capture(
       page,
       "09-tasting-memory-editor-empty-note-desktop-1440x900.png",
+      page.locator(".gv-cellar-editor"),
     );
 
     await gotoAllowlistedRoute(page, routes.profile);
@@ -236,7 +281,11 @@ test.describe("hosted Prompt 10A screenshot evidence", () => {
     await expect(
       page.getByRole("heading", { name: "YOUR RECORDED BRANCHES" }),
     ).toBeVisible();
-    await capture(page, "10-active-taste-profile-desktop-1440x900.png");
+    await capture(
+      page,
+      "10-active-taste-profile-desktop-1440x900.png",
+      page.locator(".gv-profile-disclosure"),
+    );
 
     await page.setViewportSize({ height: 844, width: 390 });
     await gotoAllowlistedRoute(page, routes.profile);
@@ -244,11 +293,14 @@ test.describe("hosted Prompt 10A screenshot evidence", () => {
       name: "YOUR RECORDED BRANCHES",
     });
     await expect(tasteAtlasHeading).toBeVisible();
-    await tasteAtlasHeading.scrollIntoViewIfNeeded();
     await expect(
       page.getByRole("group", { name: "Taste Atlas preference clusters" }),
     ).toBeVisible();
-    await capture(page, "11-taste-atlas-mobile-390x844.png");
+    await capture(
+      page,
+      "11-taste-atlas-mobile-390x844.png",
+      page.locator(".gv-taste-atlas"),
+    );
 
     const logoutResponse = await sameOriginApi(page, "/api/auth/logout", {
       method: "POST",
