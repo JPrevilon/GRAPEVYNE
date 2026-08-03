@@ -4,7 +4,11 @@ from app.extensions import db
 
 
 DEPLOYMENT_SENTINEL_QUERY = text(
-    "SELECT current_setting('grapevyne.deployment_sentinel', true)"
+    """
+    SELECT pg_catalog.shobj_description(database.oid, 'pg_database')
+    FROM pg_catalog.pg_database AS database
+    WHERE database.datname = pg_catalog.current_database()
+    """
 )
 
 

@@ -58,7 +58,7 @@ The SPA rewrite is an explicit allowlist. It cannot swallow `/api`, JavaScript, 
 - Vercel Functions use SQLAlchemy `NullPool`, avoiding a warm-instance application pool in front of a provider’s serverless pool.
 - Preview migrations use the provider’s direct/unpooled connection when supplied. The operator temporarily maps that value to `DATABASE_URL` for explicit Alembic commands; request-time code never prefers the migration URL.
 - Migration 0001 and 0002 are applied before the first Preview deployment. Migration never runs during import, build, or Function invocation.
-- The dedicated Preview database receives the same marker through `ALTER DATABASE ... SET grapevyne.deployment_sentinel` over its direct connection. Hosted health queries `current_setting('grapevyne.deployment_sentinel', true)` and returns `503` without exposing database details when the value is absent, mismatched, or unavailable.
+- The dedicated Preview database receives the same marker as its PostgreSQL database comment over the direct connection. The provisioned Neon role can set that owner-controlled comment without elevated parameter privileges or an untracked schema object. Hosted health queries `shobj_description` for the current database and returns `503` without exposing database details when the value is absent, mismatched, or unavailable.
 - Hosted-E2E cleanup is an explicit CLI operation guarded by the same Preview marker. It can remove only `e2e-%@example.test` users and their dependent Cellar entries; it never creates a public cleanup endpoint.
 
 The Function region is selected only after the database region is known. No region is guessed in source configuration.

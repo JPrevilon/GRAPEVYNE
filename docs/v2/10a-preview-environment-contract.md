@@ -8,7 +8,7 @@ This document records names and trust boundaries only. It intentionally contains
 | --- | --- | --- | --- |
 | `FLASK_ENV` | Preview | Non-secret | Selects immutable production security policy for hosted Flask |
 | `DATABASE_URL` | Preview | Secret | Dedicated pooled/serverless-safe Preview PostgreSQL connection |
-| `DEPLOYMENT_DATABASE_SENTINEL` | Preview | Non-secret | Unique `grapevyne-preview-*` marker that must exactly match the Preview database custom setting |
+| `DEPLOYMENT_DATABASE_SENTINEL` | Preview | Non-secret | Unique `grapevyne-preview-*` marker that must exactly match the Preview PostgreSQL database comment |
 | `SECRET_KEY` | Preview | Secret | Preview-only Flask session signing key |
 | `FRONTEND_ORIGINS` | Preview | Non-secret | Optional additive exact HTTPS origin list |
 | `SESSION_COOKIE_SECURE` | Preview | Non-secret | Documented as true; production policy also forces true |
@@ -87,15 +87,35 @@ Before deployment, export one unique non-secret marker with a `grapevyne-preview
 psql "$GRAPEVYNE_PREVIEW_DIRECT_DATABASE_URL" \
   --set=ON_ERROR_STOP=1 \
   --set=sentinel="$DEPLOYMENT_DATABASE_SENTINEL" <<'SQL'
-SELECT format(
-  'ALTER DATABASE %I SET grapevyne.deployment_sentinel = %L',
-  current_database(),
+SELECT pg_catalog.shobj_description(database.oid, 'pg_database') IS NULL
+         AS comment_is_empty,
+       COALESCE(
+         pg_catalog.shobj_description(database.oid, 'pg_database') = :'sentinel',
+         false
+       ) AS comment_matches
+FROM pg_catalog.pg_database AS database
+WHERE database.datname = pg_catalog.current_database()
+\gset
+
+\if :comment_is_empty
+SELECT pg_catalog.format(
+  'COMMENT ON DATABASE %I IS %L',
+  pg_catalog.current_database(),
   :'sentinel'
 ) \gexec
+\elif :comment_matches
+\echo 'The expected Preview database comment is already installed.'
+\else
+DO $grapevyne$
+BEGIN
+  RAISE EXCEPTION 'Refusing to overwrite an existing database comment.';
+END
+$grapevyne$;
+\endif
 SQL
 ```
 
-`ALTER DATABASE ... SET grapevyne.deployment_sentinel` is a **Preview-only Prompt 10A operation**. Do not run it against Production, and do not reuse the Preview marker for Production. The setting applies to new database sessions, so close the setup connection before migration and health verification. Hosted `/api/health` fails closed with a standard `503` envelope unless PostgreSQL returns the exact configured marker; a verified response includes only the non-secret environment, marker, and `databaseVerified: true`.
+`COMMENT ON DATABASE` is a **Preview-only Prompt 10A operation** against the dedicated, freshly verified database. Do not run it against Production, do not overwrite an existing database comment, and do not reuse the Preview marker for Production. The provisioned Neon role is a member of the database owner role but cannot set arbitrary database parameters, so the owner-controlled comment provides the identity marker without elevated privileges or schema drift. Hosted `/api/health` reads the current database comment through `shobj_description` and fails closed with a standard `503` envelope unless PostgreSQL returns the exact configured marker; a verified response includes only the non-secret environment, marker, and `databaseVerified: true`.
 
 After hosted evidence is complete, remove disposable hosted accounts with the same verified Preview connection:
 
@@ -106,6 +126,6 @@ python -m flask --app app cleanup-preview-e2e \
   --sentinel "$DEPLOYMENT_DATABASE_SENTINEL"
 ```
 
-The command refuses non-PostgreSQL or non-encrypted connections, malformed or non-Preview markers, and any database whose custom setting is absent or does not match exactly. It deletes only users matching `e2e-%@example.test` and their dependent Cellar entries, commits, verifies that none remain, and prints counts without identities or connection values.
+The command refuses non-PostgreSQL or non-encrypted connections, malformed or non-Preview markers, and any database whose comment is absent or does not match exactly. It deletes only users matching `e2e-%@example.test` and their dependent Cellar entries, commits, verifies that none remain, and prints counts without identities or connection values.
 
 Disposable hosted accounts remain in the dedicated Preview database only until evidence capture is complete. Because the product intentionally has no public account-deletion test endpoint, the guarded CLI cleanup removes those users through the dedicated Preview database rather than adding a Production-reachable bypass.

@@ -2,6 +2,7 @@ import pytest
 
 from app import cli as cli_module
 from app import create_app
+from app import deployment as deployment_module
 from app import routes
 from app.extensions import db
 from app.models import CellarEntry, User, Wine
@@ -12,6 +13,16 @@ POSTGRES_DATABASE_URL = (
     "postgresql+psycopg://preview:credential@db.example.test/grapevyne"
     "?sslmode=require"
 )
+
+
+def test_deployment_sentinel_uses_the_postgres_database_comment():
+    query = str(deployment_module.DEPLOYMENT_SENTINEL_QUERY)
+
+    assert "shobj_description" in query
+    assert "pg_database" in query
+    assert "current_database()" in query
+    assert query.count("pg_catalog.") == 3
+    assert "current_setting" not in query
 
 
 def _hosted_health_app(database_path):
