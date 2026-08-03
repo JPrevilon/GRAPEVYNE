@@ -318,6 +318,32 @@ export function validateHostedPreviewHealth(payload, expectedSentinel) {
   return true;
 }
 
+export function validateHostedPreviewBypassRedirect(status, location, baseUrl) {
+  const healthUrl = new URL("/api/health", normalizeHostedPreviewBaseUrl(baseUrl));
+
+  if (status !== 307 || typeof location !== "string" || !location.trim()) {
+    throw new Error(
+      "The Preview bypass cookie response was not the expected redirect.",
+    );
+  }
+
+  let redirectUrl;
+
+  try {
+    redirectUrl = new URL(location, healthUrl);
+  } catch {
+    throw new Error("The Preview bypass cookie redirect was not a valid URL.");
+  }
+
+  if (redirectUrl.href !== healthUrl.href) {
+    throw new Error(
+      "The Preview bypass cookie redirect left the exact health URL.",
+    );
+  }
+
+  return true;
+}
+
 export function parseSetCookiesForStorageState(setCookieValues, baseUrl) {
   if (!Array.isArray(setCookieValues)) {
     throw new TypeError("Set-Cookie values must be an array.");

@@ -12,6 +12,7 @@ import {
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
+import { setTimeout as delay } from "node:timers/promises";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
@@ -19,6 +20,7 @@ import {
   createRestrictedChildEnvironment,
   normalizeHostedPreviewBaseUrl,
   parseSetCookiesForStorageState,
+  validateHostedPreviewBypassRedirect,
   validateHostedPreviewDeployment,
   validateHostedPreviewHealth,
   validatePreviewDatabaseSentinel,
@@ -51,6 +53,8 @@ const MAX_JSON_BYTES = 4 * 1024 * 1024;
 const MAX_HEALTH_BYTES = 64 * 1024;
 const VERCEL_COMMAND_TIMEOUT = 30_000;
 const CLEANUP_TIMEOUT = 60_000;
+const BYPASS_ACTIVATION_ATTEMPTS = 5;
+const BYPASS_ACTIVATION_DELAY_MS = 500;
 
 function requiredEnvironmentValue(name) {
   const value = process.env[name];
@@ -205,18 +209,9 @@ async function inspectPreviewMetadata(deploymentId, environment) {
   );
 }
 
-async function verifyPreviewHealth(baseUrl, expectedSentinel, bypassSecret) {
-  const healthUrl = new URL("/api/health", baseUrl);
-  const headers = bypassSecret
-    ? {
-        "x-vercel-protection-bypass": bypassSecret,
-        "x-vercel-set-bypass-cookie": "true",
-      }
-    : undefined;
-  let response;
-
+async function fetchPreviewHealth(healthUrl, headers) {
   try {
-    response = await fetch(healthUrl, {
+    return await fetch(healthUrl, {
       cache: "no-store",
       headers,
       redirect: "manual",
@@ -225,7 +220,13 @@ async function verifyPreviewHealth(baseUrl, expectedSentinel, bypassSecret) {
   } catch {
     throw new Error("The exact-origin Preview health preflight failed.");
   }
+}
 
+async function validatePreviewHealthResponse(
+  response,
+  healthUrl,
+  expectedSentinel,
+) {
   if (
     response.status !== 200 ||
     response.redirected ||
@@ -257,24 +258,97 @@ async function verifyPreviewHealth(baseUrl, expectedSentinel, bypassSecret) {
   }
 
   validateHostedPreviewHealth(payload, expectedSentinel);
+}
 
-  const setCookieValues =
-    typeof response.headers.getSetCookie === "function"
-      ? response.headers.getSetCookie()
-      : response.headers.get("set-cookie")
-        ? [response.headers.get("set-cookie")]
-        : [];
+function responseSetCookieValues(response) {
+  return typeof response.headers.getSetCookie === "function"
+    ? response.headers.getSetCookie()
+    : response.headers.get("set-cookie")
+      ? [response.headers.get("set-cookie")]
+      : [];
+}
 
-  if (bypassSecret && setCookieValues.length === 0) {
+async function waitForPreviewBypass(healthUrl, bypassSecret) {
+  let response;
+
+  for (let attempt = 0; attempt < BYPASS_ACTIVATION_ATTEMPTS; attempt += 1) {
+    response = await fetchPreviewHealth(healthUrl, {
+      "x-vercel-protection-bypass": bypassSecret,
+    });
+
+    if (response.status === 200) return response;
+    if (attempt < BYPASS_ACTIVATION_ATTEMPTS - 1) {
+      await response.body?.cancel();
+      await delay(BYPASS_ACTIVATION_DELAY_MS);
+    }
+  }
+
+  return response;
+}
+
+async function verifyPreviewHealth(baseUrl, expectedSentinel, bypassSecret) {
+  const healthUrl = new URL("/api/health", baseUrl);
+
+  if (!bypassSecret) {
+    const response = await fetchPreviewHealth(healthUrl);
+    await validatePreviewHealthResponse(response, healthUrl, expectedSentinel);
+    return { cookies: [], origins: [] };
+  }
+
+  const activationResponse = await waitForPreviewBypass(
+    healthUrl,
+    bypassSecret,
+  );
+  await validatePreviewHealthResponse(
+    activationResponse,
+    healthUrl,
+    expectedSentinel,
+  );
+
+  const cookieResponse = await fetchPreviewHealth(healthUrl, {
+    "x-vercel-protection-bypass": bypassSecret,
+    "x-vercel-set-bypass-cookie": "true",
+  });
+
+  if (cookieResponse.redirected || cookieResponse.url !== healthUrl.href) {
+    throw new Error(
+      "The Preview bypass cookie response left the exact health URL.",
+    );
+  }
+
+  validateHostedPreviewBypassRedirect(
+    cookieResponse.status,
+    cookieResponse.headers.get("location"),
+    baseUrl,
+  );
+
+  const setCookieValues = responseSetCookieValues(cookieResponse);
+
+  if (setCookieValues.length === 0) {
     throw new Error(
       "The protected Preview preflight did not return a browser bypass cookie.",
     );
   }
 
+  const cookies = parseSetCookiesForStorageState(setCookieValues, baseUrl);
+
+  if (cookies.length !== 1 || cookies[0].name !== "_vercel_jwt") {
+    throw new Error(
+      "The protected Preview preflight returned an unexpected bypass cookie.",
+    );
+  }
+
+  const cookieResponseHealth = await fetchPreviewHealth(healthUrl, {
+    Cookie: `${cookies[0].name}=${cookies[0].value}`,
+  });
+  await validatePreviewHealthResponse(
+    cookieResponseHealth,
+    healthUrl,
+    expectedSentinel,
+  );
+
   return {
-    cookies: bypassSecret
-      ? parseSetCookiesForStorageState(setCookieValues, baseUrl)
-      : [],
+    cookies,
     origins: [],
   };
 }

@@ -4,6 +4,7 @@ import {
   createRestrictedChildEnvironment,
   normalizeHostedPreviewBaseUrl,
   parseSetCookiesForStorageState,
+  validateHostedPreviewBypassRedirect,
   validateHostedPreviewDeployment,
   validateHostedPreviewHealth,
   validatePreviewDatabaseSentinel,
@@ -199,6 +200,27 @@ describe("hosted Preview health contract", () => {
 });
 
 describe("hosted Preview bypass state", () => {
+  it.each(["/api/health", `${baseUrl}/api/health`])(
+    "accepts the exact Vercel bypass-cookie redirect: %s",
+    (location) => {
+      expect(validateHostedPreviewBypassRedirect(307, location, baseUrl)).toBe(
+        true,
+      );
+    },
+  );
+
+  it.each([
+    [302, "/api/health"],
+    [308, "/api/health"],
+    [307, "https://vercel.com/sso-api"],
+    [307, "/"],
+    [307, "/api/health?token=secret"],
+  ])("rejects an unsafe bypass redirect: %s %s", (status, location) => {
+    expect(() =>
+      validateHostedPreviewBypassRedirect(status, location, baseUrl),
+    ).toThrow();
+  });
+
   it("scopes a bypass cookie to the exact generated deployment hostname", () => {
     const [cookie] = parseSetCookiesForStorageState(
       [
