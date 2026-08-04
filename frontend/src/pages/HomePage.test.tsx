@@ -1,15 +1,8 @@
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  within,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, useLocation } from "react-router-dom";
 
-import { STORY_CHAPTERS, SceneProvider } from "@/experience";
+import { SceneProvider, STORY_CHAPTERS } from "@/experience";
 
 import HomePage from "./HomePage";
 
@@ -18,37 +11,37 @@ const auth = vi.hoisted(() => ({
   isLoading: false,
 }));
 
-const webgl = vi.hoisted(() => ({
-  onReadyChange: null as ((ready: boolean) => void) | null,
+const presentation = vi.hoisted(() => ({
+  staticMode: false,
 }));
 
 vi.mock("@/features/auth/useAuth", () => ({
   useAuth: () => ({
     ...auth,
-    login: vi.fn(),
-    logout: vi.fn(),
-    refreshUser: vi.fn(),
-    signup: vi.fn(),
     status: "ready",
     user: auth.isAuthenticated ? { id: 1, name: "Test user" } : null,
   }),
 }));
 
-vi.mock("@/hooks/useScrollStory", () => ({
-  useScrollStory: vi.fn(),
+vi.mock("@/hooks/useScrollStory", () => ({ useScrollStory: vi.fn() }));
+vi.mock("@/hooks/useStoryStaticMode", () => ({
+  useStoryStaticMode: () => ({
+    reason: presentation.staticMode ? "reduced-motion" : null,
+    staticMode: presentation.staticMode,
+  }),
 }));
-
-vi.mock("@/experience/CinematicVideo", () => ({
-  default: ({ mediaKey }: { mediaKey: string }) => (
-    <span aria-hidden="true" data-media-key={mediaKey} />
-  ),
+vi.mock("@/experience/StoryMediaStack", () => ({
+  default: () => <div aria-hidden="true" data-testid="story-media-stack" />,
 }));
-
 vi.mock("@/experience/webgl/WebGLExperience", () => ({
-  default: ({ onReadyChange }: { onReadyChange: (ready: boolean) => void }) => {
-    webgl.onReadyChange = onReadyChange;
-    return <div aria-hidden="true" data-testid="webgl-lazy-shell" />;
-  },
+  default: () => <div aria-hidden="true" data-testid="webgl-shell" />,
+}));
+vi.mock("@/experience/webgl/BottleInspectorModal", () => ({
+  default: ({ onClose }: { onClose: () => void }) => (
+    <div aria-label="Inspect the bottle" role="dialog">
+      <button onClick={onClose} type="button">Close viewer</button>
+    </div>
+  ),
 }));
 
 function LocationProbe() {
@@ -70,70 +63,36 @@ function renderHome() {
   );
 }
 
-describe("HomePage scroll story", () => {
+describe("HomePage cinematic story", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
     auth.isAuthenticated = false;
     auth.isLoading = false;
-    webgl.onReadyChange = null;
+    presentation.staticMode = false;
   });
 
-  it("renders all nine semantic chapters from the shared ordered configuration", () => {
+  it("renders one fixed visual stage and nine stable semantic chapter steps", () => {
     const { container } = renderHome();
     const chapters = Array.from(
       container.querySelectorAll<HTMLElement>("section[data-story-chapter]"),
     );
 
+    expect(container.querySelectorAll("[data-story-stage]")).toHaveLength(1);
+    expect(container.querySelectorAll("[data-story-track]")).toHaveLength(1);
+    expect(screen.getByTestId("story-media-stack")).toBeInTheDocument();
+    expect(screen.getByTestId("webgl-shell")).toBeInTheDocument();
     expect(chapters).toHaveLength(9);
-    expect(chapters.map((chapter) => chapter.id)).toEqual(
+    expect(chapters.map(({ id }) => id)).toEqual(
       STORY_CHAPTERS.map(({ anchorId }) => anchorId),
     );
-    expect(chapters.map((chapter) => chapter.dataset.storyChapter)).toEqual(
+    expect(chapters.map(({ dataset }) => dataset.storyChapter)).toEqual(
       STORY_CHAPTERS.map(({ key }) => key),
     );
-
-    chapters.forEach((chapter) => {
-      const headingId = chapter.getAttribute("aria-labelledby");
-      expect(headingId).toBeTruthy();
-      expect(chapter.querySelector(`#${headingId}`)).toBeInstanceOf(HTMLHeadingElement);
-    });
-    expect(container.querySelector("main")).not.toBeInTheDocument();
-    expect(container.querySelector("canvas")).not.toBeInTheDocument();
-    expect(container.querySelector("model-viewer")).not.toBeInTheDocument();
   });
 
-  it("keeps the CSS bottle mounted until and after the WebGL frame handshake", () => {
+  it("uses one semantic heading and the locked minimal copy in every chapter", () => {
     const { container } = renderHome();
-    const story = container.querySelector(".gv-story");
-    const fallback = container.querySelector(".gv-hero-bottle");
-
-    expect(screen.getByTestId("webgl-lazy-shell")).toHaveAttribute(
-      "aria-hidden",
-      "true",
-    );
-    expect(story).not.toHaveClass("gv-story--webgl-ready");
-    expect(fallback).toBeInTheDocument();
-    expect(container.querySelector("canvas")).not.toBeInTheDocument();
-
-    act(() => {
-      webgl.onReadyChange?.(true);
-    });
-    expect(story).toHaveClass("gv-story--webgl-ready");
-    expect(fallback).toBeInTheDocument();
-
-    act(() => {
-      webgl.onReadyChange?.(false);
-    });
-    expect(story).not.toHaveClass("gv-story--webgl-ready");
-    expect(fallback).toBeInTheDocument();
-  });
-
-  it("renders the locked accessible title compositions and directory labels", () => {
-    const { container } = renderHome();
-    const chapters = Array.from(
-      container.querySelectorAll<HTMLElement>("section[data-story-chapter]"),
-    );
     const expectedHeadings = [
       "FIND THE BOTTLE KEEP THE MEMORY",
       "DESCRIBE THE MOMENT",
@@ -142,91 +101,30 @@ describe("HomePage scroll story", () => {
       "OPEN THE CELLAR",
       "BUILD THE COLLECTION",
       "REMEMBER THE POUR",
-      "YOUR TASTE ATLAS",
+      "FOLLOW YOUR TASTE",
       "KEEP THE STORY",
-    ];
-    const expectedLabels = [
-      "01 / DISCOVERY",
-      "02 / SEARCH",
-      "03 / MATCH LOGIC",
-      "04 / TASTE SIGNALS",
-      "05 / PRIVATE CELLAR",
-      "06 / COLLECTION",
-      "07 / TASTING MEMORY",
-      "08 / TASTE ATLAS",
-      "09 / GRAPEVYNE",
-    ];
-    const expectedCompositions = [
-      ["FIND THE|small|light|base", "BOTTLE|large|regular|base", "KEEP THE|micro|light|base", "MEMORY|medium|regular|accent"],
-      ["DESCRIBE|small|light|base", "THE MOMENT|large|regular|base"],
-      ["WHY|micro|light|base", "IT FITS|large|regular|base"],
-      ["TASTE|small|light|base", "TAKES SHAPE|large|regular|base"],
-      ["OPEN|small|light|base", "THE CELLAR|large|regular|base"],
-      ["BUILD|small|light|base", "THE COLLECTION|large|regular|base"],
-      ["REMEMBER|small|light|base", "THE POUR|large|regular|base"],
-      ["YOUR|micro|light|base", "TASTE ATLAS|large|regular|base"],
-      ["KEEP|small|light|base", "THE STORY|large|regular|base"],
     ];
 
     expect(container.querySelectorAll("h1")).toHaveLength(1);
     expect(container.querySelectorAll("h2")).toHaveLength(8);
-    expect(
-      STORY_CHAPTERS.map(({ headingSegments }) =>
-        headingSegments.map((segment) =>
-          [
-            segment.text,
-            segment.size,
-            segment.weight,
-            "accent" in segment && segment.accent ? "accent" : "base",
-          ].join("|"),
-        ),
-      ),
-    ).toEqual(expectedCompositions);
-
-    chapters.forEach((chapter, index) => {
-      const definition = STORY_CHAPTERS[index]!;
-      const heading = within(chapter).getByRole("heading", {
-        level: index === 0 ? 1 : 2,
-        name: expectedHeadings[index],
-      });
-      const segments = Array.from(
-        heading.querySelectorAll<HTMLElement>(".gv-directory-heading__segment"),
-      );
-
-      expect(heading.getAttribute("aria-label")).not.toMatch(/[.!?]$/);
-      expect(heading.querySelector(".gv-directory-heading__visual")).toHaveAttribute(
-        "aria-hidden",
-        "true",
-      );
-      expect(segments.map((segment) => segment.textContent?.trim())).toEqual(
-        definition.headingSegments.map(({ text }) => text),
-      );
-      definition.headingSegments.forEach((segment, segmentIndex) => {
-        expect(segments[segmentIndex]).toHaveClass(
-          `gv-directory-heading__segment--size-${segment.size}`,
-          `gv-directory-heading__segment--weight-${segment.weight}`,
-        );
-        if ("accent" in segment && segment.accent) {
-          expect(segments[segmentIndex]).toHaveClass(
-            "gv-directory-heading__segment--accent",
-          );
-        }
-      });
+    STORY_CHAPTERS.forEach((chapter, index) => {
+      const section = container.querySelector<HTMLElement>(`#${chapter.anchorId}`);
+      expect(section).not.toBeNull();
+      expect(
+        within(section as HTMLElement).getByRole("heading", {
+          level: index === 0 ? 1 : 2,
+          name: expectedHeadings[index],
+        }),
+      ).toBeInTheDocument();
+      expect(within(section as HTMLElement).getByText(chapter.supportingLine)).toBeInTheDocument();
+      expect(section?.querySelectorAll(".gv-brand-lockup")).toHaveLength(0);
     });
-
-    expect(
-      chapters.map((chapter) =>
-        chapter
-          .querySelector(".gv-story-heading__number")
-          ?.textContent?.replace(/\s+/g, " ")
-          .trim(),
-      ),
-    ).toEqual(expectedLabels);
   });
 
-  it("trims and encodes natural-language discovery navigation", () => {
-    renderHome();
-    const input = screen.getByLabelText("What is the bottle for?");
+  it("has one intentional homepage search and trims and encodes its route", () => {
+    const { container } = renderHome();
+    expect(container.querySelectorAll("form.gv-story-search")).toHaveLength(1);
+    const input = screen.getByLabelText("Describe the moment");
 
     fireEvent.change(input, { target: { value: "  crisp white & oysters  " } });
     fireEvent.submit(input.closest("form") as HTMLFormElement);
@@ -236,79 +134,52 @@ describe("HomePage scroll story", () => {
     );
   });
 
-  it("connects shortcuts and signed-out calls to real public and auth routes", () => {
+  it("shows a truthful search validation error without navigating", () => {
     renderHome();
+    fireEvent.click(screen.getByRole("button", { name: "SEARCH WINES" }));
+    expect(screen.getByRole("alert")).toHaveTextContent(/Describe a wine/i);
+    expect(screen.getByTestId("location")).toHaveTextContent(/^\/$/);
+  });
 
-    expect(screen.getByRole("link", { name: /Begin the tasting/i })).toHaveAttribute(
-      "href",
-      "/discover",
-    );
-    expect(
-      screen.getByRole("link", { name: "Bold red for steak night" }),
-    ).toHaveAttribute("href", "/discover?query=Bold%20red%20for%20steak%20night");
-    expect(screen.getAllByRole("link", { name: /Create my cellar/i })).not.toHaveLength(0);
-    screen.getAllByRole("link", { name: /Create my cellar/i }).forEach((link) => {
-      expect(link).toHaveAttribute("href", "/signup");
-    });
-    expect(screen.getByRole("link", { name: /Create your cellar/i })).toHaveAttribute(
+  it("preserves discovery, auth-aware cellar, and profile route actions", () => {
+    renderHome();
+    expect(screen.getAllByRole("link", { name: /DISCOVER/i })).toHaveLength(2);
+    expect(screen.getByRole("link", { name: /CREATE CELLAR/i })).toHaveAttribute(
       "href",
       "/signup",
     );
-    screen.getAllByRole("link", { name: "Explore the demo cellar" }).forEach((link) => {
-      expect(link).toHaveAttribute("href", "/demo/cellar");
-    });
-    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
-      "href",
-      "/login",
-    );
-    expect(screen.getByRole("link", { name: /View source/i })).toHaveAttribute(
-      "rel",
-      "noopener noreferrer",
-    );
-  });
-
-  it("uses authenticated state for protected cellar and profile calls", () => {
-    auth.isAuthenticated = true;
-    renderHome();
-
-    screen.getAllByRole("link", { name: /Open my cellar/i }).forEach((link) => {
-      expect(link).toHaveAttribute("href", "/cellar");
-    });
-    expect(screen.getByRole("link", { name: "View my profile" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /VIEW TASTE PROFILE/i })).toHaveAttribute(
       "href",
       "/profile",
     );
-    expect(screen.queryByRole("link", { name: "Sign in" })).not.toBeInTheDocument();
   });
 
-  it("labels every illustrative state and never renders a personalized percentage", () => {
-    const { container } = renderHome();
-
-    expect(screen.getByText("Explainable match reasoning")).toBeInTheDocument();
-    expect(screen.getByText("Demonstration tasting memory")).toBeInTheDocument();
-    expect(
-      within(
-        screen.getByRole("group", { name: /Demonstration of taste/i }),
-      ).getByText("Fresh & mineral"),
-    ).toBeInTheDocument();
-    expect(container.textContent).not.toMatch(/\d+\s*%/);
-    expect(container.textContent).toMatch(/protected Profile route now provides an accessible, owner-scoped Taste Atlas/i);
-  });
-
-  it("keeps the engineering disclosure factual about implemented private memories and engines", () => {
+  it("uses the protected Cellar route for an authenticated visitor", () => {
+    auth.isAuthenticated = true;
     renderHome();
-
-    expect(
-      screen.getByText(/persistent React Three Fiber WebGL bottle/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/local desktop and mobile GLB models/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Persisted private tasting memories now support a deterministic/i),
-    ).toBeInTheDocument();
-    expect(document.body).not.toHaveTextContent(
-      "A recommendation engine and personalized Taste Atlas remain future work.",
+    expect(screen.getByRole("link", { name: /OPEN CELLAR/i })).toHaveAttribute(
+      "href",
+      "/cellar",
     );
+  });
+
+  it("opens the lazy dedicated bottle inspector from the Hero", async () => {
+    renderHome();
+    fireEvent.click(screen.getByRole("button", { name: /INSPECT BOTTLE/i }));
+    const dialog = await screen.findByRole("dialog", { name: /Inspect the bottle/i });
+    expect(dialog).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: /Close viewer/i }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("renders poster-only chapters and no stage runtime in static mode", () => {
+    presentation.staticMode = true;
+    const { container } = renderHome();
+    expect(container.querySelector("[data-story-stage]")).not.toBeInTheDocument();
+    expect(container.querySelectorAll(".gv-story-static-visual")).toHaveLength(9);
+    expect(container.querySelectorAll("video")).toHaveLength(0);
+    expect(container.querySelectorAll("canvas")).toHaveLength(0);
+    expect(container.querySelectorAll(".gv-story-static-subject--bottle")).toHaveLength(3);
+    expect(container.querySelectorAll(".gv-story-static-subject--grapes")).toHaveLength(1);
   });
 });

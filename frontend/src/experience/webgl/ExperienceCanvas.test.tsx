@@ -313,7 +313,7 @@ describe("ExperienceCanvas renderer lifecycle", () => {
   });
 
   it("bridges story visibility to render activity and removes the bridge on cleanup", async () => {
-    const storyProgressRef = createStoryProgressRef(false);
+    const storyProgressRef = createStoryProgressRef(true);
     const view = render(
       <ExperienceCanvas
         onFailure={vi.fn()}
@@ -327,10 +327,19 @@ describe("ExperienceCanvas renderer lifecycle", () => {
     await waitFor(() => {
       expect(storyProgressRef.current.setRenderActivity).toBeTypeOf("function");
     });
-    expect(fiberMock.setFrameloop).toHaveBeenLastCalledWith("never");
-    expect(fiberMock.invalidate).not.toHaveBeenCalled();
+    expect(fiberMock.setFrameloop).toHaveBeenLastCalledWith("always");
+    expect(fiberMock.invalidate).toHaveBeenCalledOnce();
 
     fiberMock.setFrameloop.mockClear();
+    fiberMock.invalidate.mockClear();
+    act(() => {
+      storyProgressRef.current.setRenderActivity?.(false);
+    });
+    expect(fiberMock.setFrameloop).toHaveBeenLastCalledWith("demand");
+    expect(fiberMock.invalidate).toHaveBeenCalledOnce();
+
+    fiberMock.setFrameloop.mockClear();
+    fiberMock.invalidate.mockClear();
     storyProgressRef.current.storyVisible = false;
     act(() => {
       storyProgressRef.current.setRenderActivity?.(false);

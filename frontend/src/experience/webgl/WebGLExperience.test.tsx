@@ -366,4 +366,34 @@ describe("WebGLExperience lazy shell", () => {
     expect(cancelIdleCallbackMock).toHaveBeenCalledWith(57);
     expect(canvasMock.renders).not.toHaveBeenCalled();
   });
+
+  it("reselects the desktop or mobile model tier after a viewport change", async () => {
+    sceneMock.homepageActive = true;
+    render(<WebGLExperience onReadyChange={vi.fn()} />);
+    await activateLazyCanvas();
+    expect(document.querySelector("[data-webgl-tier='high']")).toBeInTheDocument();
+
+    capabilityMock.inspect.mockReturnValue({ reason: null, tier: "standard" });
+    fireEvent(window, new Event("resize"));
+    const resizeCallback = animationFrameCallback;
+    act(() => resizeCallback?.(0));
+
+    await waitFor(() => {
+      expect(capabilityMock.inspect).toHaveBeenCalledTimes(2);
+      expect(document.querySelector(".gv-webgl-experience")).not.toBeInTheDocument();
+    });
+
+    const activationCallback = animationFrameCallback;
+    act(() => activationCallback?.(0));
+    await act(async () => {
+      idleCallback?.();
+      await Promise.resolve();
+    });
+
+    expect(document.querySelector("[data-webgl-tier='standard']")).toBeInTheDocument();
+    expect(canvasMock.renders).toHaveBeenLastCalledWith(
+      "standard",
+      sceneMock.progressRef,
+    );
+  });
 });

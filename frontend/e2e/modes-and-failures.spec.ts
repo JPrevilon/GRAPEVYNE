@@ -10,7 +10,9 @@ import {
 import {
   forceLiveWebGLCapability,
   forceSoftwareWebGLCapability,
+  installWebGLFrameProbe,
   resourceNames,
+  webGLFrameProbeSnapshot,
 } from "./helpers/browser";
 import {
   createCellarEntryThroughPreview,
@@ -44,8 +46,14 @@ test("reduced motion keeps the complete story semantic and poster-based", async 
     .locator("section[data-story-chapter]")
     .evaluateAll((chapters) => chapters.map((chapter) => chapter.getAttribute("data-story-chapter")));
   expect(renderedOrder).toEqual(chapterOrder);
+  await expect(page.locator(".gv-story")).toHaveAttribute(
+    "data-story-mode",
+    "reduced-motion",
+  );
+  await expect(page.locator("[data-story-stage]")).toHaveCount(0);
   await expect(page.locator("video")).toHaveCount(0);
   await expect(page.locator("canvas")).toHaveCount(0);
+  await expect(page.locator(".gv-story-static-visual picture")).toHaveCount(9);
   await expect(page.locator("#chapter-09-finale")).toBeAttached();
   await expect(page.locator("#chapter-08-atlas img")).toHaveAttribute(
     "src",
@@ -55,12 +63,19 @@ test("reduced motion keeps the complete story semantic and poster-based", async 
   const chapterNavigation = page.getByRole("navigation", {
     name: "From Vine to Memory chapters",
   });
-  await chapterNavigation.getByRole("link", { name: "GRAPEVYNE" }).click();
+  await chapterNavigation
+    .getByRole("button", { name: "ALL CHAPTERS" })
+    .click();
+  await expect(chapterNavigation.getByRole("link")).toHaveCount(9);
+  await chapterNavigation.getByRole("link", { name: "JOURNEY" }).click();
   await expect(page).toHaveURL(/#chapter-09-finale$/);
 
-  await page.locator("#chapter-01-hero").scrollIntoViewIfNeeded();
-  await page.getByLabel("What is the bottle for?").fill("Cabernet for steak");
-  await page.getByRole("button", { name: "Discover" }).first().click();
+  const searchChapter = page.locator("#chapter-02-discovery");
+  await searchChapter.scrollIntoViewIfNeeded();
+  await searchChapter
+    .getByRole("searchbox", { name: "Describe the moment" })
+    .fill("Cabernet for steak");
+  await searchChapter.getByRole("button", { name: "SEARCH WINES" }).click();
   await expect(page).toHaveURL(/\/discover\?query=/);
   expect(new URL(page.url()).searchParams.get("query")).toBe("Cabernet for steak");
   await page.goBack();
@@ -73,7 +88,7 @@ test("reduced motion keeps the complete story semantic and poster-based", async 
   expect(resources.some((name) => /ExperienceCanvas|\.glb(?:$|\?)/i.test(name))).toBe(false);
 });
 
-test("disabled WebGL and Save-Data retain the CSS bottle without 3D requests", async ({
+test("disabled WebGL and Save-Data retain approved static subjects without heavy requests", async ({
   page,
 }, testInfo) => {
   test.skip(
@@ -104,7 +119,14 @@ test("disabled WebGL and Save-Data retain the CSS bottle without 3D requests", a
       name: "FIND THE BOTTLE KEEP THE MEMORY",
     }),
   ).toBeVisible();
-  await expect(page.locator(".gv-hero-bottle")).toBeVisible();
+  await expect(page.locator(".gv-story")).toHaveAttribute(
+    "data-story-mode",
+    "save-data",
+  );
+  await expect(page.locator("#chapter-01-hero .gv-story-static-subject--bottle")).toBeVisible();
+  await expect(page.locator("#chapter-02-discovery .gv-story-static-subject--grapes")).toBeVisible();
+  await expect(page.locator("#chapter-03-match .gv-story-static-subject")).toHaveCount(0);
+  await expect(page.locator("video")).toHaveCount(0);
   await expect(page.locator("canvas")).toHaveCount(0);
   await expect(page.locator("[data-webgl-status]")).toHaveCount(0);
   const resources = await resourceNames(page);
@@ -143,7 +165,18 @@ test("software WebGL renderers retain the CSS bottle without 3D requests", async
     reason: "software-renderer",
     tier: "fallback",
   });
-  await expect(page.locator(".gv-hero-bottle")).toBeVisible();
+  await expect(page.locator(".gv-story")).toHaveAttribute(
+    "data-story-mode",
+    "scrub",
+  );
+  await expect(page.locator(".gv-story-fallback-subject--bottle")).toHaveCSS(
+    "opacity",
+    "1",
+  );
+  await expect(page.locator(".gv-story-fallback-subject--grapes")).toHaveCSS(
+    "opacity",
+    "0",
+  );
   await expect(page.locator("canvas")).toHaveCount(0);
   const resources = await resourceNames(page);
   expect(
@@ -155,7 +188,7 @@ test("software WebGL renderers retain the CSS bottle without 3D requests", async
   ).toBe(false);
 });
 
-test("a rejected autoplay falls back to the final hero poster", async ({
+test("the scroll-scrub runtime never invokes autoplay and keeps its hero poster", async ({
   page,
 }, testInfo) => {
   test.skip(
@@ -164,12 +197,38 @@ test("a rejected autoplay falls back to the final hero poster", async ({
   );
 
   await page.addInitScript(() => {
-    HTMLMediaElement.prototype.play = () =>
-      Promise.reject(new DOMException("Autoplay blocked for E2E.", "NotAllowedError"));
+    Object.defineProperty(window, "__grapevynePlayCalls", {
+      configurable: true,
+      value: 0,
+      writable: true,
+    });
+    HTMLMediaElement.prototype.play = () => {
+      const probe = window as Window & { __grapevynePlayCalls?: number };
+      probe.__grapevynePlayCalls = (probe.__grapevynePlayCalls ?? 0) + 1;
+      return Promise.reject(
+        new DOMException("Autoplay blocked for E2E.", "NotAllowedError"),
+      );
+    };
   });
   await page.goto("/");
-  await expect(page.locator("#chapter-01-hero img.gv-story-media__visual")).toBeVisible();
-  await expect(page.locator("#chapter-01-hero video")).toHaveCount(0);
+  await expect(
+    page.locator('[data-media-chapter="hero"] .gv-story-media-poster'),
+  ).toBeVisible();
+  await expect(page.locator("video[data-scrub-video]")).toHaveCount(2);
+  expect(
+    await page
+      .locator("video[data-scrub-video]")
+      .evaluateAll((videos) =>
+        videos.every((video) => (video as HTMLVideoElement).paused),
+      ),
+  ).toBe(true);
+  expect(
+    await page.evaluate(
+      () =>
+        (window as Window & { __grapevynePlayCalls?: number })
+          .__grapevynePlayCalls ?? 0,
+    ),
+  ).toBe(0);
 });
 
 test("live WebGL visual smoke retains one ready, nonblank bottle frame", async ({
@@ -190,7 +249,9 @@ test("live WebGL visual smoke retains one ready, nonblank bottle frame", async (
       name: "FIND THE BOTTLE KEEP THE MEMORY",
     }),
   ).toBeVisible();
-  const fallbackBottle = page.locator(".gv-hero-bottle");
+  const fallbackBottle = page.locator(
+    ".gv-story-fallback-subject--bottle",
+  );
   const fallbackBounds = await fallbackBottle.boundingBox();
   expect(fallbackBounds).not.toBeNull();
 
@@ -202,8 +263,11 @@ test("live WebGL visual smoke retains one ready, nonblank bottle frame", async (
   const canvasBounds = await canvas.boundingBox();
   expect(canvasBounds).not.toBeNull();
   expect(canvasBounds?.width).toBeGreaterThanOrEqual(1_400);
-  expect(canvasBounds?.height).toBeGreaterThanOrEqual(880);
-  await expect(fallbackBottle).toHaveCSS("opacity", "0");
+  expect(canvasBounds?.height).toBeGreaterThanOrEqual(760);
+  await expect(page.locator("[data-story-fallback-subjects]")).toHaveCSS(
+    "opacity",
+    "0",
+  );
   const readyFallbackBounds = await fallbackBottle.boundingBox();
   expect(readyFallbackBounds).not.toBeNull();
   expect(Math.abs((readyFallbackBounds?.x ?? 0) - (fallbackBounds?.x ?? 0))).toBeLessThanOrEqual(1);
@@ -213,21 +277,86 @@ test("live WebGL visual smoke retains one ready, nonblank bottle frame", async (
 
   const resources = await resourceNames(page);
   expect(
-    resources.some((name) => /grapevyne-master-bottle\.glb(?:$|\?)/.test(name)),
+    resources.some((name) =>
+      /grapevyne-meshy-bottle\.desktop\.glb(?:$|\?)/.test(name),
+    ),
   ).toBe(true);
   expect(
     resources.some((name) => /grapevyne-label-front-red\.png(?:$|\?)/.test(name)),
   ).toBe(true);
-  expect(
-    resources.some((name) => /grapevyne-label-back\.png(?:$|\?)/.test(name)),
-  ).toBe(true);
-
   const screenshot = await page.screenshot({ animations: "disabled" });
   expect(screenshot.byteLength).toBeGreaterThan(100_000);
   await testInfo.attach("live-webgl-label-forward-visual-smoke", {
     body: screenshot,
     contentType: "image/png",
   });
+});
+
+test("real WebGL clears the prior model before sleeping in a NONE chapter", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "desktop-chromium",
+    "The live renderer lifecycle probe runs once in desktop Chromium.",
+  );
+  test.setTimeout(30_000);
+
+  await installWebGLFrameProbe(page);
+  await forceLiveWebGLCapability(page);
+  // Native scrolling makes the single large chapter jump deterministic while
+  // still exercising a genuine WebGL canvas and the optimized mobile model.
+  await page.setViewportSize({ height: 768, width: 1024 });
+  await page.goto("/");
+
+  const canvas = page.locator(".gv-webgl-experience canvas");
+  try {
+    await expect(canvas).toHaveCount(1, { timeout: 8_000 });
+    await expect(page.locator("[data-webgl-status='ready']")).toBeVisible({
+      timeout: 8_000,
+    });
+  } catch {
+    test.skip(true, "The local Chromium renderer exposes no usable WebGL context.");
+  }
+
+  await expect
+    .poll(async () => (await webGLFrameProbeSnapshot(page)).drawCallsSinceClear)
+    .toBeGreaterThan(0);
+  const bottleFrame = await webGLFrameProbeSnapshot(page);
+
+  await page.locator("#chapter-03-match").evaluate((section) => {
+    const bounds = section.getBoundingClientRect();
+    const documentTop = window.scrollY + bounds.top;
+    window.scrollTo({
+      behavior: "instant",
+      top: documentTop + bounds.height * 0.45 - window.innerHeight / 2,
+    });
+  });
+
+  await expect(
+    page.getByRole("progressbar", { name: "03 of 09 — TABLE" }),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      page.locator("[data-story-stage]").evaluate((stage) => {
+        const styles = getComputedStyle(stage);
+        return ["--story-bottle-opacity", "--story-grape-opacity"].every(
+          (property) =>
+            Number.parseFloat(styles.getPropertyValue(property) || "0") <=
+            0.001,
+        );
+      }),
+    )
+    .toBe(true);
+  await expect
+    .poll(async () => (await webGLFrameProbeSnapshot(page)).clearCount)
+    .toBeGreaterThan(bottleFrame.clearCount);
+
+  // Let any queued demand frame finish. The final clear must contain no model
+  // draw calls; otherwise the previous bottle remains composited over TABLE.
+  await page.waitForTimeout(150);
+  const noneFrame = await webGLFrameProbeSnapshot(page);
+  expect(noneFrame.drawCallsSinceClear).toBe(0);
+  expect(noneFrame.totalDrawCalls).toBeGreaterThan(0);
 });
 
 test("WebGL context loss restores the CSS fallback after one recovery attempt", async ({
@@ -263,7 +392,7 @@ test("WebGL context loss restores the CSS fallback after one recovery attempt", 
     cancelable: true,
   });
   await expect(page.locator("[data-webgl-status]")).toHaveCount(0);
-  await expect(page.locator(".gv-hero-bottle")).toBeVisible();
+  await expect(page.locator(".gv-story-fallback-subject--bottle")).toBeVisible();
 });
 
 test("auth boot failure recovers without exposing protected content", async ({

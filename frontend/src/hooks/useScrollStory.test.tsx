@@ -91,6 +91,10 @@ let mediaQueries: MediaQueryMock[] = [];
 let requestAnimationFrameMock: ReturnType<typeof vi.fn>;
 let cancelAnimationFrameMock: ReturnType<typeof vi.fn>;
 const originalFontsDescriptor = Object.getOwnPropertyDescriptor(document, "fonts");
+const originalScrollIntoViewDescriptor = Object.getOwnPropertyDescriptor(
+  Element.prototype,
+  "scrollIntoView",
+);
 
 function installMediaQueries(matches: (query: string) => boolean) {
   vi.spyOn(window, "matchMedia").mockImplementation((query) => {
@@ -129,10 +133,11 @@ function StoryHarness({
       ref={rootRef}
       style={{ "--story-progress": "0.25" } as CSSProperties}
     >
-      {CHAPTERS.map((chapter) => (
+      {CHAPTERS.map((chapter, index) => (
         <section
           data-story-chapter={chapter}
           data-story-pin={PINNED_CHAPTERS.has(chapter) ? "" : undefined}
+          id={`chapter-${String(index + 1).padStart(2, "0")}-${chapter}`}
           key={chapter}
         >
           <div className="gv-story-chapter__inner">
@@ -180,6 +185,8 @@ function createDesktopRuntimeMock() {
     lenisOff: vi.fn(),
     lenisOn: vi.fn(),
     lenisRaf: vi.fn(),
+    lenisResize: vi.fn(),
+    lenisScrollTo: vi.fn(),
     lenisScrollCallback: undefined as (() => void) | undefined,
     lenisStarts: 0,
     matchMediaRevert: vi.fn(),
@@ -234,6 +241,17 @@ function createDesktopRuntimeMock() {
 
     raf(time: number) {
       state.lenisRaf(time);
+    }
+
+    resize() {
+      state.lenisResize();
+    }
+
+    scrollTo(
+      target: number,
+      options: { force: boolean; immediate: boolean },
+    ) {
+      state.lenisScrollTo(target, options);
     }
   }
 
@@ -327,14 +345,52 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  window.history.replaceState(null, "", "/");
   if (originalFontsDescriptor) {
     Object.defineProperty(document, "fonts", originalFontsDescriptor);
   } else {
     Reflect.deleteProperty(document, "fonts");
   }
+  if (originalScrollIntoViewDescriptor) {
+    Object.defineProperty(
+      Element.prototype,
+      "scrollIntoView",
+      originalScrollIntoViewDescriptor,
+    );
+  } else {
+    Reflect.deleteProperty(Element.prototype, "scrollIntoView");
+  }
 });
 
 describe("useScrollStory native runtime", () => {
+  it("restores a direct chapter hash and handles later history navigation", () => {
+    sceneMock.prefersReducedMotion = true;
+    installMediaQueries(() => false);
+    window.history.replaceState(null, "", "/#chapter-05-portal");
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(Element.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
+    const loadRuntime = vi.fn() as unknown as ScrollRuntimeLoader;
+
+    const view = render(<StoryHarness loadRuntime={loadRuntime} />);
+    const initialHashFrame = requestAnimationFrameMock.mock.calls.at(-1)?.[0];
+    act(() => initialHashFrame?.(performance.now()));
+
+    expect(scrollIntoView).toHaveBeenLastCalledWith({ block: "start" });
+    expect(sceneMock.setCurrentChapterId).toHaveBeenLastCalledWith("portal");
+
+    window.history.pushState(null, "", "/#chapter-08-atlas");
+    fireEvent(window, new Event("hashchange"));
+    const historyHashFrame = requestAnimationFrameMock.mock.calls.at(-1)?.[0];
+    act(() => historyHashFrame?.(performance.now()));
+
+    expect(scrollIntoView).toHaveBeenCalledTimes(2);
+    expect(sceneMock.setCurrentChapterId).toHaveBeenLastCalledWith("atlas");
+    view.unmount();
+  });
+
   it("uses IntersectionObserver in reduced motion without loading animation modules", async () => {
     sceneMock.prefersReducedMotion = true;
     installMediaQueries(() => false);
@@ -433,6 +489,29 @@ describe("useScrollStory native runtime", () => {
 });
 
 describe("useScrollStory desktop runtime", () => {
+  it("re-applies a direct chapter hash through Lenis after startup", async () => {
+    installMediaQueries(() => false);
+    window.history.replaceState(null, "", "/#chapter-05-portal");
+    const { loadRuntime, state } = createDesktopRuntimeMock();
+
+    const view = render(<StoryHarness loadRuntime={loadRuntime} />);
+    const initialHashFrame = requestAnimationFrameMock.mock.calls.at(-1)?.[0];
+    act(() => initialHashFrame?.(performance.now()));
+    await waitFor(() => expect(state.lenisStarts).toBe(1));
+
+    const runtimeHashFrame = requestAnimationFrameMock.mock.calls.at(-1)?.[0];
+    act(() => runtimeHashFrame?.(performance.now()));
+
+    expect(state.lenisResize).toHaveBeenCalled();
+    expect(state.lenisScrollTo).toHaveBeenCalledWith(expect.any(Number), {
+      force: true,
+      immediate: true,
+    });
+    expect(sceneMock.setCurrentChapterId).toHaveBeenLastCalledWith("portal");
+
+    view.unmount();
+  });
+
   it("refreshes measurements once after fonts settle", async () => {
     installMediaQueries(() => false);
     const { loadRuntime, state } = createDesktopRuntimeMock();

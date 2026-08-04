@@ -68,12 +68,20 @@ for (const viewport of viewportMatrix) {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
 
+    // The complete Chromium gate creates several resource-heavy story pages
+    // in parallel. Wait on the route-level readiness contract before querying
+    // the lazy Home heading so machine load cannot masquerade as a reflow bug.
+    await expect(page.locator(".gv-story")).toHaveAttribute(
+      "data-story-mode",
+      "reduced-motion",
+      { timeout: 20_000 },
+    );
     await expect(
       page.getByRole("heading", {
         level: 1,
         name: "FIND THE BOTTLE KEEP THE MEMORY",
       }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 20_000 });
     await expect(page.locator("section[data-story-chapter]")).toHaveCount(9);
     await expectCoreLandmarks(page);
     await expectNoHorizontalOverflow(page);

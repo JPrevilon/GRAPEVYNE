@@ -15,6 +15,12 @@ export interface LayoutShiftSample {
   value: number;
 }
 
+export interface WebGLFrameProbeSnapshot {
+  clearCount: number;
+  drawCallsSinceClear: number;
+  totalDrawCalls: number;
+}
+
 export function monitorPageIssues(page: Page): PageIssueMonitor {
   const issues: string[] = [];
 
@@ -194,6 +200,85 @@ export async function forceSoftwareWebGLCapability(page: Page): Promise<void> {
     page,
     "ANGLE (Google, Vulkan (SwiftShader Device), SwiftShader driver)",
   );
+}
+
+/**
+ * Records actual WebGL clears and draw calls without reaching into React or
+ * Three.js internals. A subject-free story frame should clear the previously
+ * composited model and issue no mesh draw calls before the renderer sleeps.
+ */
+export async function installWebGLFrameProbe(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const probe: WebGLFrameProbeSnapshot = {
+      clearCount: 0,
+      drawCallsSinceClear: 0,
+      totalDrawCalls: 0,
+    };
+    Object.defineProperty(window, "__grapevyneWebGLFrameProbe", {
+      configurable: true,
+      value: probe,
+    });
+
+    const patchPrototype = (
+      prototype: WebGLRenderingContext | WebGL2RenderingContext | undefined,
+    ) => {
+      if (!prototype) return;
+      const marker = "__grapevyneFrameProbePatched";
+      if (Object.prototype.hasOwnProperty.call(prototype, marker)) return;
+      Object.defineProperty(prototype, marker, { value: true });
+
+      const originalClear = prototype.clear;
+      Object.defineProperty(prototype, "clear", {
+        configurable: true,
+        value(this: WebGLRenderingContext | WebGL2RenderingContext, mask: number) {
+          probe.clearCount += 1;
+          probe.drawCallsSinceClear = 0;
+          return originalClear.call(this, mask);
+        },
+        writable: true,
+      });
+
+      for (const methodName of [
+        "drawArrays",
+        "drawElements",
+        "drawArraysInstanced",
+        "drawElementsInstanced",
+      ]) {
+        const originalDraw = Reflect.get(prototype, methodName) as
+          | CallableFunction
+          | undefined;
+        if (typeof originalDraw !== "function") continue;
+
+        Object.defineProperty(prototype, methodName, {
+          configurable: true,
+          value(this: WebGLRenderingContext | WebGL2RenderingContext, ...args: unknown[]) {
+            probe.drawCallsSinceClear += 1;
+            probe.totalDrawCalls += 1;
+            return Reflect.apply(originalDraw, this, args);
+          },
+          writable: true,
+        });
+      }
+    };
+
+    patchPrototype(window.WebGLRenderingContext?.prototype);
+    patchPrototype(window.WebGL2RenderingContext?.prototype);
+  });
+}
+
+export async function webGLFrameProbeSnapshot(
+  page: Page,
+): Promise<WebGLFrameProbeSnapshot> {
+  return page.evaluate(() => {
+    const value = (
+      window as Window & {
+        __grapevyneWebGLFrameProbe?: WebGLFrameProbeSnapshot;
+      }
+    ).__grapevyneWebGLFrameProbe;
+
+    if (!value) throw new Error("The WebGL frame probe was not installed.");
+    return { ...value };
+  });
 }
 
 export async function resourceNames(page: Page): Promise<string[]> {

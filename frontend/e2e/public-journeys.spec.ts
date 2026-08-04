@@ -11,7 +11,7 @@ const storyHeadings = [
   "OPEN THE CELLAR",
   "BUILD THE COLLECTION",
   "REMEMBER THE POUR",
-  "YOUR TASTE ATLAS",
+  "FOLLOW YOUR TASTE",
   "KEEP THE STORY",
 ];
 

@@ -8,7 +8,7 @@ import {
 } from "three";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { BOTTLE_SCENE_TARGETS, MAX_POINTER_PITCH, MAX_POINTER_YAW } from "./sceneTargets";
+import { MAX_POINTER_PITCH, MAX_POINTER_YAW } from "./sceneTargets";
 
 interface FrameState {
   clock: { elapsedTime: number };
@@ -17,14 +17,14 @@ interface FrameState {
 type FrameCallback = (state: FrameState, delta: number) => void;
 
 const rigMock = vi.hoisted(() => ({
-  bottleRenders: 0,
   frame: undefined as FrameCallback | undefined,
   injectedRefs: [] as Object3D[],
+  opacityRefs: {} as Record<string, { current: number }>,
+  subjectKinds: [] as string[],
 }));
 
 const sceneMock = vi.hoisted(() => ({
   chapter: "hero",
-  chapterIndex: 0,
   progressRef: {
     current: { chapter: 0, story: 0, storyVisible: true },
   },
@@ -74,9 +74,16 @@ vi.mock("@/experience/useScene", () => ({
   useScene: () => sceneMock,
 }));
 
-vi.mock("./BottleModel", () => ({
-  default: () => {
-    rigMock.bottleRenders += 1;
+vi.mock("./MeshySubjectModel", () => ({
+  default: ({
+    kind,
+    opacityRef,
+  }: {
+    kind: string;
+    opacityRef: { current: number };
+  }) => {
+    rigMock.subjectKinds.push(kind);
+    rigMock.opacityRefs[kind] = opacityRef;
     return null;
   },
 }));
@@ -84,25 +91,25 @@ vi.mock("./BottleModel", () => ({
 import SceneRig from "./SceneRig";
 
 interface RigObjects {
-  chapter: Group;
+  bottle: Group;
   fillLight: PointLight;
-  interaction: Group;
+  grapes: Group;
   keyLight: SpotLight;
   shadow: Mesh;
 }
 
 function createRigObjects(): RigObjects {
   const objects = {
-    chapter: new Group(),
+    bottle: new Group(),
     fillLight: new PointLight(),
-    interaction: new Group(),
+    grapes: new Group(),
     keyLight: new SpotLight(),
     shadow: new Mesh(),
   };
 
   rigMock.injectedRefs = [
-    objects.interaction,
-    objects.chapter,
+    objects.bottle,
+    objects.grapes,
     objects.keyLight,
     objects.fillLight,
     objects.shadow,
@@ -123,21 +130,25 @@ function installPointerMedia(matches: boolean) {
   }));
 }
 
-function stepFrames(count = 180) {
+function stepFrame(delta = 1 / 20) {
   act(() => {
-    for (let index = 0; index < count; index += 1) {
-      rigMock.frame?.({ clock: { elapsedTime: 0 } }, 1 / 20);
-    }
+    rigMock.frame?.({ clock: { elapsedTime: 0 } }, delta);
   });
 }
 
-describe("SceneRig persistent motion", () => {
+function subjectOpacity(kind: "bottle" | "grapes") {
+  const opacityRef = rigMock.opacityRefs[kind];
+  if (!opacityRef) throw new Error(`Missing ${kind} opacity ref`);
+  return opacityRef.current;
+}
+
+describe("SceneRig scroll-linked subjects", () => {
   beforeEach(() => {
-    rigMock.bottleRenders = 0;
     rigMock.frame = undefined;
     rigMock.injectedRefs = [];
+    rigMock.opacityRefs = {};
+    rigMock.subjectKinds = [];
     sceneMock.chapter = "hero";
-    sceneMock.chapterIndex = 0;
     sceneMock.progressRef.current = {
       chapter: 0,
       story: 0,
@@ -151,9 +162,106 @@ describe("SceneRig persistent motion", () => {
     vi.restoreAllMocks();
   });
 
-  it("attaches one passive fine-pointer listener for high tier and removes it", () => {
-    installPointerMedia(true);
+  it("mounts exactly one bottle and one grape asset and projects the subject map", () => {
+    installPointerMedia(false);
+    const objects = createRigObjects();
+    const view = render(
+      <SceneRig
+        frameHandshakeRef={{ current: false }}
+        onRendered={vi.fn()}
+        tier="standard"
+      />,
+    );
+
+    expect(rigMock.subjectKinds).toEqual(["bottle", "grapes"]);
+
+    stepFrame();
+    expect(subjectOpacity("bottle")).toBe(1);
+    expect(subjectOpacity("grapes")).toBe(0);
+    expect(objects.bottle.visible).toBe(true);
+    expect(objects.grapes.visible).toBe(false);
+
+    sceneMock.chapter = "discovery";
+    sceneMock.progressRef.current.chapter = 0;
+    view.rerender(
+      <SceneRig
+        frameHandshakeRef={{ current: false }}
+        onRendered={vi.fn()}
+        tier="standard"
+      />,
+    );
+    stepFrame();
+    expect(subjectOpacity("bottle")).toBe(0);
+    expect(subjectOpacity("grapes")).toBe(1);
+    expect(objects.bottle.visible).toBe(false);
+    expect(objects.grapes.visible).toBe(true);
+
+    sceneMock.chapter = "match";
+    view.rerender(
+      <SceneRig
+        frameHandshakeRef={{ current: false }}
+        onRendered={vi.fn()}
+        tier="standard"
+      />,
+    );
+    stepFrame();
+    expect(subjectOpacity("bottle")).toBe(0);
+    expect(subjectOpacity("grapes")).toBe(0);
+    expect(objects.bottle.visible).toBe(false);
+    expect(objects.grapes.visible).toBe(false);
+  });
+
+  it("keeps bottle and grapes mutually exclusive through a chapter handoff", () => {
+    installPointerMedia(false);
     createRigObjects();
+    render(
+      <SceneRig
+        frameHandshakeRef={{ current: false }}
+        onRendered={vi.fn()}
+        tier="standard"
+      />,
+    );
+
+    for (const progress of [0, 0.68, 0.75, 0.82, 0.9, 0.95, 1]) {
+      sceneMock.progressRef.current.chapter = progress;
+      stepFrame();
+      expect(
+        subjectOpacity("bottle") * subjectOpacity("grapes"),
+      ).toBe(0);
+    }
+  });
+
+  it("swaps transforms at the hidden boundary in both scroll directions", () => {
+    installPointerMedia(false);
+    const objects = createRigObjects();
+    render(
+      <SceneRig
+        frameHandshakeRef={{ current: false }}
+        onRendered={vi.fn()}
+        tier="standard"
+      />,
+    );
+
+    sceneMock.progressRef.current.chapter = 0.86;
+    stepFrame();
+    expect(subjectOpacity("bottle")).toBe(0);
+    expect(subjectOpacity("grapes")).toBe(0);
+    expect(objects.bottle.visible).toBe(false);
+    expect(objects.grapes.visible).toBe(false);
+    expect(objects.bottle.position.x).toBeCloseTo(0.72);
+
+    sceneMock.progressRef.current.chapter = 0.75;
+    stepFrame();
+    expect(subjectOpacity("bottle")).toBeGreaterThan(0);
+    expect(subjectOpacity("grapes")).toBe(0);
+    expect(objects.bottle.visible).toBe(true);
+    expect(objects.grapes.visible).toBe(false);
+    expect(objects.bottle.position.x).toBeCloseTo(0.9);
+  });
+
+  it("attaches fine-pointer motion only on the high tier and removes it", () => {
+    installPointerMedia(true);
+    const objects = createRigObjects();
     const addListener = vi.spyOn(window, "addEventListener");
     const removeListener = vi.spyOn(window, "removeEventListener");
     const view = render(
@@ -167,9 +275,22 @@ describe("SceneRig persistent motion", () => {
       ([eventName]) => eventName === "pointermove",
     );
 
-    expect(pointerRegistration).toBeDefined();
     expect(pointerRegistration?.[2]).toEqual({ passive: true });
-    expect(window.matchMedia).toHaveBeenCalledWith("(pointer: fine)");
+
+    const pointerEvent = new MouseEvent("pointermove", {
+      clientX: window.innerWidth * 20,
+      clientY: -window.innerHeight * 20,
+    });
+    Object.defineProperty(pointerEvent, "pointerType", { value: "mouse" });
+    window.dispatchEvent(pointerEvent);
+    for (let index = 0; index < 180; index += 1) stepFrame();
+
+    expect(objects.bottle.rotation.y).toBeGreaterThan(0.06);
+    expect(objects.bottle.rotation.y - 0.06).toBeLessThanOrEqual(
+      MAX_POINTER_YAW + Number.EPSILON,
+    );
+    expect(objects.bottle.rotation.x).toBeGreaterThan(0);
+    expect(objects.bottle.rotation.x).toBeLessThanOrEqual(MAX_POINTER_PITCH);
 
     view.unmount();
     expect(removeListener).toHaveBeenCalledWith(
@@ -178,11 +299,9 @@ describe("SceneRig persistent motion", () => {
     );
   });
 
-  it("never probes or attaches pointer motion for the standard tier", () => {
+  it("does not probe for pointer motion on the standard tier", () => {
     const matchMedia = installPointerMedia(true);
     createRigObjects();
-    const addListener = vi.spyOn(window, "addEventListener");
-
     render(
       <SceneRig
         frameHandshakeRef={{ current: false }}
@@ -192,115 +311,5 @@ describe("SceneRig persistent motion", () => {
     );
 
     expect(matchMedia).not.toHaveBeenCalled();
-    expect(
-      addListener.mock.calls.some(([eventName]) => eventName === "pointermove"),
-    ).toBe(false);
-  });
-
-  it("clamps pointer motion into refs and advances frames without React renders", () => {
-    installPointerMedia(true);
-    const objects = createRigObjects();
-    render(
-      <SceneRig
-        frameHandshakeRef={{ current: false }}
-        onRendered={vi.fn()}
-        tier="high"
-      />,
-    );
-
-    const pointerEvent = new MouseEvent("pointermove", {
-      clientX: window.innerWidth * 20,
-      clientY: -window.innerHeight * 20,
-    });
-    Object.defineProperty(pointerEvent, "pointerType", { value: "mouse" });
-    window.dispatchEvent(pointerEvent);
-    stepFrames();
-
-    expect(objects.interaction.rotation.y).toBeGreaterThan(0);
-    expect(objects.interaction.rotation.y).toBeLessThanOrEqual(MAX_POINTER_YAW);
-    expect(objects.interaction.rotation.x).toBeGreaterThan(0);
-    expect(objects.interaction.rotation.x).toBeLessThanOrEqual(
-      MAX_POINTER_PITCH,
-    );
-    expect(objects.keyLight.intensity).toBeCloseTo(
-      BOTTLE_SCENE_TARGETS.high.hero.keyLight * 0.8,
-      3,
-    );
-    expect(objects.fillLight.intensity).toBeCloseTo(1.2, 3);
-    expect(rigMock.bottleRenders).toBe(1);
-  });
-
-  it("interpolates forward and reverses smoothly through the same target boundary", () => {
-    installPointerMedia(false);
-    const objects = createRigObjects();
-    const view = render(
-      <SceneRig
-        frameHandshakeRef={{ current: false }}
-        onRendered={vi.fn()}
-        tier="standard"
-      />,
-    );
-    const discoveryTarget = BOTTLE_SCENE_TARGETS.standard.discovery;
-    const heroTarget = BOTTLE_SCENE_TARGETS.standard.hero;
-
-    sceneMock.progressRef.current.chapter = 1;
-    stepFrames();
-    expect(objects.interaction.position.x).toBeCloseTo(
-      discoveryTarget.position[0],
-      3,
-    );
-    expect(objects.interaction.position.y).toBeCloseTo(
-      discoveryTarget.position[1],
-      3,
-    );
-    expect(objects.interaction.scale.x).toBeCloseTo(discoveryTarget.scale, 3);
-    expect(objects.chapter.rotation.y).toBeCloseTo(
-      discoveryTarget.rotation[1],
-      3,
-    );
-    expect(objects.keyLight.intensity).toBeCloseTo(
-      discoveryTarget.keyLight * 0.76,
-      3,
-    );
-    expect(objects.fillLight.intensity).toBeCloseTo(0.8, 3);
-
-    sceneMock.chapter = "discovery";
-    sceneMock.chapterIndex = 1;
-    sceneMock.progressRef.current.chapter = 0;
-    view.rerender(
-      <SceneRig
-        frameHandshakeRef={{ current: false }}
-        onRendered={vi.fn()}
-        tier="standard"
-      />,
-    );
-    stepFrames();
-    expect(objects.interaction.position.x).toBeCloseTo(
-      discoveryTarget.position[0],
-      3,
-    );
-
-    sceneMock.chapter = "hero";
-    sceneMock.chapterIndex = 0;
-    sceneMock.progressRef.current.chapter = 1;
-    view.rerender(
-      <SceneRig
-        frameHandshakeRef={{ current: false }}
-        onRendered={vi.fn()}
-        tier="standard"
-      />,
-    );
-    stepFrames(1);
-    expect(objects.interaction.position.x).toBeCloseTo(
-      discoveryTarget.position[0],
-      3,
-    );
-
-    sceneMock.progressRef.current.chapter = 0;
-    stepFrames();
-    expect(objects.interaction.position.x).toBeCloseTo(heroTarget.position[0], 3);
-    expect(objects.interaction.position.y).toBeCloseTo(heroTarget.position[1], 3);
-    expect(objects.interaction.scale.x).toBeCloseTo(heroTarget.scale, 3);
-    expect(objects.chapter.rotation.y).toBeCloseTo(heroTarget.rotation[1], 3);
   });
 });

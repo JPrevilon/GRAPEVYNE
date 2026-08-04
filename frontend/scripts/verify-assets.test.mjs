@@ -15,7 +15,11 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   loadFinalMediaManifest,
+  loadMeshyModelManifest,
+  loadStoryMediaManifest,
   loadWebGLAssetManifest,
+  parsePngContract,
+  parseStorySubjectMap,
   verifyAssets,
 } from "./verify-assets.mjs";
 
@@ -36,7 +40,10 @@ async function createFixtureRepository() {
   fixtureRoots.push(repositoryRoot);
   const sourceManifest = await loadFinalMediaManifest();
   const sourceWebGLManifest = await loadWebGLAssetManifest();
+  const sourceStoryManifest = await loadStoryMediaManifest();
+  const sourceMeshyManifest = await loadMeshyModelManifest();
   const files = [];
+  const storyFiles = [];
 
   for (const file of sourceManifest.files) {
     const content = Buffer.from(`fixture:${file.relativeRepositoryPath}`);
@@ -44,6 +51,18 @@ async function createFixtureRepository() {
     await mkdir(path.dirname(absolutePath), { recursive: true });
     await writeFile(absolutePath, content);
     files.push({
+      ...file,
+      byteSize: content.byteLength,
+      sha256: hash(content),
+    });
+  }
+
+  for (const file of sourceStoryManifest.files) {
+    const content = Buffer.from(`fixture:${file.relativeRepositoryPath}`);
+    const absolutePath = path.join(repositoryRoot, file.relativeRepositoryPath);
+    await mkdir(path.dirname(absolutePath), { recursive: true });
+    await writeFile(absolutePath, content);
+    storyFiles.push({
       ...file,
       byteSize: content.byteLength,
       sha256: hash(content),
@@ -69,12 +88,77 @@ async function createFixtureRepository() {
     );
   }
 
+  for (const asset of sourceMeshyManifest.assets) {
+    const absolutePath = path.join(
+      repositoryRoot,
+      asset.production.assetPath,
+    );
+    await mkdir(path.dirname(absolutePath), { recursive: true });
+    await copyFile(
+      path.join(sourceRepositoryRoot, asset.production.assetPath),
+      absolutePath,
+    );
+  }
+
+  const grapeFallback = sourceMeshyManifest.staticFallbacks.find(
+    (fallback) => fallback.assetPath?.endsWith("grapevyne-meshy-grapes.png"),
+  );
+  if (!grapeFallback) throw new Error("Expected the grape fallback manifest entry.");
+  const grapeFallbackPath = path.join(
+    repositoryRoot,
+    grapeFallback.assetPath,
+  );
+  await mkdir(path.dirname(grapeFallbackPath), { recursive: true });
+  await copyFile(
+    path.join(sourceRepositoryRoot, grapeFallback.assetPath),
+    grapeFallbackPath,
+  );
+
+  const acceptedManifestPath = "docs/v2/04a-final-media-manifest.json";
+  await mkdir(path.join(repositoryRoot, "docs/v2"), { recursive: true });
+  await copyFile(
+    path.join(sourceRepositoryRoot, acceptedManifestPath),
+    path.join(repositoryRoot, acceptedManifestPath),
+  );
+
+  const storyChaptersPath = path.join(
+    repositoryRoot,
+    "frontend/src/experience/storyChapters.ts",
+  );
+  await mkdir(path.dirname(storyChaptersPath), { recursive: true });
+  await writeFile(
+    storyChaptersPath,
+    `export const STORY_CHAPTERS = [
+      { key: "hero", subject: "bottle" },
+      { key: "discovery", subject: "grapes" },
+      { key: "match", subject: "none" },
+      { key: "taste", subject: "none" },
+      { key: "portal", subject: "bottle" },
+      { key: "cellar", subject: "none" },
+      { key: "memory", subject: "none" },
+      { key: "atlas", subject: "bottle" },
+      { key: "finale", subject: "none" },
+    ] as const;`,
+  );
+
   return {
     manifest: {
       ...sourceManifest,
       files,
       totalBytes: files.reduce((total, file) => total + file.byteSize, 0),
     },
+    storyManifest: {
+      ...sourceStoryManifest,
+      files: storyFiles,
+      scope: {
+        ...sourceStoryManifest.scope,
+        totalNewBytes: storyFiles.reduce(
+          (total, file) => total + file.byteSize,
+          0,
+        ),
+      },
+    },
+    meshyManifest: sourceMeshyManifest,
     webglManifest: sourceWebGLManifest,
     repositoryRoot,
   };
@@ -120,7 +204,9 @@ describe("final-media asset verification failures", () => {
     expect(result.failures).toEqual(
       expect.arrayContaining([
         `${target.relativeRepositoryPath}: missing`,
-        expect.stringContaining("expected exactly 30 files, found 29"),
+        expect.stringContaining(
+          "expected exactly 74 accepted-plus-additive files, found 73",
+        ),
       ]),
     );
   });
@@ -277,5 +363,136 @@ describe("WebGL asset verification failures", () => {
         `${sourcePath}: remote environment/HDRI URL is prohibited`,
       ]),
     );
+  });
+});
+
+describe("Prompt 10A1 additive asset verification", () => {
+  it("reports a changed additive story-media hash", async () => {
+    const fixture = await createFixtureRepository();
+    const target = fixture.storyManifest.files[0];
+    const absolutePath = path.join(
+      fixture.repositoryRoot,
+      target.relativeRepositoryPath,
+    );
+    const changed = await readFile(absolutePath);
+    changed[0] = changed[0] === 0 ? 1 : changed[0] - 1;
+    await writeFile(absolutePath, changed);
+
+    const result = await verifyAssets(fixture);
+
+    expect(result.failures).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          `${target.relativeRepositoryPath}: SHA-256 mismatch`,
+        ),
+      ]),
+    );
+  });
+
+  it("reports a changed optimized Meshy model hash", async () => {
+    const fixture = await createFixtureRepository();
+    const target = fixture.meshyManifest.assets[0].production;
+    const absolutePath = path.join(fixture.repositoryRoot, target.assetPath);
+    const changed = await readFile(absolutePath);
+    changed[changed.byteLength - 1] ^= 1;
+    await writeFile(absolutePath, changed);
+
+    const result = await verifyAssets(fixture);
+
+    expect(result.failures).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(`${target.assetPath}: SHA-256 mismatch`),
+      ]),
+    );
+  });
+
+  it("requires the exact transparent grape fallback", async () => {
+    const fixture = await createFixtureRepository();
+    const target = fixture.meshyManifest.staticFallbacks.find(
+      (fallback) => fallback.subject === "grapes",
+    );
+    if (!target) throw new Error("Expected the grape fallback fixture.");
+    await unlink(path.join(fixture.repositoryRoot, target.assetPath));
+
+    const result = await verifyAssets(fixture);
+
+    expect(result.failures).toContain(`${target.assetPath}: missing`);
+  });
+
+  it("enforces the locked chapter-subject map", async () => {
+    const fixture = await createFixtureRepository();
+    const storyChaptersPath = path.join(
+      fixture.repositoryRoot,
+      "frontend/src/experience/storyChapters.ts",
+    );
+    const source = await readFile(storyChaptersPath, "utf8");
+    await writeFile(
+      storyChaptersPath,
+      source.replace(
+        '{ key: "match", subject: "none" }',
+        '{ key: "match", subject: "bottle" }',
+      ),
+    );
+
+    const result = await verifyAssets(fixture);
+
+    expect(result.failures).toContain(
+      "frontend/src/experience/storyChapters.ts: locked chapter-subject map mismatch",
+    );
+  });
+
+  it("rejects remote texture URLs and reference production filenames", async () => {
+    const fixture = await createFixtureRepository();
+    const sourcePath = "frontend/src/remote-texture.ts";
+    const absoluteSourcePath = path.join(fixture.repositoryRoot, sourcePath);
+    await writeFile(
+      absoluteSourcePath,
+      'export const texture = "https://cdn.example.test/grapes.webp";',
+    );
+    const referencePath =
+      "frontend/public/assets/video/reference/grape-reel.reference.mp4";
+    const absoluteReferencePath = path.join(
+      fixture.repositoryRoot,
+      referencePath,
+    );
+    await mkdir(path.dirname(absoluteReferencePath), { recursive: true });
+    await writeFile(absoluteReferencePath, "reference");
+
+    const result = await verifyAssets(fixture);
+
+    expect(result.failures).toEqual(
+      expect.arrayContaining([
+        `${sourcePath}: remote texture URL is prohibited`,
+        `${referencePath}: prohibited production filename`,
+      ]),
+    );
+  });
+
+  it("parses the production fallback and nested story objects behaviorally", async () => {
+    const png = parsePngContract(
+      await readFile(
+        path.join(
+          sourceRepositoryRoot,
+          "frontend/public/assets/models/fallbacks/grapevyne-meshy-grapes.png",
+        ),
+      ),
+    );
+    expect(png).toEqual({
+      bitDepth: 8,
+      colorType: 6,
+      height: 1200,
+      width: 1024,
+    });
+
+    const subjects = parseStorySubjectMap(`
+      export const STORY_CHAPTERS = [
+        { key: "hero", headingSegments: [{ text: "Bottle" }], subject: "bottle" },
+        { key: "discovery", subject: "grapes" },
+      ] as const;
+    `);
+    expect(subjects).toEqual([
+      ["hero", "bottle"],
+      ["discovery", "grapes"],
+    ]);
   });
 });
