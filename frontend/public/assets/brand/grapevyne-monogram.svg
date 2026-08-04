@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000" role="img">
+  <g>
+    <path d="M 250 790 C 120 660 128 405 285 230 C 405 96 602 76 758 170" fill="none" stroke="#C9A86A" stroke-width="22" stroke-linecap="round"/>
+    <path d="M 565 118 C 675 78 800 132 850 242" fill="none" stroke="#C9A86A" stroke-width="12" stroke-linecap="round"/>
+    <path d="M 178 592 C 122 548 122 480 178 450 C 225 425 259 462 236 495" fill="none" stroke="#C9A86A" stroke-width="10" stroke-linecap="round"/>
+    <path d="M 743 173 C 791 154 829 176 824 211 C 820 239 790 249 772 229" fill="none" stroke="#C9A86A" stroke-width="8" stroke-linecap="round"/>
+    <path d="M 0 0 C 22 -18 52 -12 70 0 C 50 25 20 28 0 0 Z" fill="#C9A86A" transform="translate(620 89) rotate(-12) scale(1.05)"/>
+    <path d="M 0 0 C 22 -18 52 -12 70 0 C 50 25 20 28 0 0 Z" fill="#C9A86A" transform="translate(728 132) rotate(28) scale(0.82)"/>
+    <path d="M 0 0 C 22 -18 52 -12 70 0 C 50 25 20 28 0 0 Z" fill="#C9A86A" transform="translate(190 305) rotate(124) scale(0.82)"/>
+    <path d="M 0 0 C 22 -18 52 -12 70 0 C 50 25 20 28 0 0 Z" fill="#C9A86A" transform="translate(165 386) rotate(150) scale(0.62)"/>
+    <g transform="translate(148 500) scale(0.7)">
+      <path d="M 22 -18 C 20 -8 20 -4 22 0" stroke="#C9A86A" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <circle cx="0" cy="0" r="9" fill="#C9A86A"/><circle cx="22" cy="2" r="9" fill="#C9A86A"/><circle cx="44" cy="0" r="9" fill="#C9A86A"/><circle cx="11" cy="22" r="9" fill="#C9A86A"/><circle cx="33" cy="24" r="9" fill="#C9A86A"/><circle cx="22" cy="45" r="9" fill="#C9A86A"/><circle cx="12" cy="48" r="9" fill="#C9A86A"/>
+    </g>
+    <text x="500" y="635" text-anchor="middle" font-family="EB Garamond, Georgia, serif" font-size="520" font-weight="400" fill="#C9A86A">G</text>
+    <circle cx="662" cy="595" r="11" fill="#C9A86A"/><circle cx="692" cy="620" r="8" fill="#C9A86A"/><circle cx="675" cy="646" r="7" fill="#C9A86A"/>
+  </g>
+</svg>

@@ -20,7 +20,10 @@ def register_error_handlers(app):
     @app.errorhandler(SQLAlchemyError)
     def handle_database_exception(error):
         db.session.rollback()
-        current_app.logger.exception("Database error: %s", error)
+        current_app.logger.error(
+            "Database operation failed (%s).",
+            type(error).__name__,
+        )
 
         return error_response(
             "A database error occurred.",
@@ -33,10 +36,12 @@ def register_error_handlers(app):
         if current_app.config.get("DEBUG"):
             raise error
 
-        current_app.logger.exception("Unexpected error: %s", error)
+        current_app.logger.error(
+            "Unexpected application error (%s).",
+            type(error).__name__,
+        )
         return error_response(
             "An unexpected error occurred.",
             status=500,
             code="internal_server_error",
         )
-

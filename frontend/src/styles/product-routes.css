@@ -1,0 +1,2203 @@
+/* Route-level composition built from the Prompt 03 tokens and primitives. */
+
+/* Home */
+.gv-home {
+  padding-top: 0;
+}
+
+.gv-home-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.04fr) minmax(22rem, 0.96fr);
+  min-height: min(52rem, calc(100vh - var(--nav-height)));
+  align-items: center;
+  gap: clamp(2rem, 7vw, 7rem);
+  padding-block: clamp(3rem, 7vw, 7rem);
+}
+
+.gv-home-hero::before {
+  position: absolute;
+  z-index: -1;
+  top: 8%;
+  left: -18vw;
+  width: 56vw;
+  height: 56vw;
+  max-width: 50rem;
+  max-height: 50rem;
+  border: 1px solid rgba(201, 168, 106, 0.08);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.gv-home-hero__copy {
+  position: relative;
+  z-index: 2;
+  max-width: 48rem;
+}
+
+.gv-home-hero__monogram {
+  display: none;
+  width: 3.25rem;
+  margin-bottom: var(--space-4);
+}
+
+.gv-home-hero h1 {
+  margin-bottom: var(--space-5);
+  font-size: var(--display-lg);
+  line-height: 0.82;
+}
+
+.gv-home-hero h1 em {
+  display: inline-block;
+  padding-left: clamp(0rem, 4vw, 3rem);
+}
+
+.gv-home-hero__lede {
+  max-width: 39rem;
+  margin-bottom: var(--space-6);
+  color: var(--color-text-muted);
+  font-size: clamp(1rem, 1.5vw, 1.18rem);
+}
+
+.gv-home-hero .gv-natural-search {
+  max-width: 43rem;
+}
+
+.gv-home-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.gv-home-hero__privacy {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+  color: var(--color-smoke);
+  font-size: var(--text-xs);
+}
+
+.gv-home-stage {
+  position: relative;
+  display: grid;
+  min-height: clamp(32rem, 48vw, 47rem);
+  place-items: center;
+  isolation: isolate;
+}
+
+.gv-home-stage::before {
+  position: absolute;
+  z-index: -2;
+  width: min(100%, 38rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(113, 28, 53, 0.36), rgba(74, 16, 32, 0.12) 38%, transparent 68%);
+  content: "";
+}
+
+.gv-home-stage::after {
+  position: absolute;
+  z-index: -1;
+  bottom: 15%;
+  width: 55%;
+  height: 7%;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.62);
+  content: "";
+  filter: blur(1.1rem);
+}
+
+.gv-home-stage .gv-bottle {
+  width: clamp(7.2rem, 12vw, 10rem);
+  height: clamp(21rem, 34vw, 30rem);
+}
+
+.gv-home-stage__orbit {
+  position: absolute;
+  z-index: -1;
+  border: 1px solid rgba(201, 168, 106, 0.2);
+  border-radius: 50%;
+}
+
+.gv-home-stage__orbit--one { width: 77%; aspect-ratio: 1; }
+.gv-home-stage__orbit--two { width: 54%; aspect-ratio: 1; border-style: dashed; opacity: 0.55; }
+
+.gv-home-stage__note {
+  position: absolute;
+  display: grid;
+  max-width: 12rem;
+  gap: 0.15rem;
+  padding: 0.8rem 1rem;
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: rgba(16, 14, 12, 0.9);
+  box-shadow: var(--shadow-low);
+  font-size: var(--text-xs);
+}
+
+.gv-home-stage__note span { color: var(--color-champagne); text-transform: uppercase; letter-spacing: 0.11em; }
+.gv-home-stage__note strong { color: var(--color-aged-ivory); font-weight: 500; }
+.gv-home-stage__note--top { top: 21%; right: 2%; }
+.gv-home-stage__note--bottom { bottom: 21%; left: 0; }
+
+.gv-home-journey {
+  padding-block: clamp(4rem, 8vw, 8rem);
+  border-top: var(--border-hairline);
+}
+
+.gv-home-journey__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.gv-journey-card {
+  min-width: 0;
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+  border: var(--border-hairline);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(145deg, rgba(233, 225, 211, 0.055), rgba(16, 14, 12, 0.68));
+}
+
+.gv-journey-card > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: clamp(2.5rem, 5vw, 5rem);
+  color: var(--color-champagne);
+  font-size: var(--text-sm);
+}
+
+.gv-journey-card h3 { margin-bottom: var(--space-3); font-size: clamp(1.8rem, 3vw, 2.8rem); }
+.gv-journey-card p { margin: 0; color: var(--color-text-muted); }
+
+.gv-home-finale {
+  display: grid;
+  grid-template-columns: minmax(9rem, 0.35fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(1.5rem, 5vw, 5rem);
+  margin-bottom: clamp(2rem, 5vw, 5rem);
+  padding: clamp(1.5rem, 4vw, 3rem);
+  border: 1px solid rgba(201, 168, 106, 0.32);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 90% 0, rgba(113, 28, 53, 0.26), transparent 24rem),
+    var(--surface-raised);
+}
+
+.gv-home-finale > img { width: 12rem; }
+.gv-home-finale h2 { margin-bottom: var(--space-2); font-size: clamp(2rem, 4vw, 3.6rem); }
+.gv-home-finale p:last-child { max-width: 38rem; margin: 0; color: var(--color-text-muted); }
+
+/* Discover and reusable wine result cards */
+.discover-search-panel {
+  display: grid;
+  gap: var(--space-5);
+  max-width: var(--content-default);
+  margin-bottom: var(--space-7);
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  border: 1px solid rgba(201, 168, 106, 0.32);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 100% 0, rgba(113, 28, 53, 0.25), transparent 22rem),
+    var(--surface-raised);
+  box-shadow: var(--shadow-mid);
+}
+
+.discover-search-panel__intro {
+  display: flex;
+  align-items: start;
+  gap: var(--space-3);
+}
+
+.discover-search-panel__intro > svg { margin-top: 0.25rem; color: var(--color-champagne); }
+.discover-search-panel__intro h2 { margin-bottom: var(--space-2); font-size: clamp(1.7rem, 3vw, 2.4rem); }
+.discover-search-panel__intro p { margin: 0; color: var(--color-text-muted); }
+
+.suggestion-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.discover-results { margin-top: clamp(3rem, 6vw, 6rem); }
+.discover-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  padding: var(--space-4);
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.discover-filters .gv-field { min-width: min(100%, 14rem); }
+
+.wine-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1rem, 2vw, 1.5rem);
+}
+
+.gv-wine-card {
+  display: grid;
+  min-width: 0;
+  grid-template-rows: minmax(19rem, 1fr) auto;
+  overflow: hidden;
+  border: var(--border-hairline);
+  border-radius: var(--radius-lg);
+  background: rgba(16, 14, 12, 0.84);
+  box-shadow: var(--shadow-low);
+  transition: border-color var(--duration-base), box-shadow var(--duration-base), transform var(--duration-base);
+}
+
+.gv-wine-card:hover {
+  border-color: rgba(201, 168, 106, 0.46);
+  box-shadow: var(--shadow-mid);
+  transform: translateY(-2px);
+}
+
+.gv-wine-card__visual {
+  position: relative;
+  display: grid;
+  min-height: 19rem;
+  place-items: center;
+  overflow: hidden;
+  border-bottom: var(--border-hairline);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(113, 28, 53, 0.28), transparent 46%),
+    linear-gradient(145deg, rgba(233, 225, 211, 0.035), rgba(7, 7, 6, 0.4));
+}
+
+.gv-wine-card__visual > img {
+  width: 100%;
+  height: 19rem;
+  padding: 1.25rem;
+  object-fit: contain;
+  filter: drop-shadow(0 1.2rem 1.5rem rgba(0, 0, 0, 0.42));
+}
+
+.gv-wine-card__visual .gv-bottle { width: 5.3rem; height: 15.5rem; }
+.gv-wine-card__vintage {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.32rem 0.65rem;
+  border: var(--border-hairline);
+  border-radius: var(--radius-pill);
+  background: rgba(7, 7, 6, 0.82);
+  color: var(--color-champagne);
+  font-size: var(--text-xs);
+}
+
+.gv-wine-card__body { display: flex; min-width: 0; flex-direction: column; padding: 1.35rem; }
+.gv-wine-card__body h2 { margin-bottom: 0.4rem; font-size: clamp(1.65rem, 2.4vw, 2.2rem); line-height: 1.05; }
+.gv-wine-card__body h2 a:hover { color: var(--color-champagne); }
+.gv-wine-card__producer { margin-bottom: var(--space-3); color: #c7bdb1; font-size: var(--text-sm); }
+.gv-wine-card__description {
+  display: -webkit-box;
+  margin-bottom: var(--space-4);
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.gv-wine-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: var(--border-hairline);
+  color: var(--color-smoke);
+  font-size: var(--text-xs);
+}
+
+.gv-wine-card__meta span { display: inline-flex; align-items: center; gap: 0.3rem; }
+.gv-wine-card__meta strong { margin-left: auto; color: var(--color-aged-ivory); }
+.gv-wine-card__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  color: var(--color-champagne);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+/* Wine detail */
+.gv-back-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.gv-back-link:hover { color: var(--color-champagne); }
+
+.gv-wine-detail__layout {
+  display: grid;
+  grid-template-columns: minmax(20rem, 0.9fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: clamp(2.5rem, 8vw, 8rem);
+}
+
+.gv-wine-detail__stage {
+  position: relative;
+  display: grid;
+  min-height: clamp(34rem, 55vw, 48rem);
+  place-items: center;
+  overflow: hidden;
+  border: var(--border-hairline);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(113, 28, 53, 0.38), transparent 44%),
+    linear-gradient(160deg, rgba(233, 225, 211, 0.04), rgba(7, 7, 6, 0.72));
+}
+
+.gv-wine-detail__stage > img {
+  z-index: 1;
+  width: 78%;
+  height: clamp(28rem, 46vw, 40rem);
+  object-fit: contain;
+  filter: drop-shadow(0 2rem 2rem rgba(0, 0, 0, 0.55));
+}
+
+.gv-wine-detail__stage .gv-bottle { z-index: 1; width: clamp(7.5rem, 12vw, 10rem); height: clamp(23rem, 39vw, 34rem); }
+.gv-wine-detail__halo {
+  position: absolute;
+  width: 75%;
+  aspect-ratio: 1;
+  border: 1px solid rgba(201, 168, 106, 0.22);
+  border-radius: 50%;
+}
+
+.gv-wine-detail__source {
+  position: absolute;
+  bottom: var(--space-4);
+  left: var(--space-4);
+  padding: 0.35rem 0.6rem;
+  border: var(--border-hairline);
+  border-radius: var(--radius-pill);
+  background: rgba(7, 7, 6, 0.78);
+  color: var(--color-smoke);
+  font-size: var(--text-xs);
+}
+
+.gv-wine-detail__copy { max-width: 43rem; }
+.gv-wine-detail__copy h1 { margin-bottom: var(--space-3); font-size: clamp(3rem, 7vw, 6.7rem); }
+.gv-wine-detail__producer { margin-bottom: var(--space-5); color: #d2c6b7; font-size: var(--text-lg); }
+.gv-wine-detail__description { margin-bottom: var(--space-6); color: var(--color-text-muted); font-size: 1.05rem; }
+
+.gv-wine-detail__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0 0 var(--space-6);
+  border-top: var(--border-hairline);
+  border-left: var(--border-hairline);
+}
+
+.gv-wine-detail__facts > div {
+  min-width: 0;
+  padding: 0.9rem;
+  border-right: var(--border-hairline);
+  border-bottom: var(--border-hairline);
+}
+
+.gv-wine-detail__facts dt,
+.gv-structure-list dt {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-smoke);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.gv-wine-detail__facts dd { margin: 0.2rem 0 0; overflow-wrap: anywhere; color: var(--color-aged-ivory); }
+.gv-wine-detail__save { display: grid; justify-items: start; gap: var(--space-3); }
+.gv-inline-feedback { margin: 0; color: var(--color-text-muted); font-size: var(--text-sm); }
+.gv-inline-feedback--success { color: var(--color-success); }
+.gv-inline-feedback--duplicate { color: var(--color-champagne); }
+.gv-inline-feedback--error { color: var(--color-danger); }
+
+.gv-wine-detail__sections {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-top: clamp(3rem, 8vw, 8rem);
+}
+
+.gv-detail-section {
+  min-width: 0;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: var(--border-hairline);
+  border-radius: var(--radius-lg);
+  background: var(--surface-soft);
+}
+
+.gv-detail-section h2 { margin-bottom: var(--space-4); font-size: clamp(1.7rem, 3vw, 2.4rem); }
+.gv-structure-list { display: grid; gap: var(--space-2); margin: 0; }
+.gv-structure-list > div { display: flex; justify-content: space-between; gap: var(--space-3); padding-bottom: var(--space-2); border-bottom: var(--border-hairline); }
+.gv-structure-list dd { margin: 0; color: #d5c7b2; text-align: right; }
+
+/* Authentication */
+.gv-auth-page {
+  display: grid;
+  min-height: calc(100vh - var(--nav-height));
+  grid-template-columns: minmax(0, 1fr) minmax(19rem, 30rem);
+  align-content: center;
+  align-items: center;
+  gap: clamp(2rem, 8vw, 8rem);
+  background:
+    radial-gradient(circle at 8% 45%, rgba(113, 28, 53, 0.24), transparent 36rem),
+    radial-gradient(circle at 86% 78%, rgba(102, 112, 86, 0.1), transparent 28rem);
+}
+
+.gv-auth-page .gv-page-hero { margin: 0; }
+.gv-auth-page .gv-page-hero h1 { max-width: 11ch; font-size: clamp(3rem, 7vw, 6.4rem); }
+.gv-auth-card {
+  display: grid;
+  gap: var(--space-5);
+  padding: clamp(1.3rem, 4vw, 2.25rem);
+  border: 1px solid rgba(201, 168, 106, 0.36);
+  border-radius: var(--radius-lg);
+  background: rgba(16, 14, 12, 0.92);
+  box-shadow: var(--shadow-high);
+}
+
+.gv-auth-card__fields { display: grid; gap: var(--space-4); }
+.gv-auth-card__actions .gv-button { width: 100%; }
+.gv-auth-card__error {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(224, 154, 159, 0.34);
+  border-radius: var(--radius-sm);
+  background: rgba(113, 28, 53, 0.16);
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+}
+
+.gv-auth-card__switch { margin: 0; color: var(--color-text-muted); font-size: var(--text-sm); text-align: center; }
+.gv-auth-card__switch a { color: var(--color-champagne); font-weight: 500; text-decoration: underline; text-underline-offset: 0.2em; }
+
+/* Public, read-only demonstration routes */
+.gv-demo-page > .gv-state-panel { margin-bottom: clamp(3rem, 6vw, 6rem); }
+.gv-demo-cellar__collection,
+.gv-demo-atlas__summary { margin-top: clamp(2rem, 5vw, 5rem); }
+.gv-demo-cellar__search {
+  display: grid;
+  grid-template-columns: auto minmax(0, 28rem);
+  align-items: end;
+  justify-content: end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.gv-demo-cellar__search > svg { margin-bottom: 0.9rem; color: var(--color-champagne); }
+.gv-demo-shelves { display: grid; gap: var(--space-7); }
+.gv-demo-shelf {
+  min-width: 0;
+  padding: clamp(1rem, 3vw, 2rem);
+  border: var(--border-hairline);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(233, 225, 211, 0.04), transparent),
+    rgba(16, 14, 12, 0.7);
+}
+
+.gv-demo-shelf > header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: var(--border-hairline);
+}
+
+.gv-demo-shelf > header h3 { margin-bottom: var(--space-2); font-size: clamp(1.8rem, 3vw, 2.7rem); }
+.gv-demo-shelf > header p:last-child { max-width: 38rem; margin: 0; color: var(--color-text-muted); }
+.gv-demo-shelf > header > span { flex: 0 0 auto; color: var(--color-champagne); font-size: var(--text-sm); }
+.gv-demo-shelf__rail { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
+
+.gv-demo-bottle {
+  display: grid;
+  min-width: 0;
+  min-height: 22rem;
+  grid-template-rows: 1fr auto;
+  gap: var(--space-3);
+  padding: 1rem;
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: rgba(7, 7, 6, 0.48);
+  color: var(--color-aged-ivory);
+  text-align: left;
+  transition: border-color var(--duration-base), background var(--duration-base), transform var(--duration-base);
+}
+
+.gv-demo-bottle:hover,
+.gv-demo-bottle[aria-pressed="true"] {
+  border-color: var(--color-champagne);
+  background: rgba(113, 28, 53, 0.14);
+  transform: translateY(-2px);
+}
+
+.gv-demo-bottle > .gv-bottle { align-self: center; justify-self: center; width: 4.2rem; height: 12rem; }
+.gv-demo-bottle > span:last-child { display: grid; min-width: 0; gap: 0.15rem; }
+.gv-demo-bottle small { color: var(--color-champagne); font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.gv-demo-bottle strong { overflow-wrap: anywhere; font-family: var(--font-display); font-size: 1.25rem; font-weight: 500; line-height: 1.05; }
+.gv-demo-bottle > span:last-child > span { overflow: hidden; color: var(--color-smoke); font-size: var(--text-xs); text-overflow: ellipsis; white-space: nowrap; }
+
+.gv-demo-detail { margin-top: var(--space-7); }
+.gv-demo-detail__topline { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-5); }
+.gv-demo-detail__topline > span { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--color-success); font-size: var(--text-sm); }
+.gv-demo-detail__hero { display: flex; align-items: center; gap: clamp(1.25rem, 4vw, 3rem); }
+.gv-demo-detail__hero .gv-bottle { flex: 0 0 auto; width: 5rem; height: 14rem; }
+.gv-demo-detail__hero h2 { margin-bottom: var(--space-2); font-size: clamp(2rem, 5vw, 4rem); }
+.gv-demo-detail__facts,
+.profile-summary__details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: var(--space-5) 0; border-top: var(--border-hairline); border-left: var(--border-hairline); }
+.gv-demo-detail__facts > div,
+.profile-summary__details > div { min-width: 0; padding: 1rem; border-right: var(--border-hairline); border-bottom: var(--border-hairline); }
+.gv-demo-detail__facts dt,
+.profile-summary__details dt { color: var(--color-smoke); font-size: var(--text-xs); letter-spacing: 0.08em; text-transform: uppercase; }
+.gv-demo-detail__facts dd,
+.profile-summary__details dd { margin: 0.25rem 0 0; overflow-wrap: anywhere; color: var(--color-aged-ivory); }
+.gv-demo-detail__disclosure { margin: var(--space-5) 0 0; padding-top: var(--space-4); border-top: var(--border-hairline); color: var(--color-success); font-size: var(--text-sm); }
+.gv-demo-detail__empty { display: grid; min-height: 14rem; align-content: center; justify-items: center; color: var(--color-text-muted); text-align: center; }
+.gv-demo-detail__empty > svg { margin-bottom: var(--space-3); color: var(--color-success); }
+.gv-demo-detail__empty h2 { margin-bottom: var(--space-2); font-size: 2rem; }
+
+.gv-demo-atlas__constellation {
+  position: relative;
+  display: grid;
+  min-height: 24rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: var(--space-4);
+  overflow: hidden;
+  border: var(--border-hairline);
+  border-radius: var(--radius-lg);
+  background: radial-gradient(circle at center, rgba(113, 28, 53, 0.28), transparent 56%);
+}
+
+.gv-demo-atlas__constellation > div {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  color: var(--color-champagne);
+  text-align: center;
+}
+
+.gv-demo-atlas__constellation strong { color: var(--color-aged-ivory); font-family: var(--font-display); font-size: clamp(3rem, 7vw, 6rem); font-weight: 400; line-height: 0.8; }
+.gv-demo-atlas__constellation span { color: var(--color-text-muted); font-size: var(--text-sm); }
+.gv-demo-atlas__orbit { position: absolute; top: 50%; left: 50%; border: 1px solid rgba(201, 168, 106, 0.16); border-radius: 50%; transform: translate(-50%, -50%); }
+.gv-demo-atlas__orbit--one { width: 18rem; height: 18rem; }
+.gv-demo-atlas__orbit--two { width: 34rem; height: 34rem; }
+.gv-demo-atlas__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); margin-top: var(--space-6); }
+.gv-atlas-card { min-width: 0; padding: clamp(1.25rem, 3vw, 2rem); border: var(--border-hairline); border-radius: var(--radius-lg); background: var(--surface-soft); }
+.gv-atlas-card > svg { margin-bottom: var(--space-5); color: var(--color-champagne); }
+.gv-atlas-card h2 { margin-bottom: var(--space-4); font-size: clamp(1.8rem, 3vw, 2.5rem); }
+
+/* Profile */
+.profile-page { max-width: calc(var(--content-default) + (2 * var(--page-gutter))); }
+.profile-page > * + * { margin-top: var(--space-5); }
+.tool-surface.profile-summary {
+  margin: 0;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  border: var(--border-hairline);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-low);
+}
+
+.profile-summary .gv-section-heading { margin-bottom: var(--space-5); }
+.profile-summary__details { margin-bottom: 0; }
+
+/* Authenticated cellar — real API entries only */
+.gv-cellar-page > [data-cellar-source="authenticated-api"] {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-5);
+}
+
+.gv-cellar-toolbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.gv-cellar-toolbar__search { width: min(100%, 31rem); }
+.gv-cellar-toolbar__result-count { margin: 0 0 0.75rem; color: var(--color-smoke); font-size: var(--text-sm); }
+.gv-cellar-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(22rem, 0.95fr);
+  align-items: start;
+  gap: clamp(1rem, 3vw, 2.25rem);
+}
+
+.gv-cellar-shelf {
+  min-width: 0;
+  padding: clamp(1rem, 3vw, 2rem);
+  border: var(--border-hairline);
+  border-radius: var(--radius-lg);
+  background: rgba(16, 14, 12, 0.68);
+}
+
+.gv-cellar-shelf__count {
+  display: inline-flex;
+  padding: 0.42rem 0.7rem;
+  border: var(--border-hairline);
+  border-radius: var(--radius-pill);
+  color: var(--color-champagne);
+  font-size: var(--text-sm);
+}
+
+.gv-cellar-shelf__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gv-cellar-shelf__list li { min-width: 0; }
+.gv-cellar-bottle {
+  position: relative;
+  display: grid;
+  width: 100%;
+  min-height: 24rem;
+  grid-template-rows: minmax(12rem, 1fr) auto auto;
+  gap: var(--space-3);
+  overflow: hidden;
+  padding: 1rem;
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: rgba(7, 7, 6, 0.52);
+  color: var(--color-aged-ivory);
+  text-align: left;
+  transition: border-color var(--duration-base), background var(--duration-base), transform var(--duration-base);
+}
+
+.gv-cellar-bottle:hover:not(:disabled),
+.gv-cellar-bottle--selected {
+  border-color: var(--color-champagne);
+  background: rgba(113, 28, 53, 0.14);
+  transform: translateY(-2px);
+}
+
+.gv-cellar-bottle__glow {
+  position: absolute;
+  top: -3rem;
+  left: 50%;
+  width: 15rem;
+  height: 15rem;
+  border-radius: 50%;
+  background: rgba(113, 28, 53, 0.2);
+  filter: blur(2rem);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.gv-cellar-bottle__visual { position: relative; display: grid; min-height: 12rem; place-items: center; }
+.gv-cellar-bottle__visual > img { width: 100%; height: 13rem; object-fit: contain; filter: drop-shadow(0 1rem 1rem rgba(0, 0, 0, 0.45)); }
+.gv-cellar-bottle__visual .gv-bottle { width: 4rem; height: 11.75rem; }
+.gv-cellar-bottle__copy { display: grid; min-width: 0; gap: 0.15rem; }
+.gv-cellar-bottle__copy .gv-eyebrow { margin-bottom: 0.2rem; }
+.gv-cellar-bottle__copy strong { overflow-wrap: anywhere; font-family: var(--font-display); font-size: 1.45rem; font-weight: 500; line-height: 1.05; }
+.gv-cellar-bottle__copy > span:not(.gv-eyebrow) { overflow: hidden; color: var(--color-smoke); font-size: var(--text-xs); text-overflow: ellipsis; white-space: nowrap; }
+.gv-cellar-bottle__meta { display: flex; flex-wrap: wrap; gap: 0.4rem; padding-top: var(--space-3); border-top: var(--border-hairline); }
+.gv-cellar-bottle__meta > span { display: inline-flex; align-items: center; gap: 0.25rem; color: #c3b7aa; font-size: 0.68rem; }
+
+.gv-cellar-detail { min-width: 0; box-shadow: var(--shadow-mid); }
+.gv-cellar-detail--empty { display: grid; min-height: 24rem; align-content: center; justify-items: center; color: var(--color-text-muted); text-align: center; }
+.gv-cellar-detail--empty > svg { margin-bottom: var(--space-3); color: var(--color-champagne); }
+.gv-cellar-detail--empty h2 { margin-bottom: var(--space-2); font-size: 2.2rem; }
+.gv-cellar-detail--empty p { max-width: 28rem; margin: 0; }
+.gv-cellar-detail__selection { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-5); }
+.gv-cellar-detail__selection .gv-eyebrow { margin: 0; }
+.gv-cellar-detail__hero { display: grid; grid-template-columns: minmax(6rem, 0.32fr) minmax(0, 1fr); align-items: center; gap: var(--space-5); }
+.gv-cellar-detail__bottle { display: grid; min-height: 15rem; place-items: center; border-radius: var(--radius-md); background: radial-gradient(circle, rgba(113, 28, 53, 0.3), transparent 64%); }
+.gv-cellar-detail__bottle > img { width: 100%; height: 15rem; object-fit: contain; }
+.gv-cellar-detail__bottle .gv-bottle { width: 4.5rem; height: 13.5rem; }
+.gv-cellar-detail__hero h2 { margin-bottom: var(--space-2); overflow-wrap: anywhere; font-size: clamp(2rem, 4vw, 3.4rem); }
+.gv-cellar-detail__hero p:last-child { margin: 0; color: var(--color-text-muted); }
+.gv-cellar-detail__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: var(--space-5) 0;
+  border-top: var(--border-hairline);
+  border-left: var(--border-hairline);
+}
+
+.gv-cellar-detail__facts > div { min-width: 0; padding: 0.8rem; border-right: var(--border-hairline); border-bottom: var(--border-hairline); }
+.gv-cellar-detail__facts dt { display: flex; align-items: center; gap: 0.3rem; color: var(--color-smoke); font-size: 0.66rem; letter-spacing: 0.07em; text-transform: uppercase; }
+.gv-cellar-detail__facts dd { margin: 0.15rem 0 0; overflow-wrap: anywhere; }
+.gv-cellar-detail__tags { margin-bottom: var(--space-4); }
+.gv-cellar-editor { display: grid; gap: var(--space-4); margin-top: var(--space-6); padding-top: var(--space-5); border-top: var(--border-hairline); }
+.gv-cellar-editor__heading h3 { margin-bottom: var(--space-2); font-size: 2rem; }
+.gv-cellar-editor__heading p:last-child { margin: 0; color: var(--color-text-muted); font-size: var(--text-sm); }
+.gv-cellar-editor__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.gv-checkbox { display: flex; min-height: 2.75rem; align-items: center; gap: var(--space-3); color: var(--color-aged-ivory); }
+.gv-checkbox input { width: 1.2rem; height: 1.2rem; accent-color: var(--color-burgundy); }
+.gv-cellar-editor__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.gv-cellar-delete-confirmation { display: grid; width: 100%; gap: var(--space-3); padding: 1rem; border: 1px solid rgba(224, 154, 159, 0.38); border-radius: var(--radius-md); background: rgba(113, 28, 53, 0.16); }
+.gv-cellar-delete-confirmation p { margin: 0; color: #e1c7c7; }
+.gv-cellar-delete-confirmation > div { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+@media (min-width: 110rem) {
+  .wine-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (max-width: 64rem) {
+  .gv-home-hero { grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.75fr); }
+  .gv-home-stage__note { display: none; }
+  .wine-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gv-wine-detail__layout { grid-template-columns: minmax(18rem, 0.8fr) minmax(0, 1.2fr); gap: clamp(2rem, 5vw, 4rem); }
+  .gv-wine-detail__sections { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gv-auth-page { grid-template-columns: minmax(0, 1fr) minmax(19rem, 27rem); }
+  .gv-demo-shelf__rail { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .gv-demo-atlas__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gv-cellar-layout { grid-template-columns: 1fr; }
+  .gv-cellar-shelf__list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 48rem) {
+  .gv-home-hero { grid-template-columns: 1fr; min-height: 0; gap: 1rem; }
+  .gv-home-hero::before { display: none; }
+  .gv-home-hero h1 { font-size: clamp(3.25rem, 16.5vw, 6rem); line-height: 0.86; }
+  .gv-home-hero h1 em { padding-left: 0; }
+  .gv-home-stage { min-height: 31rem; }
+  .gv-home-stage .gv-bottle { width: 7.5rem; height: 22rem; }
+  .gv-home-journey__grid,
+  .gv-home-finale,
+  .gv-wine-detail__layout,
+  .gv-auth-page { grid-template-columns: 1fr; }
+  .gv-home-finale { align-items: start; }
+  .gv-home-finale > img { width: 10rem; }
+  .gv-wine-detail__stage { min-height: 32rem; }
+  .gv-wine-detail__copy h1 { font-size: clamp(3rem, 15vw, 5rem); }
+  .gv-wine-detail__sections,
+  .gv-demo-atlas__grid { grid-template-columns: 1fr; }
+  .gv-auth-page { display: grid; align-content: start; gap: var(--space-6); }
+  .gv-auth-page .gv-page-hero h1 { font-size: clamp(3rem, 14vw, 5rem); }
+  .gv-demo-shelf__rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gv-demo-atlas__constellation { min-height: 30rem; grid-template-columns: 1fr; padding-block: var(--space-7); }
+  .gv-demo-atlas__orbit--two {
+    width: min(27rem, calc(100% - 1.5rem));
+    height: min(27rem, calc(100% - 1.5rem));
+  }
+  .gv-cellar-shelf__list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gv-cellar-toolbar { display: grid; align-items: start; }
+  .gv-cellar-toolbar__search { width: 100%; }
+  .gv-cellar-toolbar__result-count { margin: 0; }
+}
+
+@media (max-width: 35rem) {
+  .wine-grid,
+  .gv-demo-shelf__rail,
+  .gv-wine-detail__facts,
+  .gv-demo-detail__facts,
+  .profile-summary__details { grid-template-columns: 1fr; }
+  .gv-wine-card { grid-template-rows: minmax(17rem, auto) auto; }
+  .gv-demo-cellar__search { grid-template-columns: 1fr; justify-content: stretch; }
+  .gv-demo-cellar__search > svg { display: none; }
+  .gv-demo-shelf > header { display: grid; align-items: start; }
+  .gv-demo-bottle { min-height: 20rem; }
+  .gv-demo-detail__hero { display: grid; }
+  .gv-demo-detail__hero .gv-bottle { justify-self: center; }
+  .gv-home-hero__actions .gv-button,
+  .gv-action-row .gv-button { width: 100%; }
+  .gv-cellar-shelf__list,
+  .gv-cellar-detail__facts,
+  .gv-cellar-editor__grid { grid-template-columns: 1fr; }
+  .gv-cellar-detail__hero { grid-template-columns: 1fr; }
+  .gv-cellar-detail__bottle { min-height: 13rem; }
+  .gv-cellar-editor__actions .gv-button { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gv-wine-card:hover,
+  .gv-demo-bottle:hover,
+  .gv-demo-bottle[aria-pressed="true"],
+  .gv-cellar-bottle:hover:not(:disabled),
+  .gv-cellar-bottle--selected { transform: none; }
+  .gv-taste-node { transition: none; }
+  .gv-taste-node--place > span,
+  .gv-taste-node--occasion > span { transform: rotate(45deg) scale(0.72); }
+}
+
+/* Prompt 04B: GRAPEVYNE / NEO CELLAR DIRECTORY -------------------------- */
+
+.gv-page-hero {
+  display: grid;
+  grid-template-columns: var(--editorial-grid);
+  align-items: end;
+  max-width: none;
+  padding-bottom: clamp(2rem, 5vw, 4.5rem);
+  border-bottom: 1px solid var(--color-border-strong);
+}
+
+.gv-page-hero__copy {
+  grid-column: 1 / span 10;
+  max-width: none;
+}
+
+.gv-page-hero h1 {
+  max-width: 14ch;
+  margin-bottom: clamp(1.5rem, 3vw, 2.75rem);
+  overflow-wrap: anywhere;
+}
+
+.gv-page-hero__lede {
+  max-width: 42ch;
+}
+
+.gv-section-heading h2,
+.gv-state-panel h1,
+.gv-state-panel h2,
+.gv-state-panel h3,
+.discover-search-panel__intro h2,
+.gv-detail-section h2,
+.gv-atlas-card h2,
+.gv-cellar-editor__heading h3,
+.gv-demo-detail__empty h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.025em;
+  line-height: 0.98;
+}
+
+.gv-state-panel,
+.gv-side-panel,
+.discover-search-panel,
+.discover-filters,
+.gv-detail-section,
+.gv-auth-card,
+.gv-demo-shelf,
+.gv-atlas-card,
+.tool-surface.profile-summary,
+.gv-cellar-shelf,
+.gv-cellar-toolbar {
+  border-radius: var(--radius-md);
+  backdrop-filter: none;
+}
+
+.gv-state-panel,
+.gv-side-panel,
+.gv-auth-card,
+.tool-surface.profile-summary {
+  background: var(--color-cellar-black);
+}
+
+.gv-button--secondary,
+.gv-button--ghost,
+.gv-button--danger {
+  border-radius: var(--radius-sm);
+}
+
+.gv-field input,
+.gv-field select,
+.gv-field textarea {
+  border-radius: var(--radius-sm);
+  background: #0d0c0a;
+}
+
+.gv-field__description,
+.gv-natural-search__description,
+.gv-state-panel__content > p:not(.gv-eyebrow),
+.gv-section-heading p:last-child {
+  font-family: var(--font-body);
+}
+
+/* Live discovery directory */
+.discover-search-panel {
+  grid-template-columns: var(--editorial-grid);
+  max-width: none;
+  padding: clamp(1.5rem, 3vw, 2.75rem) 0;
+  border-width: 1px 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.discover-search-panel__intro {
+  grid-column: 1 / span 4;
+}
+
+.discover-search-panel > .gv-natural-search {
+  grid-column: 5 / -1;
+}
+
+.discover-search-panel > .suggestion-row {
+  grid-column: 5 / -1;
+}
+
+.discover-search-panel__intro h2 {
+  max-width: 12ch;
+  font-size: clamp(2rem, 3vw, 3.2rem);
+}
+
+.discover-filters {
+  padding-inline: 0;
+  border-width: 1px 0;
+  background: #0c0b09;
+}
+
+.wine-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-top: 1px solid var(--color-border-strong);
+}
+
+.gv-wine-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--editorial-grid);
+  grid-template-rows: none;
+  gap: clamp(1rem, 2.5vw, 2.5rem);
+  padding: clamp(1.5rem, 3vw, 2.75rem) 0;
+  overflow: visible;
+  border: 0;
+  border-bottom: var(--border-hairline);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.gv-wine-card:hover {
+  border-color: var(--color-border-strong);
+  box-shadow: none;
+  transform: none;
+}
+
+.gv-wine-card__index {
+  grid-column: 1;
+  align-self: start;
+  color: var(--color-champagne);
+  font-family: var(--font-directory);
+  font-size: var(--size-numerical);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.gv-wine-card__visual {
+  grid-column: 2 / span 3;
+  min-height: 18rem;
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+}
+
+.gv-wine-card__body {
+  grid-column: 5 / -1;
+  align-self: center;
+  padding: 0;
+}
+
+.gv-wine-card__body h2 {
+  max-width: 19ch;
+  margin-bottom: var(--space-3);
+  font-family: var(--font-display);
+  font-size: clamp(2.35rem, 4.2vw, 4.75rem);
+  font-weight: 400;
+  letter-spacing: 0.025em;
+  line-height: 0.98;
+  text-transform: none;
+}
+
+.gv-wine-card__producer {
+  margin-bottom: var(--space-4);
+  color: var(--color-aged-ivory);
+  font-size: clamp(1rem, 1.4vw, 1.2rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+.gv-wine-card__description {
+  max-width: 58ch;
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.gv-wine-card__meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  border-top: var(--border-hairline);
+}
+
+.gv-wine-card__meta > div {
+  min-width: 0;
+  padding: 0.72rem 0.75rem 0.72rem 0;
+  border-bottom: var(--border-hairline);
+}
+
+.gv-wine-card__meta dt,
+.gv-wine-detail__facts dt,
+.gv-structure-list dt,
+.gv-demo-detail__facts dt,
+.profile-summary__details dt,
+.gv-cellar-detail__facts dt {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--color-champagne);
+  font-family: var(--font-directory);
+  font-size: var(--size-metadata);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.gv-wine-card__meta dd {
+  margin: 0.25rem 0 0;
+  overflow-wrap: anywhere;
+  color: var(--color-aged-ivory);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-transform: none;
+}
+
+.gv-wine-card__link {
+  width: max-content;
+  min-height: 2.75rem;
+  padding-top: var(--space-3);
+  border-bottom: 1px solid currentColor;
+  font-family: var(--font-directory);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+/* Product record */
+.gv-wine-detail__layout {
+  grid-template-columns: var(--editorial-grid);
+  align-items: center;
+  gap: clamp(1.5rem, 3vw, 3rem);
+}
+
+.gv-wine-detail__stage {
+  grid-column: 1 / span 5;
+  border-radius: var(--radius-lg);
+}
+
+.gv-wine-detail__copy {
+  grid-column: 7 / -1;
+  max-width: none;
+}
+
+.gv-wine-detail__copy h1 {
+  max-width: 12ch;
+  font-size: var(--size-display-page);
+  font-weight: 400;
+  letter-spacing: 0.025em;
+  line-height: 0.98;
+  text-transform: none;
+}
+
+.gv-wine-detail__description {
+  max-width: 48ch;
+  font-size: clamp(1.08rem, 1.5vw, 1.35rem);
+  font-weight: 350;
+  letter-spacing: 0.025em;
+  line-height: 1.55;
+}
+
+.gv-wine-detail__facts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gv-wine-detail__facts dd,
+.gv-structure-list dd,
+.gv-demo-detail__facts dd,
+.profile-summary__details dd,
+.gv-cellar-detail__facts dd {
+  font-family: var(--font-body);
+  font-weight: 400;
+  text-transform: none;
+}
+
+.gv-wine-detail__sections {
+  gap: 0;
+  border-top: 1px solid var(--color-border-strong);
+}
+
+.gv-detail-section {
+  border-width: 0 1px 1px 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.gv-detail-section h2 {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: clamp(1.65rem, 2.5vw, 2.2rem);
+}
+
+/* Account entry terminal */
+.gv-auth-page {
+  grid-template-columns: var(--editorial-grid);
+  align-content: center;
+  gap: 0;
+}
+
+.gv-auth-page > .gv-page-hero {
+  grid-column: 1 / span 7;
+  align-self: stretch;
+  padding-right: clamp(2rem, 6vw, 7rem);
+  border-right: var(--border-hairline);
+  border-bottom: 0;
+}
+
+.gv-auth-page > .gv-auth-card {
+  grid-column: 9 / -1;
+}
+
+.gv-auth-page .gv-page-hero__copy {
+  grid-column: 1 / -1;
+}
+
+.gv-auth-page .gv-page-hero h1 {
+  max-width: 9ch;
+  font-size: var(--size-display-page);
+}
+
+.gv-auth-card {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  box-shadow: none;
+}
+
+.gv-auth-card__brand {
+  padding-bottom: var(--space-5);
+  border-bottom: var(--border-hairline);
+}
+
+/* Public fixture directory */
+.gv-demo-shelf {
+  padding: clamp(1rem, 2.5vw, 2rem) 0;
+  border-width: 1px 0 0;
+  background: transparent;
+}
+
+.gv-demo-shelf__rail {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  border-bottom: var(--border-hairline);
+}
+
+.gv-demo-bottle {
+  position: relative;
+  min-height: 13rem;
+  grid-template-columns: 2.25rem minmax(4rem, 0.3fr) minmax(0, 1fr);
+  grid-template-rows: 1fr;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 1rem;
+  border-width: 1px 1px 0 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.gv-demo-bottle__index,
+.gv-cellar-bottle__index {
+  align-self: start;
+  color: var(--color-champagne);
+  font-family: var(--font-directory);
+  font-size: var(--size-numerical);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.gv-demo-bottle > .gv-bottle {
+  width: 3.1rem;
+  height: 9.5rem;
+}
+
+.gv-demo-bottle strong {
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 1.8vw, 1.65rem);
+  font-weight: 400;
+  letter-spacing: 0.025em;
+  line-height: 1.02;
+  text-transform: none;
+}
+
+.gv-demo-bottle small {
+  font-family: var(--font-directory);
+  font-size: var(--size-metadata);
+  font-weight: 500;
+}
+
+.gv-demo-atlas__constellation {
+  border-radius: var(--radius-lg);
+}
+
+.gv-demo-atlas__constellation strong {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.gv-demo-atlas__grid {
+  gap: 0;
+  border-top: var(--border-hairline);
+  border-left: var(--border-hairline);
+}
+
+.gv-atlas-card {
+  border-width: 0 1px 1px 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.profile-page {
+  max-width: none;
+}
+
+.tool-surface.profile-summary {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.profile-summary__details dd,
+.gv-nav__user {
+  text-transform: none;
+}
+
+/* Authenticated private directory */
+.gv-cellar-layout {
+  grid-template-columns: minmax(0, 7fr) minmax(22rem, 5fr);
+}
+
+.gv-cellar-shelf {
+  padding: 0;
+  border-width: 1px 0 0;
+  background: transparent;
+}
+
+.gv-cellar-shelf > .gv-section-heading {
+  padding: var(--space-5) 0;
+}
+
+.gv-cellar-shelf__count {
+  border-radius: var(--radius-sm);
+  font-family: var(--font-directory);
+  font-weight: 500;
+}
+
+.gv-cellar-shelf__list {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.gv-cellar-bottle {
+  grid-template-columns: 2.75rem minmax(5rem, 0.28fr) minmax(0, 0.92fr) minmax(9rem, 0.8fr);
+  grid-template-rows: 1fr;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: 13rem;
+  padding: 1rem 0;
+  overflow: visible;
+  border-width: 1px 0 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.gv-cellar-bottle:hover:not(:disabled),
+.gv-cellar-bottle--selected {
+  padding-inline: 1rem;
+  border-color: var(--color-champagne);
+  background: rgba(113, 28, 53, 0.12);
+  transform: none;
+}
+
+.gv-cellar-bottle__glow {
+  display: none;
+}
+
+.gv-cellar-bottle__visual {
+  min-height: 10rem;
+}
+
+.gv-cellar-bottle__visual .gv-bottle {
+  width: 3.2rem;
+  height: 9.5rem;
+}
+
+.gv-cellar-bottle__copy strong,
+.gv-cellar-detail__hero h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.025em;
+  line-height: 1;
+  text-transform: none;
+}
+
+.gv-cellar-bottle__copy strong {
+  font-size: clamp(1.45rem, 2.3vw, 2.2rem);
+}
+
+.gv-cellar-bottle__meta {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0 0 0 var(--space-4);
+  border-top: 0;
+  border-left: var(--border-hairline);
+}
+
+.gv-cellar-bottle__meta > span {
+  font-family: var(--font-directory);
+  font-size: var(--size-metadata);
+  font-weight: 400;
+}
+
+.gv-cellar-detail {
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+
+@media (max-width: 64rem) {
+  .gv-page-hero__copy { grid-column: 1 / -1; }
+
+  .discover-search-panel__intro { grid-column: 1 / span 5; }
+  .discover-search-panel > .gv-natural-search,
+  .discover-search-panel > .suggestion-row { grid-column: 6 / -1; }
+
+  .gv-wine-card__visual { grid-column: 2 / span 4; }
+  .gv-wine-card__body { grid-column: 6 / -1; }
+  .gv-wine-card__meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .gv-wine-detail__stage { grid-column: 1 / span 5; }
+  .gv-wine-detail__copy { grid-column: 6 / -1; }
+  .gv-wine-detail__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .gv-auth-page > .gv-page-hero { grid-column: 1 / span 7; }
+  .gv-auth-page > .gv-auth-card { grid-column: 8 / -1; }
+
+  .gv-cellar-shelf__list { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 48rem) {
+  .gv-page-hero {
+    grid-template-columns: 1fr;
+    padding-bottom: var(--space-6);
+  }
+
+  .discover-search-panel {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+
+  .discover-search-panel__intro,
+  .discover-search-panel > .gv-natural-search,
+  .discover-search-panel > .suggestion-row {
+    grid-column: 1;
+  }
+
+  .gv-wine-card {
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+
+  .gv-wine-card__index { grid-column: 1; grid-row: 1; }
+  .gv-wine-card__visual { grid-column: 2; grid-row: 1; min-height: 16rem; }
+  .gv-wine-card__body { grid-column: 1 / -1; grid-row: 2; }
+  .gv-wine-card__body h2 { font-size: clamp(2.35rem, 11vw, 3.8rem); }
+  .gv-wine-card__meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .gv-wine-detail__layout { grid-template-columns: 1fr; }
+  .gv-wine-detail__stage,
+  .gv-wine-detail__copy { grid-column: 1; }
+  .gv-wine-detail__copy h1 { font-size: var(--size-display-page); }
+
+  .gv-auth-page {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .gv-auth-page > .gv-page-hero,
+  .gv-auth-page > .gv-auth-card {
+    grid-column: 1;
+  }
+
+  .gv-auth-page > .gv-page-hero {
+    padding-right: 0;
+    padding-bottom: var(--space-6);
+    border-right: 0;
+    border-bottom: var(--border-hairline);
+  }
+
+  .gv-demo-shelf__rail { grid-template-columns: 1fr; }
+  .gv-demo-bottle { border-right: 0; }
+
+  .gv-cellar-bottle {
+    grid-template-columns: 2.25rem minmax(5rem, 0.32fr) minmax(0, 1fr);
+  }
+
+  .gv-cellar-bottle__index { grid-column: 1; }
+  .gv-cellar-bottle__visual { grid-column: 2; }
+  .gv-cellar-bottle__copy { grid-column: 3; }
+  .gv-cellar-bottle__meta {
+    grid-column: 1 / -1;
+    padding: var(--space-3) 0 0;
+    border-top: var(--border-hairline);
+    border-left: 0;
+  }
+}
+
+@media (max-width: 30rem) {
+  .gv-wine-card__meta,
+  .gv-wine-detail__facts { grid-template-columns: 1fr; }
+
+  .gv-demo-bottle {
+    grid-template-columns: 2rem 4.5rem minmax(0, 1fr);
+    padding-inline: 0;
+  }
+
+  .gv-cellar-bottle {
+    grid-template-columns: 2rem 5rem minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+}
+
+/* Prompt 07 / explainable recommendation directory */
+.discover-mode-switch {
+  grid-column: 5 / -1;
+  display: flex;
+  align-self: start;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.gv-recommendation-results {
+  display: grid;
+  gap: clamp(2rem, 5vw, 4.5rem);
+  margin-top: clamp(2rem, 5vw, 4.5rem);
+}
+
+.gv-intent-summary {
+  display: grid;
+  grid-template-columns: var(--editorial-grid);
+  gap: var(--space-5);
+  padding: clamp(1.5rem, 3vw, 2.75rem) 0;
+  border-block: var(--border-hairline);
+}
+
+.gv-intent-summary > div:first-child {
+  grid-column: 1 / span 4;
+}
+
+.gv-intent-summary h2,
+.gv-recommendation-context h2 {
+  max-width: 15ch;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 3.4vw, 3.5rem);
+  font-weight: 400;
+  letter-spacing: 0.025em;
+  line-height: 1;
+}
+
+.gv-intent-summary > dl {
+  grid-column: 5 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  border-top: var(--border-hairline);
+}
+
+.gv-intent-summary > dl > div {
+  min-width: 0;
+  padding: 0.8rem 0.8rem 0.8rem 0;
+  border-bottom: var(--border-hairline);
+}
+
+.gv-intent-summary dt,
+.gv-recommendation-basis dt,
+.gv-recommendation-card__facts dt,
+.gv-score-breakdown dt {
+  color: var(--color-champagne);
+  font-family: var(--font-directory);
+  font-size: var(--size-metadata);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.gv-intent-summary dd,
+.gv-recommendation-basis dd,
+.gv-recommendation-card__facts dd,
+.gv-score-breakdown dd {
+  margin: 0.28rem 0 0;
+  overflow-wrap: anywhere;
+  color: var(--color-aged-ivory);
+  font-family: var(--font-body);
+}
+
+.gv-intent-summary__unparsed {
+  grid-column: 5 / -1;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.gv-intent-summary__warnings {
+  grid-column: 5 / -1;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.gv-intent-summary__warnings strong {
+  color: var(--color-champagne);
+  font-family: var(--font-directory);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.gv-intent-summary__warnings ul {
+  margin: var(--space-2) 0 0;
+  padding-left: 1.1rem;
+}
+
+.gv-recommendation-disclosure {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: var(--border-hairline);
+  background: #0c0b09;
+}
+
+.gv-recommendation-disclosure > div {
+  min-width: 0;
+  padding: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.gv-recommendation-disclosure > div + div {
+  border-left: var(--border-hairline);
+}
+
+.gv-recommendation-disclosure strong {
+  display: block;
+  color: var(--color-aged-ivory);
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 2.5vw, 2.25rem);
+  font-weight: 400;
+  text-transform: capitalize;
+}
+
+.gv-recommendation-disclosure p:last-child {
+  max-width: 64ch;
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+}
+
+.gv-recommendation-list {
+  border-top: 1px solid var(--color-border-strong);
+}
+
+.gv-recommendation-card {
+  display: grid;
+  grid-template-columns: var(--editorial-grid);
+  gap: clamp(1rem, 2.5vw, 2.5rem);
+  padding: clamp(1.75rem, 4vw, 4rem) 0;
+  border-bottom: 1px solid var(--color-border-strong);
+}
+
+.gv-recommendation-card__index {
+  grid-column: 1;
+  color: var(--color-champagne);
+  font-family: var(--font-directory);
+  font-size: var(--size-numerical);
+  font-variant-numeric: tabular-nums;
+}
+
+.gv-recommendation-card__visual {
+  position: relative;
+  grid-column: 2 / span 3;
+  display: grid;
+  min-height: 22rem;
+  place-items: center;
+  overflow: hidden;
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background: radial-gradient(circle at 50% 42%, rgb(197 161 93 / 16%), transparent 52%), #0a0908;
+}
+
+.gv-recommendation-card__visual > img {
+  width: auto;
+  max-width: min(78%, 12rem);
+  height: 17rem;
+  object-fit: contain;
+}
+
+.gv-recommendation-card__visual .gv-bottle {
+  width: 5.3rem;
+  height: 16rem;
+}
+
+.gv-recommendation-card__copy {
+  grid-column: 5 / -1;
+  min-width: 0;
+}
+
+.gv-recommendation-card__copy > h2 {
+  max-width: 18ch;
+  margin: var(--space-2) 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-display);
+  font-size: clamp(2.3rem, 4.2vw, 4.6rem);
+  font-weight: 400;
+  letter-spacing: 0.025em;
+  line-height: 0.98;
+  text-transform: none;
+}
+
+.gv-recommendation-card__copy > h2 a:hover {
+  color: var(--color-champagne);
+}
+
+.gv-recommendation-card__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: var(--space-4) 0;
+  border-top: var(--border-hairline);
+}
+
+.gv-recommendation-card__facts > div {
+  min-width: 0;
+  padding: 0.7rem 0.7rem 0.7rem 0;
+  border-bottom: var(--border-hairline);
+}
+
+.gv-recommendation-card__facts dt {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.gv-recommendation-explanation {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+
+.gv-recommendation-score-row {
+  display: grid;
+  grid-template-columns: minmax(9rem, 0.65fr) minmax(0, 1.35fr);
+  gap: var(--space-4);
+  align-items: end;
+}
+
+.gv-recommendation-score {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin: 0;
+  color: var(--color-aged-ivory);
+  font-family: var(--font-directory);
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+}
+
+.gv-recommendation-score strong {
+  color: var(--color-champagne);
+  font-size: clamp(2.8rem, 6vw, 5.6rem);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 0.82;
+}
+
+.gv-recommendation-score span {
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+}
+
+.gv-recommendation-basis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  border-top: var(--border-hairline);
+}
+
+.gv-recommendation-basis > div {
+  padding: 0.7rem 0;
+  border-bottom: var(--border-hairline);
+}
+
+.gv-recommendation-basis dd {
+  text-transform: capitalize;
+}
+
+.gv-recommendation-explanation section > h3,
+.gv-score-breakdown__missing h3 {
+  margin: 0 0 var(--space-2);
+  color: var(--color-champagne);
+  font-family: var(--font-directory);
+  font-size: var(--size-metadata);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.gv-recommendation-reasons,
+.gv-recommendation-cautions,
+.gv-score-breakdown ul {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding-left: 1.15rem;
+}
+
+.gv-recommendation-reasons li::marker {
+  color: var(--color-champagne);
+}
+
+.gv-recommendation-cautions {
+  color: #d6c4ab;
+}
+
+.gv-breakdown-toggle {
+  width: max-content;
+}
+
+.gv-breakdown-toggle svg {
+  flex: 0 0 auto;
+}
+
+.gv-score-breakdown {
+  padding: clamp(1rem, 2vw, 1.5rem);
+  overflow-wrap: anywhere;
+  border: var(--border-hairline);
+  background: #0c0b09;
+}
+
+.gv-score-breakdown > p {
+  max-width: 68ch;
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.gv-score-breakdown > dl {
+  display: grid;
+  margin: 0;
+}
+
+.gv-score-breakdown > dl > div {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.45fr) minmax(0, 1.55fr);
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: var(--border-hairline);
+}
+
+.gv-score-breakdown dd {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.gv-score-breakdown dd > span,
+.gv-score-breakdown li {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.gv-score-breakdown__missing {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: var(--border-hairline);
+}
+
+.gv-recommendation-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: flex-start;
+  margin-top: var(--space-5);
+}
+
+.gv-recommendation-card__actions > div {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.gv-recommendation-context {
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.65fr) minmax(0, 1.35fr);
+  gap: clamp(1.5rem, 4vw, 4rem);
+  margin-top: clamp(3rem, 7vw, 7rem);
+  padding: clamp(1.5rem, 3vw, 3rem) 0;
+  border-block: 1px solid var(--color-border-strong);
+}
+
+.gv-recommendation-context > header > p:not(.gv-eyebrow),
+.gv-recommendation-context--unavailable > p:last-child {
+  max-width: 55ch;
+  color: var(--color-text-muted);
+}
+
+.gv-recommendation-context--unavailable {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 64rem) {
+  .discover-mode-switch,
+  .gv-intent-summary > dl,
+  .gv-intent-summary__unparsed,
+  .gv-intent-summary__warnings {
+    grid-column: 6 / -1;
+  }
+
+  .gv-intent-summary > div:first-child {
+    grid-column: 1 / span 5;
+  }
+
+  .gv-recommendation-card__visual {
+    grid-column: 2 / span 4;
+  }
+
+  .gv-recommendation-card__copy {
+    grid-column: 6 / -1;
+  }
+}
+
+@media (max-width: 48rem) {
+  .discover-mode-switch {
+    grid-column: 1;
+  }
+
+  .gv-intent-summary,
+  .gv-recommendation-card {
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+  }
+
+  .gv-intent-summary > div:first-child,
+  .gv-intent-summary > dl,
+  .gv-intent-summary__unparsed,
+  .gv-intent-summary__warnings {
+    grid-column: 1 / -1;
+  }
+
+  .gv-recommendation-disclosure,
+  .gv-recommendation-context,
+  .gv-recommendation-score-row {
+    grid-template-columns: 1fr;
+  }
+
+  .gv-recommendation-disclosure > div + div {
+    border-top: var(--border-hairline);
+    border-left: 0;
+  }
+
+  .gv-recommendation-card__index {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .gv-recommendation-card__visual {
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 17rem;
+  }
+
+  .gv-recommendation-card__copy {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .gv-recommendation-card__copy > h2 {
+    font-size: clamp(2.35rem, 11vw, 3.8rem);
+  }
+}
+
+@media (max-width: 30rem) {
+  .gv-intent-summary > dl,
+  .gv-recommendation-card__facts,
+  .gv-recommendation-basis {
+    grid-template-columns: 1fr;
+  }
+
+  .gv-score-breakdown > dl > div {
+    grid-template-columns: 1fr;
+  }
+
+  .gv-recommendation-card__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .gv-recommendation-card__actions .gv-wine-card__link {
+    width: 100%;
+  }
+}
+.gv-assistive-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Prompt 08 / private tasting memories and deterministic Taste Atlas */
+.gv-cellar-privacy {
+  margin: 0;
+  padding: var(--space-3) 0;
+  border-block: var(--border-hairline);
+  color: var(--color-success);
+  font-family: var(--font-directory);
+  font-size: var(--size-metadata);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gv-cellar-organization {
+  display: grid;
+  grid-template-columns: minmax(13rem, 0.55fr) minmax(0, 1.45fr);
+  gap: var(--space-5) clamp(1.5rem, 4vw, 4rem);
+  padding-block: var(--space-5);
+  border-block: var(--border-hairline);
+}
+
+.gv-cellar-organization h2,
+.gv-cellar-remove h3,
+.gv-taste-atlas h2,
+.gv-taste-text-summary h2,
+.gv-taste-adjacent h2,
+.gv-taste-text-summary h3,
+.gv-taste-atlas__selection h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.025em;
+}
+
+.gv-cellar-organization h2 { margin-bottom: var(--space-2); font-size: clamp(1.8rem, 3vw, 2.8rem); }
+.gv-cellar-organization > div:first-child > p:last-child { margin: 0; color: var(--color-text-muted); }
+.gv-cellar-group-filters { display: flex; flex-wrap: wrap; align-content: start; gap: var(--space-2); }
+.gv-cellar-view-controls {
+  grid-column: 2;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.gv-cellar-view-controls > .gv-field { width: min(100%, 18rem); }
+.gv-cellar-view-controls > [role="group"] { display: flex; gap: var(--space-2); padding-bottom: 0.2rem; }
+
+.gv-cellar-shelf__list[data-view="grid"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  border-top: var(--border-hairline);
+}
+.gv-cellar-shelf__list[data-view="grid"] .gv-cellar-bottle {
+  min-height: 18rem;
+  grid-template-columns: 2rem minmax(4.5rem, 0.34fr) minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  padding-inline: var(--space-3);
+  border: var(--border-hairline);
+}
+.gv-cellar-shelf__list[data-view="grid"] .gv-cellar-bottle__meta {
+  grid-column: 1 / -1;
+  padding: var(--space-3) 0 0;
+  border-top: var(--border-hairline);
+  border-left: 0;
+}
+.gv-cellar-bottle__memory-title {
+  overflow: visible !important;
+  color: var(--color-champagne) !important;
+  font-style: italic;
+  overflow-wrap: anywhere;
+  text-overflow: clip !important;
+  white-space: normal !important;
+}
+
+.gv-cellar-buy-again {
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-4);
+  border: var(--border-hairline);
+}
+.gv-cellar-buy-again legend {
+  padding-inline: var(--space-2);
+  color: var(--color-aged-ivory);
+  font-family: var(--font-directory);
+  font-size: var(--size-metadata);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.gv-cellar-buy-again > p { margin-bottom: var(--space-3); color: var(--color-text-muted); font-size: var(--text-sm); }
+.gv-cellar-buy-again > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+.gv-cellar-buy-again label {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.65rem;
+  border: var(--border-hairline);
+  cursor: pointer;
+}
+.gv-cellar-buy-again input { width: 1.1rem; height: 1.1rem; accent-color: var(--color-burgundy); }
+.gv-cellar-remove { margin-top: var(--space-6); padding-top: var(--space-5); border-top: var(--border-hairline); }
+.gv-cellar-remove h3 { margin-bottom: var(--space-4); font-size: clamp(1.5rem, 2vw, 2rem); }
+
+.gv-private-profile { display: grid; gap: clamp(2rem, 5vw, 5rem); }
+.profile-summary { padding-block: var(--space-5); border-block: var(--border-hairline); }
+.gv-profile-disclosure {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.35fr) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-6);
+  padding-block: var(--space-4);
+  border-block: 1px solid var(--color-border-strong);
+}
+.gv-profile-disclosure > strong { color: var(--color-champagne); font-family: var(--font-directory); letter-spacing: 0.08em; text-transform: uppercase; }
+.gv-profile-disclosure > p,
+.gv-profile-disclosure > small { grid-column: 2; margin: 0; }
+.gv-profile-disclosure > p { color: var(--color-text-muted); }
+.gv-profile-disclosure > small { color: var(--color-smoke); }
+
+.gv-taste-atlas,
+.gv-taste-text-summary,
+.gv-taste-adjacent {
+  padding-block: clamp(2rem, 5vw, 5rem);
+  border-top: 1px solid var(--color-border-strong);
+}
+.gv-taste-atlas > header,
+.gv-taste-text-summary > header { display: grid; grid-template-columns: minmax(13rem, 0.5fr) minmax(0, 1fr); gap: var(--space-3) var(--space-6); margin-bottom: var(--space-6); }
+.gv-taste-atlas > header .gv-eyebrow,
+.gv-taste-text-summary > header .gv-eyebrow { grid-column: 1; }
+.gv-taste-atlas > header h2,
+.gv-taste-text-summary > header h2 { grid-column: 1; margin: 0; font-size: clamp(2rem, 4vw, 4rem); }
+.gv-taste-atlas > header > p:last-child,
+.gv-taste-text-summary > header > p:last-child { grid-column: 2; grid-row: 1 / span 2; align-self: end; max-width: 48ch; margin: 0; color: var(--color-text-muted); }
+.gv-taste-atlas__layout { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(16rem, 0.55fr); border-block: var(--border-hairline); }
+.gv-taste-atlas__plot { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; gap: var(--space-3); min-height: 28rem; padding: clamp(1rem, 3vw, 2.5rem); background: radial-gradient(circle at 42% 46%, rgba(113, 28, 53, 0.22), transparent 56%); }
+.gv-taste-node {
+  display: grid;
+  min-width: 0;
+  min-height: 7rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: center;
+  align-items: center;
+  gap: 0 var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-hairline);
+  background: rgba(7, 7, 6, 0.72);
+  color: var(--color-aged-ivory);
+  text-align: left;
+  transition: border-color var(--duration-base), background var(--duration-base);
+}
+.gv-taste-node > span {
+  grid-row: 1 / span 2;
+  width: var(--taste-node-size);
+  height: var(--taste-node-size);
+  max-width: 4.8rem;
+  max-height: 4.8rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201, 168, 106, 0.22), transparent 66%);
+}
+.gv-taste-node--varietal > span,
+.gv-taste-node--structure > span { border-radius: 15%; }
+.gv-taste-node--place > span,
+.gv-taste-node--occasion > span { transform: rotate(45deg) scale(0.72); }
+.gv-taste-node > strong { overflow-wrap: anywhere; font-family: var(--font-display); font-size: 1.05rem; font-weight: 450; line-height: 1.1; }
+.gv-taste-node > small { color: var(--color-smoke); }
+.gv-taste-node:hover,
+.gv-taste-node[aria-pressed="true"] { border-color: var(--color-champagne); background: rgba(113, 28, 53, 0.18); }
+.gv-taste-atlas__selection { padding: clamp(1.25rem, 3vw, 2.25rem); border-left: var(--border-hairline); }
+.gv-taste-atlas__selection > svg { margin-bottom: var(--space-5); color: var(--color-champagne); }
+.gv-taste-atlas__selection h3 { margin-bottom: var(--space-3); font-size: clamp(2rem, 3.5vw, 3.4rem); overflow-wrap: anywhere; }
+.gv-taste-atlas__selection > p:not(.gv-eyebrow) { color: var(--color-text-muted); }
+.gv-taste-atlas__selection dl { display: grid; margin: var(--space-5) 0 0; border-top: var(--border-hairline); }
+.gv-taste-atlas__selection dl > div { display: flex; justify-content: space-between; gap: var(--space-3); padding-block: var(--space-2); border-bottom: var(--border-hairline); }
+.gv-taste-atlas__selection dd { margin: 0; }
+
+.gv-taste-evidence { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0 0 var(--space-6); border-top: var(--border-hairline); border-left: var(--border-hairline); }
+.gv-taste-evidence > div { min-width: 0; padding: var(--space-4); border-right: var(--border-hairline); border-bottom: var(--border-hairline); }
+.gv-taste-evidence dt { color: var(--color-champagne); font-family: var(--font-directory); font-size: var(--size-metadata); text-transform: uppercase; }
+.gv-taste-evidence dd { margin: var(--space-2) 0 0; font-family: var(--font-display); font-size: clamp(1.8rem, 3vw, 3rem); }
+.gv-taste-text-summary__groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: var(--border-hairline); border-left: var(--border-hairline); }
+.gv-taste-text-summary__groups > section { min-width: 0; padding: clamp(1rem, 3vw, 2rem); border-right: var(--border-hairline); border-bottom: var(--border-hairline); }
+.gv-taste-text-summary__groups h3 { margin-bottom: var(--space-4); font-size: clamp(1.5rem, 2.4vw, 2.2rem); }
+.gv-taste-text-summary__groups ul,
+.gv-taste-lower-affinity ul { display: grid; gap: var(--space-3); margin: 0; padding-left: 1.25rem; }
+.gv-taste-text-summary__groups li > span,
+.gv-taste-text-summary__groups li > small { display: block; color: var(--color-text-muted); }
+.gv-taste-price-range,
+.gv-taste-lower-affinity { margin-top: var(--space-5); padding-top: var(--space-4); border-top: var(--border-hairline); }
+.gv-taste-lower-affinity h3 { font-size: 1.5rem; }
+.gv-taste-lower-affinity > p { color: var(--color-text-muted); }
+.gv-taste-adjacent { display: grid; grid-template-columns: minmax(14rem, 0.7fr) minmax(0, 1.3fr); gap: var(--space-4) clamp(2rem, 6vw, 6rem); }
+.gv-taste-adjacent h2 { margin-bottom: var(--space-2); font-size: clamp(2.2rem, 5vw, 5rem); overflow-wrap: anywhere; }
+.gv-taste-adjacent > ul { margin: 0; }
+.gv-taste-adjacent > .gv-story-disclosure,
+.gv-taste-adjacent > .gv-button { grid-column: 2; }
+.gv-taste-adjacent > .gv-button { width: max-content; }
+
+@media (max-width: 64rem) {
+  .gv-cellar-layout { grid-template-columns: minmax(0, 1fr); }
+  .gv-cellar-organization,
+  .gv-taste-atlas > header,
+  .gv-taste-text-summary > header { grid-template-columns: 1fr; }
+  .gv-cellar-view-controls,
+  .gv-taste-atlas > header > *,
+  .gv-taste-text-summary > header > * { grid-column: 1 !important; grid-row: auto !important; }
+  .gv-taste-atlas__layout { grid-template-columns: 1fr; }
+  .gv-taste-atlas__selection { border-top: var(--border-hairline); border-left: 0; }
+  .gv-taste-atlas__plot { min-height: 0; }
+  .gv-taste-evidence { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 48rem) {
+  .gv-cellar-view-controls { display: grid; align-items: start; }
+  .gv-cellar-view-controls > .gv-field { width: 100%; }
+  .gv-cellar-shelf__list[data-view="grid"] { grid-template-columns: 1fr; }
+  .gv-taste-atlas__plot { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-inline: 0; background: none; }
+  .gv-profile-disclosure { grid-template-columns: 1fr; }
+  .gv-profile-disclosure > p,
+  .gv-profile-disclosure > small { grid-column: 1; }
+  .gv-taste-text-summary__groups,
+  .gv-taste-adjacent { grid-template-columns: 1fr; }
+  .gv-taste-adjacent > .gv-story-disclosure,
+  .gv-taste-adjacent > .gv-button { grid-column: 1; }
+}
+
+@media (max-width: 30rem) {
+  .gv-cellar-buy-again > div,
+  .gv-taste-atlas__plot,
+  .gv-taste-evidence { grid-template-columns: 1fr; }
+  .gv-taste-node { min-height: 5.5rem; }
+  .gv-taste-adjacent > .gv-button { width: 100%; }
+}

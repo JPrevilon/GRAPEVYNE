@@ -5,7 +5,7 @@ export default function WineResultsGrid({ query, results }) {
     return (
       <section className="state-panel state-panel--compact">
         <p className="eyebrow">No matches</p>
-        <h1>No bottle surfaced for that search.</h1>
+        <h1>NO BOTTLE SURFACED FOR THAT SEARCH</h1>
         <p>
           Try a varietal, region, food pairing, or occasion. Good starting
           points include steak, salmon, champagne, Tuscany, Napa, and gift.

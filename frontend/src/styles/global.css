@@ -14,8 +14,7 @@
   --radius-sm: 8px;
   --radius-md: 14px;
   --space-page: clamp(1rem, 4vw, 4rem);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  font-family: var(--font-body, "Jost Variable", "Jost", "Helvetica Neue", Arial, sans-serif);
   background: var(--color-ink);
   color: var(--color-ivory);
 }
@@ -108,7 +107,7 @@ textarea:focus-visible {
 
 .brand-mark {
   gap: 0.65rem;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-size: 1.2rem;
   letter-spacing: 0;
 }
@@ -243,7 +242,7 @@ textarea:focus-visible {
   margin: 0 0 0.9rem;
   color: var(--color-champagne);
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -251,7 +250,7 @@ textarea:focus-visible {
 h1 {
   margin: 0;
   max-width: 58rem;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-size: clamp(3rem, 7vw, 6.8rem);
   font-weight: 500;
   line-height: 0.95;
@@ -260,7 +259,7 @@ h1 {
 
 h2 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-size: 1.25rem;
   font-weight: 500;
 }
@@ -307,12 +306,12 @@ h2 {
 .hero-image-caption {
   margin: 0;
   max-width: 36rem;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  font-family: var(--font-body, "Jost Variable", "Jost", "Helvetica Neue", Arial, sans-serif);
   color: var(--color-ink);
   font-size: clamp(1.25rem, 2vw, 2rem);
-  font-weight: 700;
-  line-height: 1.16;
+  font-weight: 350;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
 }
 
 .bottle-stage {
@@ -389,7 +388,12 @@ h2 {
   box-shadow: var(--shadow-soft);
 }
 
-.state-panel h1 {
+.home-route-loading-reservation {
+  min-height: max(46rem, calc(100svh - var(--nav-height)));
+}
+
+.state-panel h1,
+.state-panel h2 {
   font-size: clamp(2.2rem, 5vw, 4.8rem);
 }
 
@@ -592,7 +596,7 @@ textarea {
 }
 
 .profile-summary strong {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-size: 1.8rem;
   font-weight: 500;
 }
@@ -664,7 +668,7 @@ textarea {
 .wine-card__varietal {
   margin: 0 0 0.35rem;
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -796,7 +800,7 @@ textarea {
 
 .wine-detail__winery {
   margin: -0.45rem 0 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-size: 1.55rem;
 }
 
@@ -883,7 +887,7 @@ textarea {
 .structure-list dd {
   color: var(--color-ivory);
   text-align: right;
-  text-transform: capitalize;
+  text-transform: none;
 }
 
 .cellar-grid {
@@ -1084,7 +1088,7 @@ textarea {
 }
 
 .open-cellar-bottle__copy strong {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-size: 1.08rem;
   font-weight: 500;
 }
@@ -1546,12 +1550,12 @@ textarea {
 .oc-hero__label span {
   color: var(--color-champagne);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 500;
   text-transform: uppercase;
 }
 
 .oc-hero__label strong {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-weight: 500;
 }
 
@@ -1944,7 +1948,7 @@ textarea {
   background: rgba(8, 6, 5, 0.64);
   color: var(--color-champagne);
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .oc-bottle-card__visual {
@@ -1984,13 +1988,13 @@ textarea {
 .oc-bottle-card__style {
   color: var(--color-champagne);
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .oc-bottle-card__copy strong {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-size: 1.08rem;
   font-weight: 500;
   line-height: 1.16;
@@ -2136,7 +2140,7 @@ textarea {
   background: rgba(245, 239, 228, 0.055);
   color: var(--color-champagne);
   font-size: 0.82rem;
-  text-transform: capitalize;
+  text-transform: none;
 }
 
 .oc-detail-actions {
@@ -3041,13 +3045,13 @@ textarea {
   color: var(--color-champagne);
   font-size: 0.72rem;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .interactive-cellar-section__label strong {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-size: clamp(1rem, 1.7vw, 1.5rem);
   font-weight: 500;
 }
@@ -3182,7 +3186,7 @@ textarea {
 }
 
 .interactive-bottle-marker__preview strong {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display, "Raleway Variable", "Raleway", "Helvetica Neue", Arial, sans-serif);
   font-weight: 500;
   line-height: 1.18;
 }
@@ -3717,4 +3721,112 @@ textarea:focus {
   background: rgba(239, 197, 182, 0.46);
   border-color: rgba(126, 75, 64, 0.28);
   color: #7e4b40;
+}
+
+/* Prompt 02 typed route foundation */
+.brand-mark {
+  min-width: 9rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 0.65rem;
+  background: #261430;
+}
+
+.brand-wordmark {
+  display: block;
+  width: clamp(8.25rem, 12vw, 11rem);
+  height: 2.15rem;
+  object-fit: contain;
+}
+
+.state-panel__mark {
+  width: 3.5rem;
+  height: 3.5rem;
+  object-fit: contain;
+}
+
+.demo-page {
+  min-width: 0;
+}
+
+.demo-notice {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0 0 1.5rem;
+  padding: clamp(1.1rem, 3vw, 1.75rem);
+  border: 1px solid rgba(126, 75, 64, 0.26);
+  border-left: 0.4rem solid var(--color-burgundy);
+  border-radius: var(--radius-md);
+  background: rgba(247, 248, 251, 0.94);
+  box-shadow: 0 18px 50px rgba(38, 20, 48, 0.1);
+  color: var(--color-ink);
+}
+
+.demo-notice h1,
+.demo-notice p {
+  max-width: 58rem;
+  margin: 0;
+}
+
+.demo-notice h1 {
+  font-size: clamp(2rem, 5vw, 4rem);
+}
+
+.demo-notice p:not(.eyebrow) {
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+
+.text-link {
+  justify-self: start;
+  color: var(--color-merlot);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.22em;
+}
+
+.demo-read-only-note {
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid rgba(126, 75, 64, 0.25);
+  border-radius: var(--radius-sm);
+  background: rgba(239, 197, 182, 0.4);
+  color: var(--color-merlot);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.demo-atlas-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.demo-atlas-grid .tool-surface {
+  display: grid;
+  align-content: start;
+  gap: 0.9rem;
+}
+
+.demo-atlas-grid h2,
+.demo-atlas-grid p {
+  margin: 0;
+}
+
+.live-cellar-page .page-header__content > p {
+  max-width: 48rem;
+}
+
+@media (max-width: 860px) {
+  .brand-mark {
+    min-width: auto;
+  }
+
+  .brand-wordmark {
+    width: 8.25rem;
+  }
+
+  .demo-atlas-grid {
+    grid-template-columns: 1fr;
+  }
 }

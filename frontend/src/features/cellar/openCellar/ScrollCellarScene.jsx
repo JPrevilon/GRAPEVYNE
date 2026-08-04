@@ -110,7 +110,7 @@ export default function ScrollCellarScene({
 
       <div className="oc-scene__intro">
         <p className="eyebrow">Below the house</p>
-        <h2>Scroll into the cellar.</h2>
+        <h2>SCROLL INTO THE CELLAR</h2>
         <p>
           Each shelf is arranged by intent, so the next bottle feels found
           instead of filtered.

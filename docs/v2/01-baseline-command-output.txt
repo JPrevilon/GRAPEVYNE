@@ -1,0 +1,362 @@
+GRAPEVYNE Prompt 01 baseline command output
+Captured 2026-08-01. ANSI color disabled/absent in captured output.
+
+Frontend working directory: /Users/rachel/Desktop/GRAPEVYNE/frontend
+
+COMMAND: node --version
+v20.19.6
+EXIT: 0
+
+COMMAND: npm --version
+10.8.2
+EXIT: 0
+
+COMMAND: npm ls --depth=0
+grapevyne-frontend@0.1.0 /Users/rachel/Desktop/GRAPEVYNE/frontend
+├── @vitejs/plugin-react@4.7.0
+├── eslint-plugin-react-hooks@5.2.0
+├── eslint-plugin-react-refresh@0.4.26
+├── eslint-plugin-react@7.37.5
+├── eslint@9.39.4
+├── framer-motion@12.38.0
+├── globals@15.15.0
+├── lucide-react@0.468.0
+├── react-dom@18.3.1
+├── react-router-dom@6.30.3
+├── react@18.3.1
+└── vite@5.4.21
+
+EXIT: 0
+
+COMMAND: npm ci
+npm warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/eslint/lib/eslint/index.js'
+npm warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/eslint-plugin-react/lib/util/usedPropTypes.js'
+npm warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/ajv/lib/dotjs/README.md'
+npm warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/framer-motion/dist/cjs/client.js.map'
+npm warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/eslint-plugin-react/lib/util/variable.js'
+npm warn cleanup Failed to remove some directories [
+npm warn cleanup   [
+npm warn cleanup     '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/ajv',
+npm warn cleanup     [Error: ENOTEMPTY: directory not empty, rmdir '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/ajv/dist'] {
+npm warn cleanup       errno: -66,
+npm warn cleanup       code: 'ENOTEMPTY',
+npm warn cleanup       syscall: 'rmdir',
+npm warn cleanup       path: '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/ajv/dist'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/caniuse-lite',
+npm warn cleanup     [Error: ENOTEMPTY: directory not empty, rmdir '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/caniuse-lite/data/features'] {
+npm warn cleanup       errno: -66,
+npm warn cleanup       code: 'ENOTEMPTY',
+npm warn cleanup       syscall: 'rmdir',
+npm warn cleanup       path: '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/caniuse-lite/data/features'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/eslint-plugin-react',
+npm warn cleanup     [Error: ENOTEMPTY: directory not empty, rmdir '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/eslint-plugin-react/lib/rules'] {
+npm warn cleanup       errno: -66,
+npm warn cleanup       code: 'ENOTEMPTY',
+npm warn cleanup       syscall: 'rmdir',
+npm warn cleanup       path: '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/eslint-plugin-react/lib/rules'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/@babel/traverse',
+npm warn cleanup     [Error: ENOTEMPTY: directory not empty, rmdir '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/@babel/traverse/lib/path'] {
+npm warn cleanup       errno: -66,
+npm warn cleanup       code: 'ENOTEMPTY',
+npm warn cleanup       syscall: 'rmdir',
+npm warn cleanup       path: '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/@babel/traverse/lib/path'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/@babel/helpers',
+npm warn cleanup     [Error: ENOTEMPTY: directory not empty, rmdir '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/@babel/helpers/lib/helpers'] {
+npm warn cleanup       errno: -66,
+npm warn cleanup       code: 'ENOTEMPTY',
+npm warn cleanup       syscall: 'rmdir',
+npm warn cleanup       path: '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/@babel/helpers/lib/helpers'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/es-abstract',
+npm warn cleanup     [Error: ENOTEMPTY: directory not empty, rmdir '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/es-abstract/2020'] {
+npm warn cleanup       errno: -66,
+npm warn cleanup       code: 'ENOTEMPTY',
+npm warn cleanup       syscall: 'rmdir',
+npm warn cleanup       path: '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/es-abstract/2020'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/@babel',
+npm warn cleanup     [Error: ENOTEMPTY: directory not empty, rmdir '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/@babel/core/lib/config'] {
+npm warn cleanup       errno: -66,
+npm warn cleanup       code: 'ENOTEMPTY',
+npm warn cleanup       syscall: 'rmdir',
+npm warn cleanup       path: '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/@babel/core/lib/config'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/eslint',
+npm warn cleanup     [Error: ENOTEMPTY: directory not empty, rmdir '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/eslint/lib/cli-engine'] {
+npm warn cleanup       errno: -66,
+npm warn cleanup       code: 'ENOTEMPTY',
+npm warn cleanup       syscall: 'rmdir',
+npm warn cleanup       path: '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/eslint/lib/cli-engine'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/@babel/core',
+npm warn cleanup     [Error: ENOTEMPTY: directory not empty, rmdir '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/@babel/core/lib/config'] {
+npm warn cleanup       errno: -66,
+npm warn cleanup       code: 'ENOTEMPTY',
+npm warn cleanup       syscall: 'rmdir',
+npm warn cleanup       path: '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/@babel/core/lib/config'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/@babel/types',
+npm warn cleanup     [Error: ENOTEMPTY: directory not empty, rmdir '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/@babel/types/lib/builders'] {
+npm warn cleanup       errno: -66,
+npm warn cleanup       code: 'ENOTEMPTY',
+npm warn cleanup       syscall: 'rmdir',
+npm warn cleanup       path: '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/@babel/types/lib/builders'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/framer-motion',
+npm warn cleanup     [Error: ENOTEMPTY: directory not empty, rmdir '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/framer-motion/dist/es/components/Reorder/utils'] {
+npm warn cleanup       errno: -66,
+npm warn cleanup       code: 'ENOTEMPTY',
+npm warn cleanup       syscall: 'rmdir',
+npm warn cleanup       path: '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/framer-motion/dist/es/components/Reorder/utils'
+npm warn cleanup     }
+npm warn cleanup   ]
+npm warn cleanup ]
+npm warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/eslint-plugin-react/lib/util/version.js'
+npm error code EACCES
+npm error syscall mkdir
+npm error path /Volumes/LaCie
+npm error errno -13
+npm error Error: EACCES: permission denied, mkdir '/Volumes/LaCie'
+npm error     at async Object.mkdir (node:internal/fs/promises:858:10)
+npm error     at async makeTmp (/Users/rachel/.nvm/versions/node/v20.19.6/lib/node_modules/npm/node_modules/cacache/lib/content/write.js:156:3)
+npm error     at async handleContent (/Users/rachel/.nvm/versions/node/v20.19.6/lib/node_modules/npm/node_modules/cacache/lib/content/write.js:103:15) {
+npm error   errno: -13,
+npm error   code: 'EACCES',
+npm error   syscall: 'mkdir',
+npm error   path: '/Volumes/LaCie'
+npm error }
+npm error
+npm error The operation was rejected by your operating system.
+npm error It is likely you do not have the permissions to access this file as the current user
+npm error
+npm error If you believe this might be a permissions issue, please double-check the
+npm error permissions of the file and its containing directories, or try running
+npm error the command again as root/Administrator.
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice
+npm error Log files were not written due to an error writing to the directory: /Volumes/LaCie/.npm-cache/_logs
+npm error You can rerun the command with `--loglevel=verbose` to see the logs in your terminal
+EXIT: 243
+
+COMMAND: npm ci --cache "$(mktemp -d)"
+
+added 270 packages, and audited 271 packages in 4s
+
+110 packages are looking for funding
+  run `npm fund` for details
+
+8 vulnerabilities (1 low, 3 moderate, 4 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice
+EXIT: 0
+
+COMMAND: npm run verify:assets
+npm error Missing script: "verify:assets"
+npm error
+npm error To see a list of scripts, run:
+npm error   npm run
+npm error Log files were not written due to an error writing to the directory: /Volumes/LaCie/.npm-cache/_logs
+npm error You can rerun the command with `--loglevel=verbose` to see the logs in your terminal
+EXIT: 1
+
+COMMAND: npm run lint
+
+> grapevyne-frontend@0.1.0 lint
+> eslint .
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice
+EXIT: 0
+
+COMMAND: npm run test
+npm error Missing script: "test"
+npm error
+npm error To see a list of scripts, run:
+npm error   npm run
+npm error Log files were not written due to an error writing to the directory: /Volumes/LaCie/.npm-cache/_logs
+npm error You can rerun the command with `--loglevel=verbose` to see the logs in your terminal
+EXIT: 1
+
+COMMAND: npm run build
+
+> grapevyne-frontend@0.1.0 build
+> vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 2019 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.40 kB │ gzip:   0.27 kB
+dist/assets/index-BjKObZKJ.css   60.96 kB │ gzip:  11.50 kB
+dist/assets/index-NMnBXVNI.js   354.77 kB │ gzip: 114.00 kB
+✓ built in 1.64s
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice
+EXIT: 0
+
+COMMAND: npm run test:e2e
+npm error Missing script: "test:e2e"
+npm error
+npm error To see a list of scripts, run:
+npm error   npm run
+npm error Log files were not written due to an error writing to the directory: /Volumes/LaCie/.npm-cache/_logs
+npm error You can rerun the command with `--loglevel=verbose` to see the logs in your terminal
+EXIT: 1
+
+Backend working directory: /Users/rachel/Desktop/GRAPEVYNE/backend
+
+COMMAND: .venv/bin/python --version
+Python 3.14.3
+EXIT: 0
+
+COMMAND: .venv/bin/python -m pip install -r requirements.txt
+Requirement already satisfied: Flask==3.0.3 in ./.venv/lib/python3.14/site-packages (from -r requirements.txt (line 1)) (3.0.3)
+Requirement already satisfied: Flask-Cors==4.0.1 in ./.venv/lib/python3.14/site-packages (from -r requirements.txt (line 2)) (4.0.1)
+Requirement already satisfied: Flask-Migrate==4.0.7 in ./.venv/lib/python3.14/site-packages (from -r requirements.txt (line 3)) (4.0.7)
+Requirement already satisfied: Flask-SQLAlchemy==3.1.1 in ./.venv/lib/python3.14/site-packages (from -r requirements.txt (line 4)) (3.1.1)
+Requirement already satisfied: psycopg==3.2.13 in ./.venv/lib/python3.14/site-packages (from psycopg[binary]==3.2.13->-r requirements.txt (line 5)) (3.2.13)
+Requirement already satisfied: python-dotenv==1.0.1 in ./.venv/lib/python3.14/site-packages (from -r requirements.txt (line 6)) (1.0.1)
+Requirement already satisfied: Werkzeug>=3.0.0 in ./.venv/lib/python3.14/site-packages (from Flask==3.0.3->-r requirements.txt (line 1)) (3.1.8)
+Requirement already satisfied: Jinja2>=3.1.2 in ./.venv/lib/python3.14/site-packages (from Flask==3.0.3->-r requirements.txt (line 1)) (3.1.6)
+Requirement already satisfied: itsdangerous>=2.1.2 in ./.venv/lib/python3.14/site-packages (from Flask==3.0.3->-r requirements.txt (line 1)) (2.2.0)
+Requirement already satisfied: click>=8.1.3 in ./.venv/lib/python3.14/site-packages (from Flask==3.0.3->-r requirements.txt (line 1)) (8.3.3)
+Requirement already satisfied: blinker>=1.6.2 in ./.venv/lib/python3.14/site-packages (from Flask==3.0.3->-r requirements.txt (line 1)) (1.9.0)
+Requirement already satisfied: alembic>=1.9.0 in ./.venv/lib/python3.14/site-packages (from Flask-Migrate==4.0.7->-r requirements.txt (line 3)) (1.18.4)
+Requirement already satisfied: sqlalchemy>=2.0.16 in ./.venv/lib/python3.14/site-packages (from Flask-SQLAlchemy==3.1.1->-r requirements.txt (line 4)) (2.0.49)
+Requirement already satisfied: psycopg-binary==3.2.13 in ./.venv/lib/python3.14/site-packages (from psycopg[binary]==3.2.13->-r requirements.txt (line 5)) (3.2.13)
+Requirement already satisfied: Mako in ./.venv/lib/python3.14/site-packages (from alembic>=1.9.0->Flask-Migrate==4.0.7->-r requirements.txt (line 3)) (1.3.11)
+Requirement already satisfied: typing-extensions>=4.12 in ./.venv/lib/python3.14/site-packages (from alembic>=1.9.0->Flask-Migrate==4.0.7->-r requirements.txt (line 3)) (4.15.0)
+Requirement already satisfied: MarkupSafe>=2.0 in ./.venv/lib/python3.14/site-packages (from Jinja2>=3.1.2->Flask==3.0.3->-r requirements.txt (line 1)) (3.0.3)
+
+[notice] A new release of pip is available: 25.3 -> 26.2
+[notice] To update, run: /Users/rachel/Desktop/GRAPEVYNE/backend/.venv/bin/python -m pip install --upgrade pip
+EXIT: 0
+
+COMMAND: .venv/bin/python -m pip check
+No broken requirements found.
+EXIT: 0
+
+COMMAND: pytest
+run_audit_command:4: command not found: pytest
+EXIT: 127
+
+COMMAND: .venv/bin/python -m pytest --collect-only
+/Users/rachel/Desktop/GRAPEVYNE/backend/.venv/bin/python: No module named pytest
+EXIT: 1
+
+COMMAND: .venv/bin/flask --app app routes
+Endpoint                    Methods  Rule
+--------------------------  -------  -----------------------------
+auth.login                  POST     /api/auth/login
+auth.logout                 POST     /api/auth/logout
+auth.me                     GET      /api/auth/me
+auth.signup                 POST     /api/auth/signup
+cellar.create_cellar_entry  POST     /api/cellar
+cellar.delete_cellar_entry  DELETE   /api/cellar/<int:entry_id>
+cellar.get_cellar_entry     GET      /api/cellar/<int:entry_id>
+cellar.list_cellar_entries  GET      /api/cellar
+cellar.update_cellar_entry  PATCH    /api/cellar/<int:entry_id>
+health.health_check         GET      /api/health
+static                      GET      /static/<path:filename>
+wines.get_wine_detail       GET      /api/wines/<external_wine_id>
+wines.search_wines          GET      /api/wines/search
+EXIT: 0
+
+COMMAND: TEST_DATABASE_URL=sqlite:///:memory: FLASK_ENV=testing .venv/bin/python - <<'PY'
+from app import create_app
+from app.extensions import db
+
+app = create_app("testing")
+with app.app_context():
+    db.create_all()
+
+alice = app.test_client()
+bob = app.test_client()
+
+assert alice.get("/api/health").status_code == 200
+assert alice.get("/api/wines/search").status_code == 400
+search = alice.get("/api/wines/search?query=steak")
+assert search.status_code == 200
+wine = search.get_json()["data"]["results"][0]
+assert alice.get("/api/wines/does-not-exist").status_code == 404
+assert alice.get("/api/cellar").status_code == 401
+signup = alice.post(
+    "/api/auth/signup",
+    json={"name": "Alice", "email": "Alice@Example.COM", "password": "password123"},
+)
+assert signup.status_code == 201
+assert signup.get_json()["data"]["user"]["email"] == "alice@example.com"
+assert "HttpOnly" in signup.headers["Set-Cookie"]
+assert alice.get("/api/auth/me").status_code == 200
+assert alice.get("/api/cellar").get_json()["data"]["count"] == 0
+created = alice.post("/api/cellar", json={"wine": wine})
+assert created.status_code == 201
+entry_id = created.get_json()["data"]["entry"]["id"]
+assert alice.post("/api/cellar", json={"wine": wine}).status_code == 409
+assert alice.patch(
+    f"/api/cellar/{entry_id}", json={"userRating": 5, "favorite": True}
+).status_code == 200
+assert bob.post(
+    "/api/auth/signup",
+    json={"name": "Bob", "email": "bob@example.com", "password": "password123"},
+).status_code == 201
+assert bob.get(f"/api/cellar/{entry_id}").status_code == 404
+assert bob.patch(f"/api/cellar/{entry_id}", json={"favorite": False}).status_code == 404
+assert bob.delete(f"/api/cellar/{entry_id}").status_code == 404
+assert alice.delete(f"/api/cellar/{entry_id}").status_code == 200
+assert alice.post("/api/auth/logout").status_code == 200
+assert alice.get("/api/auth/me").status_code == 401
+allowed = alice.get("/api/health", headers={"Origin": "http://localhost:5173"})
+blocked = alice.get("/api/health", headers={"Origin": "https://invalid.example"})
+assert allowed.headers["Access-Control-Allow-Origin"] == "http://localhost:5173"
+assert allowed.headers["Access-Control-Allow-Credentials"] == "true"
+assert "Access-Control-Allow-Origin" not in blocked.headers
+print("PASS: 25 API/auth/cellar/ownership/CORS assertions")
+PY
+PASS: 25 API/auth/cellar/ownership/CORS assertions
+EXIT: 0

@@ -1,8 +1,9 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { LogOut, Search, UserRound, Wine } from "lucide-react";
+import { LogOut, Search, UserRound } from "lucide-react";
 
+import BrandLockup from "../brand/BrandLockup";
 import { useToast } from "../ui/useToast.js";
-import { useAuth } from "../../features/auth/useAuth.js";
+import { useAuth } from "../../features/auth/useAuth";
 
 export default function Header() {
   const { isAuthenticated, isLoading, logout, user } = useAuth();
@@ -14,8 +15,12 @@ export default function Header() {
         { to: "/discover", label: "Discover" },
         { to: "/cellar", label: "Cellar" },
         { to: "/profile", label: "Profile" },
+        { to: "/demo/cellar", label: "Demo" },
       ]
-    : [{ to: "/discover", label: "Discover" }];
+    : [
+        { to: "/discover", label: "Discover" },
+        { to: "/demo/cellar", label: "Demo" },
+      ];
 
   async function handleLogout() {
     try {
@@ -37,10 +42,7 @@ export default function Header() {
   return (
     <header className="site-header">
       <NavLink to="/" className="brand-mark" aria-label="GrapeVyne home">
-        <span className="brand-icon">
-          <Wine size={20} strokeWidth={1.8} />
-        </span>
-        <span>GrapeVyne</span>
+        <BrandLockup compact />
       </NavLink>
 
       <nav className="primary-nav" aria-label="Primary navigation">

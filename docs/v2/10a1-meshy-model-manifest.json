@@ -1,0 +1,578 @@
+{
+  "schemaVersion": 1,
+  "phase": "10A1R",
+  "createdDate": "2026-08-04",
+  "assetCount": 4,
+  "totalProductionBytes": 14914236,
+  "aggregateSha256": "5f3b537986d932fb9b03369e310c9f7d6fea8d81432187858f9e40149c93bd47",
+  "aggregateSha256Algorithm": "SHA-256 of lexicographically sorted `shasum -a 256` lines for frontend/public/assets/models/grapevyne-meshy-*.glb, using repository-relative paths",
+  "sourceProvenance": "Four user-supplied Meshy GLB exports from the local Downloads directory; source files were read only and are identified below by filename, byte size, and SHA-256.",
+  "toolchain": {
+    "node": "20.19.6",
+    "npm": "10.8.2",
+    "gltfTransformCli": "4.3.0",
+    "gltfTransformCore": "4.3.0",
+    "gltfTransformExtensions": "4.3.0",
+    "gltfTransformFunctions": "4.3.0",
+    "sharp": "0.34.2",
+    "ndarrayPixels": "5.0.1",
+    "meshoptimizer": "1.0.1",
+    "mikktspace": "1.1.1",
+    "gltfValidator": "2.0.0-dev.3.10",
+    "languageTags": "1.0.9",
+    "packageLockVersion": 3,
+    "ephemeralPackageLockSha256": "1758bb436322c4ef5d790d476190bea571d87048d1d5d476614b0e473926f595",
+    "installCommand": "npm install --save-exact @gltf-transform/cli@4.3.0 @gltf-transform/core@4.3.0 @gltf-transform/extensions@4.3.0 @gltf-transform/functions@4.3.0 sharp@0.34.2 ndarray-pixels@5.0.1 meshoptimizer@1.0.1 mikktspace@1.1.1 gltf-validator@2.0.0-dev.3.10 language-tags@1.0.9",
+    "lockVerificationCommand": "npm ci",
+    "repositoryPackageManifestsChanged": false
+  },
+  "processingContract": {
+    "geometryCompression": "none",
+    "draco": false,
+    "meshopt": false,
+    "ktx2": false,
+    "remoteDecoderRequired": false,
+    "tangentGeneration": "MikkTSpace via `gltf-transform tangents`",
+    "resizeFilter": "lanczos3",
+    "textureContainer": "WebP",
+    "baseColorEncoding": {
+      "mode": "lossy",
+      "quality": 88,
+      "effort": 100
+    },
+    "normalEncodingDefault": {
+      "mode": "lossless",
+      "effort": 100
+    },
+    "metallicRoughnessEncoding": {
+      "mode": "lossless",
+      "effort": 100
+    },
+    "desktopTextureLimits": {
+      "baseColor": [
+        2048,
+        2048
+      ],
+      "normal": [
+        2048,
+        2048
+      ],
+      "metallicRoughness": [
+        1024,
+        1024
+      ]
+    },
+    "mobileTextureLimits": {
+      "baseColor": [
+        1024,
+        1024
+      ],
+      "normal": [
+        1024,
+        1024
+      ],
+      "metallicRoughness": [
+        512,
+        512
+      ]
+    },
+    "grapeDesktopNormalException": {
+      "mode": "near-lossless",
+      "quality": 90,
+      "effort": 100,
+      "reason": "The lossless 2048-square normal texture produced a 9,559,928-byte GLB. Near-lossless quality 90 preserves the required resolution and brings the final GLB below the 8 MiB target."
+    },
+    "grapeDesktopTangentRepair": {
+      "count": 2,
+      "method": "Replaced only zero-length generated tangent XYZ vectors with unit vectors derived orthogonally from the corresponding authored normals; tangent W handedness was retained when valid and otherwise set to +1.",
+      "reason": "The source has two UV-degenerate vertices for which MikkTSpace emitted zero-length tangents. The repair removes two Khronos validator ACCESSOR_VECTOR3_NON_UNIT errors without changing positions, normals, UVs, indices, triangle count, bounds, material, or textures."
+    }
+  },
+  "runtimeContract": {
+    "requiredExtensions": [
+      "EXT_texture_webp"
+    ],
+    "externalUrisAllowed": false,
+    "externalUriCount": 0,
+    "embeddedBuffersAndTextures": true,
+    "threeLoaderRequirement": "Standard Three.js GLTFLoader with native browser WebP support; no Draco, Meshopt, KTX2, or network decoder setup.",
+    "sourceMeshContract": "Each Meshy asset remains one node named Mesh_0, one mesh named Mesh_0, one TRIANGLES primitive, and one opaque double-sided material named Material_0.",
+    "integrationConstraint": "These single-mesh Meshy assets do not implement the legacy seven-node bottle contract. Runtime integration must use them as authored PBR subjects, preserve the legacy models as fallback, and add the exact GRAPEVYNE label as a separate curved overlay instead of replacing the Meshy material."
+  },
+  "budgetsBytes": {
+    "bottleDesktop": {
+      "target": 6291456,
+      "hard": 8388608
+    },
+    "bottleMobile": {
+      "target": 3145728,
+      "hard": 4194304
+    },
+    "grapeDesktop": {
+      "target": 8388608,
+      "hard": 10485760
+    },
+    "grapeMobile": {
+      "target": 4194304,
+      "hard": 5242880
+    }
+  },
+  "assets": [
+    {
+      "subject": "bottle",
+      "tier": "desktop",
+      "source": {
+        "fileName": "grapevyne-meshy-bottle-desktop-source.glb",
+        "sha256": "ce44f8031a49fee0d7772c6ea460c7888b774316fd24ae7c2c56654b0d65be6e",
+        "byteSize": 33632796,
+        "generator": "Khronos glTF Blender I/O v4.4.55",
+        "vertices": 15848,
+        "triangles": 30348,
+        "attributes": [
+          "POSITION",
+          "NORMAL",
+          "TEXCOORD_0"
+        ],
+        "bounds": {
+          "min": [-0.24116599559783936, -0.9506530165672302, -0.24117699265480042],
+          "max": [0.23930500447750092, 0.9488419890403748, 0.23953400552272797]
+        },
+        "textures": [
+          {
+            "name": "Image_0",
+            "slot": "baseColorTexture",
+            "mimeType": "image/jpeg",
+            "resolution": [8192, 8192],
+            "byteSize": 19063593
+          },
+          {
+            "name": "normal",
+            "slot": "normalTexture",
+            "mimeType": "image/png",
+            "resolution": [4096, 4096],
+            "byteSize": 11936763
+          },
+          {
+            "name": "Image_1",
+            "slot": "metallicRoughnessTexture",
+            "mimeType": "image/jpeg",
+            "resolution": [4096, 4096],
+            "byteSize": 1941496
+          }
+        ]
+      },
+      "production": {
+        "assetPath": "frontend/public/assets/models/grapevyne-meshy-bottle.desktop.glb",
+        "publicUrl": "/assets/models/grapevyne-meshy-bottle.desktop.glb",
+        "sha256": "e3a78c10bf6b6253e552a77484656d267397521f54de1c57b6afcf337165165f",
+        "byteSize": 3954456,
+        "reductionPercent": 88.2423,
+        "targetBudgetPassed": true,
+        "hardBudgetPassed": true,
+        "vertices": 15911,
+        "triangles": 30348,
+        "attributes": [
+          "POSITION",
+          "NORMAL",
+          "TEXCOORD_0",
+          "TANGENT"
+        ],
+        "bounds": {
+          "min": [-0.24116599559783936, -0.9506530165672302, -0.24117699265480042],
+          "max": [0.23930500447750092, 0.9488419890403748, 0.23953400552272797]
+        },
+        "textures": [
+          {
+            "name": "Image_0",
+            "slot": "baseColorTexture",
+            "mimeType": "image/webp",
+            "resolution": [2048, 2048],
+            "byteSize": 469510,
+            "encoding": "lossy-q88"
+          },
+          {
+            "name": "normal",
+            "slot": "normalTexture",
+            "mimeType": "image/webp",
+            "resolution": [2048, 2048],
+            "byteSize": 2432650,
+            "encoding": "lossless"
+          },
+          {
+            "name": "Image_1",
+            "slot": "metallicRoughnessTexture",
+            "mimeType": "image/webp",
+            "resolution": [1024, 1024],
+            "byteSize": 104508,
+            "encoding": "lossless"
+          }
+        ],
+        "externalUris": [],
+        "validator": {
+          "errors": 0,
+          "warnings": 0,
+          "infos": 0,
+          "hints": 0
+        }
+      }
+    },
+    {
+      "subject": "bottle",
+      "tier": "mobile",
+      "source": {
+        "fileName": "grapevyne-meshy-bottle-mobile-source.glb",
+        "sha256": "b4f0e15b8bf096661b59e49598de3b8b172a1a4fe50d5ba321e2c601f41ebe11",
+        "byteSize": 28840960,
+        "generator": "Khronos glTF Blender I/O v4.4.55",
+        "vertices": 5375,
+        "triangles": 9356,
+        "attributes": [
+          "POSITION",
+          "NORMAL",
+          "TEXCOORD_0"
+        ],
+        "bounds": {
+          "min": [-0.24116599559783936, -0.9506490230560303, -0.24117699265480042],
+          "max": [0.23930500447750092, 0.9488419890403748, 0.23953400552272797]
+        },
+        "textures": [
+          {
+            "name": "Image_0",
+            "slot": "baseColorTexture",
+            "mimeType": "image/jpeg",
+            "resolution": [8192, 8192],
+            "byteSize": 12961516
+          },
+          {
+            "name": "normal",
+            "slot": "normalTexture",
+            "mimeType": "image/png",
+            "resolution": [4096, 4096],
+            "byteSize": 13485209
+          },
+          {
+            "name": "Image_1",
+            "slot": "metallicRoughnessTexture",
+            "mimeType": "image/jpeg",
+            "resolution": [4096, 4096],
+            "byteSize": 2164387
+          }
+        ]
+      },
+      "production": {
+        "assetPath": "frontend/public/assets/models/grapevyne-meshy-bottle.mobile.glb",
+        "publicUrl": "/assets/models/grapevyne-meshy-bottle.mobile.glb",
+        "sha256": "70ef18a4fd8d6ddbd20a2f84e3600a42708e1dd566ec991a2d5e668727147e25",
+        "byteSize": 881628,
+        "reductionPercent": 96.9431,
+        "targetBudgetPassed": true,
+        "hardBudgetPassed": true,
+        "vertices": 5385,
+        "triangles": 9356,
+        "attributes": [
+          "POSITION",
+          "NORMAL",
+          "TEXCOORD_0",
+          "TANGENT"
+        ],
+        "bounds": {
+          "min": [-0.24116599559783936, -0.9506490230560303, -0.24117699265480042],
+          "max": [0.23930500447750092, 0.9488419890403748, 0.23953400552272797]
+        },
+        "textures": [
+          {
+            "name": "Image_0",
+            "slot": "baseColorTexture",
+            "mimeType": "image/webp",
+            "resolution": [1024, 1024],
+            "byteSize": 33244,
+            "encoding": "lossy-q88"
+          },
+          {
+            "name": "normal",
+            "slot": "normalTexture",
+            "mimeType": "image/webp",
+            "resolution": [1024, 1024],
+            "byteSize": 478842,
+            "encoding": "lossless"
+          },
+          {
+            "name": "Image_1",
+            "slot": "metallicRoughnessTexture",
+            "mimeType": "image/webp",
+            "resolution": [512, 512],
+            "byteSize": 52968,
+            "encoding": "lossless"
+          }
+        ],
+        "externalUris": [],
+        "validator": {
+          "errors": 0,
+          "warnings": 0,
+          "infos": 0,
+          "hints": 0
+        }
+      }
+    },
+    {
+      "subject": "grape",
+      "tier": "desktop",
+      "source": {
+        "fileName": "grapevyne-meshy-grape-desktop-source.glb",
+        "sha256": "06708b822a9a09c27b46c04e26d222b9da1ce79f0a3058bdb93e2115c362883b",
+        "byteSize": 65649924,
+        "generator": "Khronos glTF Blender I/O v4.4.55",
+        "vertices": 35032,
+        "triangles": 30122,
+        "attributes": [
+          "POSITION",
+          "NORMAL",
+          "TEXCOORD_0"
+        ],
+        "bounds": {
+          "min": [-0.572409987449646, -0.9494720101356506, -0.41801103949546814],
+          "max": [0.5689550042152405, 0.9485060572624207, 0.4161520004272461]
+        },
+        "textures": [
+          {
+            "name": "Image_0",
+            "slot": "baseColorTexture",
+            "mimeType": "image/jpeg",
+            "resolution": [8192, 8192],
+            "byteSize": 34312870
+          },
+          {
+            "name": "normal",
+            "slot": "normalTexture",
+            "mimeType": "image/png",
+            "resolution": [4096, 4096],
+            "byteSize": 27853515
+          },
+          {
+            "name": "Image_1",
+            "slot": "metallicRoughnessTexture",
+            "mimeType": "image/jpeg",
+            "resolution": [4096, 4096],
+            "byteSize": 2180061
+          }
+        ]
+      },
+      "production": {
+        "assetPath": "frontend/public/assets/models/grapevyne-meshy-grapes.desktop.glb",
+        "publicUrl": "/assets/models/grapevyne-meshy-grapes.desktop.glb",
+        "sha256": "2b6b475803ff1fd72d01afd6f912ba0acd558d2d668a3c5dcf18d4d280dedbb6",
+        "byteSize": 8187568,
+        "reductionPercent": 87.5284,
+        "targetBudgetPassed": true,
+        "hardBudgetPassed": true,
+        "vertices": 35142,
+        "triangles": 30122,
+        "attributes": [
+          "POSITION",
+          "NORMAL",
+          "TEXCOORD_0",
+          "TANGENT"
+        ],
+        "bounds": {
+          "min": [-0.572409987449646, -0.9494720101356506, -0.41801103949546814],
+          "max": [0.5689550042152405, 0.9485060572624207, 0.4161520004272461]
+        },
+        "textures": [
+          {
+            "name": "Image_0",
+            "slot": "baseColorTexture",
+            "mimeType": "image/webp",
+            "resolution": [2048, 2048],
+            "byteSize": 726972,
+            "encoding": "lossy-q88"
+          },
+          {
+            "name": "normal",
+            "slot": "normalTexture",
+            "mimeType": "image/webp",
+            "resolution": [2048, 2048],
+            "byteSize": 5383082,
+            "encoding": "near-lossless-q90"
+          },
+          {
+            "name": "Image_1",
+            "slot": "metallicRoughnessTexture",
+            "mimeType": "image/webp",
+            "resolution": [1024, 1024],
+            "byteSize": 207996,
+            "encoding": "lossless"
+          }
+        ],
+        "externalUris": [],
+        "validator": {
+          "errors": 0,
+          "warnings": 0,
+          "infos": 0,
+          "hints": 0
+        }
+      }
+    },
+    {
+      "subject": "grape",
+      "tier": "mobile",
+      "source": {
+        "fileName": "grapevyne-meshy-grape-mobile-source.glb",
+        "sha256": "2355db9698752de47462086d7799ed0125bed81d88f493a72d3bf839821af54f",
+        "byteSize": 53957112,
+        "generator": "Khronos glTF Blender I/O v4.4.55",
+        "vertices": 8216,
+        "triangles": 9292,
+        "attributes": [
+          "POSITION",
+          "NORMAL",
+          "TEXCOORD_0"
+        ],
+        "bounds": {
+          "min": [-0.5720400214195251, -0.9488009810447693, -0.4175570011138916],
+          "max": [0.5689550638198853, 0.9485059976577759, 0.4155920147895813]
+        },
+        "textures": [
+          {
+            "name": "Image_0",
+            "slot": "baseColorTexture",
+            "mimeType": "image/jpeg",
+            "resolution": [8192, 8192],
+            "byteSize": 27075803
+          },
+          {
+            "name": "normal",
+            "slot": "normalTexture",
+            "mimeType": "image/png",
+            "resolution": [4096, 4096],
+            "byteSize": 24254309
+          },
+          {
+            "name": "Image_1",
+            "slot": "metallicRoughnessTexture",
+            "mimeType": "image/jpeg",
+            "resolution": [4096, 4096],
+            "byteSize": 2306628
+          }
+        ]
+      },
+      "production": {
+        "assetPath": "frontend/public/assets/models/grapevyne-meshy-grapes.mobile.glb",
+        "publicUrl": "/assets/models/grapevyne-meshy-grapes.mobile.glb",
+        "sha256": "cccac924677f6114cca2276b859ef967e055d3eafe6ed73521fb2b7a9c3ae489",
+        "byteSize": 1890584,
+        "reductionPercent": 96.4961,
+        "targetBudgetPassed": true,
+        "hardBudgetPassed": true,
+        "vertices": 8282,
+        "triangles": 9292,
+        "attributes": [
+          "POSITION",
+          "NORMAL",
+          "TEXCOORD_0",
+          "TANGENT"
+        ],
+        "bounds": {
+          "min": [-0.5720400214195251, -0.9488009810447693, -0.4175570011138916],
+          "max": [0.5689550638198853, 0.9485059976577759, 0.4155920147895813]
+        },
+        "textures": [
+          {
+            "name": "Image_0",
+            "slot": "baseColorTexture",
+            "mimeType": "image/webp",
+            "resolution": [1024, 1024],
+            "byteSize": 131076,
+            "encoding": "lossy-q88"
+          },
+          {
+            "name": "normal",
+            "slot": "normalTexture",
+            "mimeType": "image/webp",
+            "resolution": [1024, 1024],
+            "byteSize": 1267536,
+            "encoding": "lossless"
+          },
+          {
+            "name": "Image_1",
+            "slot": "metallicRoughnessTexture",
+            "mimeType": "image/webp",
+            "resolution": [512, 512],
+            "byteSize": 36726,
+            "encoding": "lossless"
+          }
+        ],
+        "externalUris": [],
+        "validator": {
+          "errors": 0,
+          "warnings": 0,
+          "infos": 0,
+          "hints": 0
+        }
+      }
+    }
+  ],
+  "commonProductionCounts": {
+    "scenes": 1,
+    "nodes": 1,
+    "meshes": 1,
+    "meshPrimitives": 1,
+    "materials": 1,
+    "textures": 3,
+    "animations": 0,
+    "nodeNames": [
+      "Mesh_0"
+    ],
+    "meshNames": [
+      "Mesh_0"
+    ],
+    "materialNames": [
+      "Material_0"
+    ],
+    "primitiveMode": "TRIANGLES",
+    "materialAlphaMode": "OPAQUE",
+    "materialDoubleSided": true
+  },
+  "legacyAssetsPreserved": [
+    {
+      "assetPath": "frontend/public/assets/models/grapevyne-master-bottle.glb",
+      "sha256": "2304b4b89cc7a249527746c6b1f7ceb02759f6395a709b129e539941c885c05a",
+      "byteSize": 1182548
+    },
+    {
+      "assetPath": "frontend/public/assets/models/grapevyne-master-bottle-mobile.glb",
+      "sha256": "1caa5eb4786326199f0f2b1fd4066590aaccda02a54da03e14bfba9bee10e3f8",
+      "byteSize": 1115844
+    }
+  ],
+  "staticFallbacks": [
+    {
+      "subject": "bottle",
+      "kind": "css-component",
+      "sourcePath": "frontend/src/components/wine/WineBottleFallback.tsx",
+      "publicUrl": null,
+      "visualContract": "Existing exact-label CSS bottle fallback retained for bottle chapters and the inspector when WebGL is unavailable."
+    },
+    {
+      "subject": "grapes",
+      "kind": "transparent-model-render",
+      "assetPath": "frontend/public/assets/models/fallbacks/grapevyne-meshy-grapes.png",
+      "publicUrl": "/assets/models/fallbacks/grapevyne-meshy-grapes.png",
+      "sha256": "8e8c3f07d22604051a208e219d68168a9c9cf747cc01c345238cefd4b285a4d8",
+      "byteSize": 297864,
+      "width": 1024,
+      "height": 1200,
+      "pixelFormat": "RGBA",
+      "sourceModel": "frontend/public/assets/models/grapevyne-meshy-grapes.desktop.glb",
+      "renderContract": "Captured from the integrated optimized desktop Meshy grape under production story lighting with a transparent WebGL buffer; cropped and Lanczos-scaled without generated or substitute imagery."
+    }
+  ],
+  "verification": {
+    "officialValidator": "All four production GLBs: 0 errors, 0 warnings, 0 infos, 0 hints.",
+    "boundsPreserved": true,
+    "triangleCountsPreserved": true,
+    "externalUris": 0,
+    "reproducibilityCheck": "A clean replay of the complete bottle-mobile pipeline was byte-for-byte identical (cmp passed; SHA-256 70ef18a4fd8d6ddbd20a2f84e3600a42708e1dd566ec991a2d5e668727147e25).",
+    "visualComparison": "Runtime browser comparison evidence is captured after integration so it includes production camera placement, lighting, subject opacity, and the separate exact GRAPEVYNE bottle label overlay. Mechanical source/production parity remains recorded per asset above.",
+    "staticFallbacks": "The existing CSS bottle fallback is retained. A transparent 1024x1200 PNG fallback was rendered from the actual optimized desktop Meshy grape and is used only for Chapter 02 in reduced-motion, Save-Data, and WebGL-failure presentations."
+  }
+}

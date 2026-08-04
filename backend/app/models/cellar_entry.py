@@ -39,6 +39,12 @@ class CellarEntry(TimestampMixin, db.Model):
     occasion = db.Column(db.String(160))
     status = db.Column(db.String(40), nullable=False, default="saved")
     saved_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utc_now)
+    memory_title = db.Column(db.String(160))
+    tasted_on = db.Column(db.Date)
+    location = db.Column(db.String(240))
+    pairing = db.Column(db.String(240))
+    opened_with = db.Column(db.String(240))
+    would_buy_again = db.Column(db.Boolean)
 
     user = db.relationship("User", back_populates="cellar_entries")
     wine = db.relationship("Wine", back_populates="cellar_entries")
@@ -55,6 +61,12 @@ class CellarEntry(TimestampMixin, db.Model):
             "occasion": self.occasion,
             "status": self.status,
             "savedAt": serialize_datetime(self.saved_at),
+            "memoryTitle": self.memory_title,
+            "tastedOn": self.tasted_on.isoformat() if self.tasted_on else None,
+            "location": self.location,
+            "pairing": self.pairing,
+            "openedWith": self.opened_with,
+            "wouldBuyAgain": self.would_buy_again,
             "createdAt": serialize_datetime(self.created_at),
             "updatedAt": serialize_datetime(self.updated_at),
         }
@@ -63,4 +75,3 @@ class CellarEntry(TimestampMixin, db.Model):
             data["wine"] = self.wine.to_dict() if self.wine else None
 
         return data
-

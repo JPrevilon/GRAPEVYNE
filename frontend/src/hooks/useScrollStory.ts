@@ -1,0 +1,766 @@
+import { type RefObject, useEffect } from "react";
+
+import {
+  STORY_CHAPTER_KEYS,
+  type StoryChapter,
+} from "@/experience/storyChapters";
+import { useScene } from "@/experience/useScene";
+
+const CHAPTER_SELECTOR = "[data-story-chapter]";
+const DESKTOP_QUERY = "(min-width: 1025px)";
+const MOBILE_QUERY = "(max-width: 1024px)";
+const COARSE_POINTER_QUERY = "(pointer: coarse)";
+const STORY_CLASS = "has-scroll-story";
+const SMOOTHING_CLASS = "has-scroll-smoothing";
+const STORY_PROGRESS_PROPERTY = "--story-progress";
+const CHAPTER_PROGRESS_PROPERTY = "--chapter-progress";
+
+const STORY_CHAPTER_SET = new Set<string>(STORY_CHAPTER_KEYS);
+let activeStoryTickerOwners = 0;
+
+type Cleanup = () => void;
+
+interface StorySection {
+  chapter: StoryChapter;
+  element: HTMLElement;
+}
+
+interface StylePropertySnapshot {
+  priority: string;
+  value: string;
+}
+
+export async function loadScrollRuntimeDependencies() {
+  const [gsapModule, scrollTriggerModule, lenisModule] = await Promise.all([
+    import("gsap"),
+    import("gsap/ScrollTrigger"),
+    import("lenis"),
+  ]);
+
+  return {
+    gsap: gsapModule.gsap,
+    Lenis: lenisModule.default,
+    ScrollTrigger: scrollTriggerModule.ScrollTrigger,
+  };
+}
+
+export type ScrollRuntimeLoader = typeof loadScrollRuntimeDependencies;
+
+function noop() {}
+
+function once(cleanup: Cleanup): Cleanup {
+  let cleaned = false;
+
+  return () => {
+    if (cleaned) return;
+    cleaned = true;
+    cleanup();
+  };
+}
+
+function clampProgress(value: number) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(1, Math.max(0, value));
+}
+
+function formatProgress(value: number) {
+  return String(Math.round(clampProgress(value) * 10_000) / 10_000);
+}
+
+function isStoryChapter(value: string | undefined): value is StoryChapter {
+  return typeof value === "string" && STORY_CHAPTER_SET.has(value);
+}
+
+function getStorySections(root: HTMLElement) {
+  const sections: StorySection[] = [];
+
+  root.querySelectorAll<HTMLElement>(CHAPTER_SELECTOR).forEach((element) => {
+    const chapter = element.dataset.storyChapter;
+
+    if (isStoryChapter(chapter)) {
+      sections.push({ chapter, element });
+    }
+  });
+
+  return sections;
+}
+
+function snapshotStyleProperty(
+  element: HTMLElement,
+  property: string,
+): StylePropertySnapshot {
+  return {
+    priority: element.style.getPropertyPriority(property),
+    value: element.style.getPropertyValue(property),
+  };
+}
+
+function restoreStyleProperty(
+  element: HTMLElement,
+  property: string,
+  snapshot: StylePropertySnapshot,
+) {
+  if (snapshot.value) {
+    element.style.setProperty(property, snapshot.value, snapshot.priority);
+    return;
+  }
+
+  element.style.removeProperty(property);
+}
+
+function findActiveSection(sections: readonly StorySection[]) {
+  if (sections.length === 0) return undefined;
+
+  const viewportCenter = (window.innerHeight || 1) / 2;
+  let nearest = sections[0];
+  let nearestDistance = Number.POSITIVE_INFINITY;
+
+  sections.forEach((section) => {
+    const bounds = section.element.getBoundingClientRect();
+    const distance =
+      viewportCenter < bounds.top
+        ? bounds.top - viewportCenter
+        : viewportCenter > bounds.bottom
+          ? viewportCenter - bounds.bottom
+          : 0;
+
+    if (distance < nearestDistance) {
+      nearest = section;
+      nearestDistance = distance;
+    }
+  });
+
+  return nearest;
+}
+
+/**
+ * Connects the semantic Home story to native or enhanced scroll behavior.
+ * Heavy animation modules are requested only after a fine-pointer desktop is
+ * confirmed, keeping reduced-motion and touch layouts in normal document flow.
+ */
+export function useScrollStory(
+  rootRef: RefObject<HTMLElement>,
+  loadRuntime: ScrollRuntimeLoader = loadScrollRuntimeDependencies,
+  transitionCoordinated = false,
+) {
+  const {
+    prefersReducedMotion,
+    progressRef,
+    setCurrentChapterId,
+    setHomepageActive,
+  } = useScene();
+
+  useEffect(() => {
+    const root = rootRef.current;
+
+    if (!root) return undefined;
+
+    const sections = getStorySections(root);
+    const sceneProgress = progressRef.current;
+    const documentElement = document.documentElement;
+    const hadStoryClass = documentElement.classList.contains(STORY_CLASS);
+    const hadSmoothingClass =
+      documentElement.classList.contains(SMOOTHING_CLASS);
+    const storyProgressSnapshot = snapshotStyleProperty(
+      root,
+      STORY_PROGRESS_PROPERTY,
+    );
+    const chapterProgressSnapshot = snapshotStyleProperty(
+      root,
+      CHAPTER_PROGRESS_PROPERTY,
+    );
+    const mobileQuery =
+      typeof window.matchMedia === "function"
+        ? window.matchMedia(MOBILE_QUERY)
+        : undefined;
+    const coarsePointerQuery =
+      typeof window.matchMedia === "function"
+        ? window.matchMedia(COARSE_POINTER_QUERY)
+        : undefined;
+
+    let activeChapter: StoryChapter | undefined;
+    let boundariesDirty = true;
+    let disposed = false;
+    let hashFrame: number | undefined;
+    let runtimeGeneration = 0;
+    let stopRuntime: Cleanup = noop;
+
+    const scrollSectionNatively = ({ element }: StorySection) => {
+      element.scrollIntoView({ block: "start" });
+    };
+    let scrollToSection = scrollSectionNatively;
+
+    const syncStoryBoundaries = () => {
+      if (!boundariesDirty) return;
+
+      const viewportHeight = window.innerHeight || 1;
+      const rootBounds = root.getBoundingClientRect();
+      const storyDistance = rootBounds.height - viewportHeight;
+      const boundaries = sceneProgress.boundaries ?? [];
+      sceneProgress.boundaries = boundaries;
+
+      boundaries.length = sections.length;
+      if (!Number.isFinite(storyDistance) || storyDistance <= 1) {
+        sections.forEach((_, index) => {
+          boundaries[index] = index / Math.max(sections.length - 1, 1);
+        });
+        boundariesDirty = false;
+        return;
+      }
+
+      const rootDocumentTop = window.scrollY + rootBounds.top;
+      sections.forEach(({ element }, index) => {
+        if (index === 0) {
+          boundaries[index] = 0;
+          return;
+        }
+
+        const bounds = element.getBoundingClientRect();
+        const activationScroll = window.scrollY + bounds.top - viewportHeight / 2;
+        const measured = clampProgress(
+          (activationScroll - rootDocumentTop) / storyDistance,
+        );
+        const previous = boundaries[index - 1] ?? 0;
+        boundaries[index] = Math.max(previous + 0.0001, measured);
+      });
+      boundariesDirty = false;
+    };
+
+    const setStoryProgress = (progress: number) => {
+      const nextProgress = clampProgress(progress);
+      const delta = nextProgress - sceneProgress.story;
+      if (Math.abs(delta) > 0.00001) {
+        sceneProgress.direction = delta > 0 ? 1 : -1;
+      }
+      sceneProgress.story = nextProgress;
+      root.style.setProperty(
+        STORY_PROGRESS_PROPERTY,
+        formatProgress(sceneProgress.story),
+      );
+      sceneProgress.requestStoryFrame?.();
+    };
+
+    const setChapterProgress = (progress: number) => {
+      sceneProgress.chapter = clampProgress(progress);
+      root.style.setProperty(
+        CHAPTER_PROGRESS_PROPERTY,
+        formatProgress(sceneProgress.chapter),
+      );
+      sceneProgress.requestStoryFrame?.();
+    };
+
+    const setStoryVisible = (visible: boolean) => {
+      if (sceneProgress.storyVisible === visible) return;
+      sceneProgress.storyVisible = visible;
+      sceneProgress.setRenderActivity?.(visible);
+      sceneProgress.requestStoryFrame?.();
+    };
+
+    const setSmoothingActive = (active: boolean) => {
+      if (active) {
+        documentElement.classList.add(SMOOTHING_CLASS);
+      } else if (!hadSmoothingClass) {
+        documentElement.classList.remove(SMOOTHING_CLASS);
+      }
+    };
+
+    const activateChapter = (chapter: StoryChapter) => {
+      if (activeChapter === chapter || disposed) return;
+      activeChapter = chapter;
+      // In full-motion mode StoryMediaStack is the only React chapter owner.
+      // Native/GSAP callbacks publish progress candidates, while the central
+      // black-gate coordinator commits the chapter only during full cover.
+      if (!transitionCoordinated) setCurrentChapterId(chapter);
+    };
+
+    const syncNativeMetrics = (preferredSection?: StorySection) => {
+      syncStoryBoundaries();
+      const activeSection = preferredSection ?? findActiveSection(sections);
+      const viewportHeight = window.innerHeight || 1;
+      const rootBounds = root.getBoundingClientRect();
+      const storyDistance = Math.max(rootBounds.height - viewportHeight, 1);
+
+      setStoryVisible(rootBounds.bottom > 0 && rootBounds.top < viewportHeight);
+      setStoryProgress(-rootBounds.top / storyDistance);
+
+      if (!activeSection) {
+        setChapterProgress(0);
+        return;
+      }
+
+      activateChapter(activeSection.chapter);
+
+      const chapterBounds = activeSection.element.getBoundingClientRect();
+      const chapterHeight = Math.max(chapterBounds.height, 1);
+      setChapterProgress(
+        (viewportHeight / 2 - chapterBounds.top) / chapterHeight,
+      );
+    };
+
+    const startNativeRuntime = (): Cleanup => {
+      let animationFrame: number | undefined;
+      let stopped = false;
+
+      const updateMetrics = () => {
+        animationFrame = undefined;
+        if (!stopped) syncNativeMetrics();
+      };
+
+      const scheduleMetricsUpdate = () => {
+        if (stopped || animationFrame !== undefined) return;
+        animationFrame = window.requestAnimationFrame(updateMetrics);
+      };
+      const handleResize = () => {
+        boundariesDirty = true;
+        scheduleMetricsUpdate();
+      };
+
+      const observer =
+        typeof window.IntersectionObserver === "function"
+          ? new window.IntersectionObserver(
+              (entries) => {
+                const viewportCenter = (window.innerHeight || 1) / 2;
+                let nearestEntry: IntersectionObserverEntry | undefined;
+                let nearestDistance = Number.POSITIVE_INFINITY;
+
+                entries.forEach((entry) => {
+                  if (!entry.isIntersecting) return;
+
+                  const entryCenter =
+                    entry.boundingClientRect.top +
+                    entry.boundingClientRect.height / 2;
+                  const distance = Math.abs(entryCenter - viewportCenter);
+
+                  if (distance < nearestDistance) {
+                    nearestEntry = entry;
+                    nearestDistance = distance;
+                  }
+                });
+
+                const observedSection = nearestEntry
+                  ? sections.find(
+                      ({ element }) => element === nearestEntry?.target,
+                    )
+                  : undefined;
+
+                if (observedSection) {
+                  syncNativeMetrics(observedSection);
+                } else {
+                  scheduleMetricsUpdate();
+                }
+              },
+              {
+                root: null,
+                rootMargin: "-45% 0px -45% 0px",
+                threshold: 0,
+              },
+            )
+          : undefined;
+
+      sections.forEach(({ element }) => observer?.observe(element));
+      window.addEventListener("scroll", scheduleMetricsUpdate, {
+        passive: true,
+      });
+      window.addEventListener("resize", handleResize);
+      syncStoryBoundaries();
+      syncNativeMetrics();
+
+      return once(() => {
+        stopped = true;
+        observer?.disconnect();
+        window.removeEventListener("scroll", scheduleMetricsUpdate);
+        window.removeEventListener("resize", handleResize);
+
+        if (animationFrame !== undefined) {
+          window.cancelAnimationFrame(animationFrame);
+          animationFrame = undefined;
+        }
+      });
+    };
+
+    const startDesktopRuntime = async (generation: number) => {
+      try {
+        const { gsap, Lenis, ScrollTrigger } = await loadRuntime();
+
+        if (disposed || generation !== runtimeGeneration) {
+          // Importing GSAP starts its singleton ticker even when this effect
+          // unmounts before the async runtime is ready. Stop that orphaned
+          // frame loop only when a newer story runtime does not own it. A
+          // later `ticker.add` wakes it on the next Home mount.
+          if (activeStoryTickerOwners === 0) {
+            gsap.ticker.sleep();
+          }
+          return;
+        }
+        let matchedRuntimeCleanup: Cleanup = noop;
+        let gsapMedia: ReturnType<typeof gsap.matchMedia> | undefined;
+        let gsapContext: ReturnType<typeof gsap.context> | undefined;
+
+          const createMatchedRuntime = (): Cleanup => {
+          type OwnedTrigger = ReturnType<typeof ScrollTrigger.create>;
+
+          const ownedTriggers = new Set<OwnedTrigger>();
+          let lenis: InstanceType<typeof Lenis> | undefined;
+          let tickerCallback: ((time: number) => void) | undefined;
+            let ownsTicker = false;
+            let lenisScrollCallback: (() => void) | undefined;
+            const scrollWithLenis = (section: StorySection) => {
+              const bounds = section.element.getBoundingClientRect();
+              const scrollMargin = Number.parseFloat(
+                getComputedStyle(section.element).scrollMarginTop || "0",
+              );
+              const target = Math.max(
+                0,
+                window.scrollY + bounds.top -
+                  (Number.isFinite(scrollMargin) ? scrollMargin : 0),
+              );
+
+              // A direct hash can arrive before Lenis has observed the final
+              // story height under a busy startup. Refresh its limit and use
+              // an absolute coordinate so a stale animated-scroll value cannot
+              // misplace later history jumps.
+              lenis?.resize();
+              lenis?.scrollTo(target, { force: true, immediate: true });
+            };
+
+          const cleanup = once(() => {
+            if (tickerCallback) {
+              gsap.ticker.remove(tickerCallback);
+              tickerCallback = undefined;
+            }
+
+            if (ownsTicker) {
+              activeStoryTickerOwners = Math.max(
+                0,
+                activeStoryTickerOwners - 1,
+              );
+              ownsTicker = false;
+            }
+
+            if (lenis && lenisScrollCallback) {
+              lenis.off("scroll", lenisScrollCallback);
+              lenisScrollCallback = undefined;
+            }
+
+            lenis?.destroy();
+            lenis = undefined;
+
+            if (scrollToSection === scrollWithLenis) {
+              scrollToSection = scrollSectionNatively;
+            }
+
+            ownedTriggers.forEach((trigger) => trigger.kill(true));
+            ownedTriggers.clear();
+            // GSAP owns the requestAnimationFrame loop behind its singleton
+            // ticker. This story is the application's only GSAP consumer, so
+            // explicitly sleep it after removing our callback and triggers.
+            // Adding the callback on a later Home visit wakes it again.
+            if (activeStoryTickerOwners === 0) {
+              gsap.ticker.sleep();
+            }
+            setSmoothingActive(false);
+          });
+
+          const own = (trigger: OwnedTrigger) => {
+            ownedTriggers.add(trigger);
+            return trigger;
+          };
+
+          try {
+            lenis = new Lenis({
+              autoRaf: false,
+              duration: 1.05,
+              smoothWheel: true,
+              syncTouch: false,
+              wheelMultiplier: 0.9,
+            });
+            lenisScrollCallback = () => ScrollTrigger.update();
+            tickerCallback = (time: number) => lenis?.raf(time * 1000);
+
+            lenis.on("scroll", lenisScrollCallback);
+            gsap.ticker.add(tickerCallback);
+            activeStoryTickerOwners += 1;
+            ownsTicker = true;
+            scrollToSection = scrollWithLenis;
+            setSmoothingActive(true);
+
+            own(
+              ScrollTrigger.create({
+                end: "bottom bottom",
+                id: "grapevyne-story-progress",
+                onEnter: () => {
+                  setStoryVisible(true);
+                },
+                onEnterBack: () => {
+                  setStoryVisible(true);
+                },
+                onLeave: () => {
+                  setStoryVisible(false);
+                },
+                onLeaveBack: () => {
+                  setStoryVisible(false);
+                },
+                onRefresh: ({ progress }) => {
+                  boundariesDirty = true;
+                  syncStoryBoundaries();
+                  setStoryProgress(progress);
+                },
+                onUpdate: ({ progress }) => setStoryProgress(progress),
+                start: "top top",
+                trigger: root,
+              }),
+            );
+
+            sections.forEach(({ chapter, element }) => {
+              own(
+                ScrollTrigger.create({
+                  end: "bottom center",
+                  id: `grapevyne-story-chapter-${chapter}`,
+                  onEnter: ({ progress }) => {
+                    activateChapter(chapter);
+                    setChapterProgress(progress);
+                  },
+                  onEnterBack: ({ progress }) => {
+                    activateChapter(chapter);
+                    setChapterProgress(progress);
+                  },
+                  onUpdate: ({ progress }) => {
+                    if (activeChapter === chapter) {
+                      setChapterProgress(progress);
+                    }
+                  },
+                  start: "top center",
+                  trigger: element,
+                }),
+              );
+
+              if (chapter !== "hero") {
+                const revealTargets = Array.from(
+                  element.querySelectorAll<HTMLElement>(
+                    "[data-story-reveal], .gv-story-media",
+                  ),
+                );
+
+                revealTargets.forEach((target, index) => {
+                  const isMedia = target.classList.contains("gv-story-media");
+                  const tween = gsap.fromTo(
+                    target,
+                    isMedia
+                      ? { autoAlpha: 0.55, scale: 0.985, y: 18 }
+                      : { autoAlpha: 0.45 },
+                    {
+                      autoAlpha: 1,
+                      ease: "none",
+                      immediateRender: false,
+                      scrollTrigger: {
+                        end: "top 48%",
+                        id: `grapevyne-story-reveal-${chapter}-${index}`,
+                        invalidateOnRefresh: true,
+                        scrub: 0.55,
+                        start: "top 82%",
+                        trigger: target,
+                      },
+                      ...(isMedia ? { scale: 1, y: 0 } : {}),
+                    },
+                  );
+
+                  if (tween.scrollTrigger) {
+                    own(tween.scrollTrigger);
+                  }
+                });
+              }
+
+            });
+          } catch (error) {
+            cleanup();
+            throw error;
+          }
+
+          return cleanup;
+        };
+
+        try {
+          gsapContext = gsap.context(() => {
+            gsap.registerPlugin(ScrollTrigger);
+            gsapMedia = gsap.matchMedia();
+            gsapMedia.add(DESKTOP_QUERY, () => {
+              const cleanup = createMatchedRuntime();
+              matchedRuntimeCleanup = cleanup;
+
+              return () => {
+                cleanup();
+                if (matchedRuntimeCleanup === cleanup) {
+                  matchedRuntimeCleanup = noop;
+                }
+              };
+            });
+          }, root);
+        } catch (error) {
+          gsapMedia?.revert();
+          matchedRuntimeCleanup();
+          gsapContext?.revert();
+          setSmoothingActive(false);
+          throw error;
+        }
+
+        const cleanup = once(() => {
+          gsapMedia?.revert();
+          matchedRuntimeCleanup();
+          gsapContext?.revert();
+          setSmoothingActive(false);
+        });
+
+        if (disposed || generation !== runtimeGeneration) {
+          cleanup();
+          return;
+        }
+
+        stopRuntime = cleanup;
+        // The initial native anchor restoration can be superseded when Lenis
+        // starts from its own scroll state. Re-apply it through the runtime
+        // that now owns scrolling so direct chapter URLs remain stable.
+        syncHashTarget();
+
+        const fontSet = document.fonts;
+
+        if (fontSet) {
+          void fontSet.ready.then(() => {
+            if (
+              !disposed &&
+              generation === runtimeGeneration &&
+              stopRuntime === cleanup
+            ) {
+              ScrollTrigger.refresh();
+              syncHashTarget();
+            }
+          });
+        }
+      } catch {
+        if (!disposed && generation === runtimeGeneration) {
+          stopRuntime = startNativeRuntime();
+        }
+      }
+    };
+
+    const restartRuntime = () => {
+      runtimeGeneration += 1;
+      const generation = runtimeGeneration;
+
+      stopRuntime();
+      stopRuntime = noop;
+      setSmoothingActive(false);
+
+      if (
+        prefersReducedMotion ||
+        mobileQuery?.matches ||
+        coarsePointerQuery?.matches
+      ) {
+        stopRuntime = startNativeRuntime();
+        return;
+      }
+
+      void startDesktopRuntime(generation);
+    };
+
+    const syncHashTarget = (event?: Event) => {
+      let target: StorySection | undefined;
+      if (!window.location.hash) {
+        // Clearing a chapter hash through browser history means returning to
+        // the original, unfragmented Home URL. Preserve ordinary scroll
+        // restoration on initial mount, but make that history step explicit.
+        if (!event) return;
+        target = sections[0];
+      } else {
+        let anchorId: string;
+        try {
+          anchorId = decodeURIComponent(window.location.hash.slice(1));
+        } catch {
+          return;
+        }
+        target = sections.find(({ element }) => element.id === anchorId);
+      }
+      if (!target) return;
+
+      sceneProgress.forceBlackGate = true;
+      sceneProgress.navigationTargetIndex = sections.indexOf(target);
+      const veilTarget =
+        root.querySelector<HTMLElement>("[data-story-stage]") ?? root;
+      veilTarget.style.setProperty("--story-veil-opacity", "1");
+      sceneProgress.requestStoryFrame?.();
+
+      if (hashFrame !== undefined) {
+        window.cancelAnimationFrame(hashFrame);
+      }
+      hashFrame = window.requestAnimationFrame(() => {
+        hashFrame = undefined;
+        if (disposed) return;
+        scrollToSection(target);
+        activateChapter(target.chapter);
+        syncNativeMetrics(target);
+      });
+    };
+
+    documentElement.classList.add(STORY_CLASS);
+    setHomepageActive(true);
+    setStoryVisible(true);
+    setStoryProgress(0);
+    setChapterProgress(0);
+
+    if (sections[0]) {
+      activateChapter(sections[0].chapter);
+    }
+
+    mobileQuery?.addEventListener("change", restartRuntime);
+    coarsePointerQuery?.addEventListener("change", restartRuntime);
+    window.addEventListener("hashchange", syncHashTarget);
+    restartRuntime();
+    syncHashTarget();
+
+    return () => {
+      disposed = true;
+      runtimeGeneration += 1;
+      mobileQuery?.removeEventListener("change", restartRuntime);
+      coarsePointerQuery?.removeEventListener("change", restartRuntime);
+      window.removeEventListener("hashchange", syncHashTarget);
+      if (hashFrame !== undefined) {
+        window.cancelAnimationFrame(hashFrame);
+        hashFrame = undefined;
+      }
+      stopRuntime();
+      stopRuntime = noop;
+      setSmoothingActive(false);
+
+      if (!hadStoryClass) {
+        documentElement.classList.remove(STORY_CLASS);
+      }
+
+      restoreStyleProperty(
+        root,
+        STORY_PROGRESS_PROPERTY,
+        storyProgressSnapshot,
+      );
+      restoreStyleProperty(
+        root,
+        CHAPTER_PROGRESS_PROPERTY,
+        chapterProgressSnapshot,
+      );
+      sceneProgress.chapter = 0;
+      sceneProgress.direction = 0;
+      sceneProgress.forceBlackGate = true;
+      sceneProgress.navigationTargetIndex = null;
+      sceneProgress.story = 0;
+      setStoryVisible(false);
+      setHomepageActive(false);
+    };
+  }, [
+    prefersReducedMotion,
+    loadRuntime,
+    progressRef,
+    rootRef,
+    setCurrentChapterId,
+    setHomepageActive,
+    transitionCoordinated,
+  ]);
+
+  return STORY_CHAPTER_KEYS;
+}

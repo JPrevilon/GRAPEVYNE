@@ -1,0 +1,24 @@
+{
+  "name": "grapevyne-10a1-model-toolchain",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@gltf-transform/cli": "4.3.0",
+    "@gltf-transform/core": "4.3.0",
+    "@gltf-transform/extensions": "4.3.0",
+    "@gltf-transform/functions": "4.3.0",
+    "gltf-validator": "2.0.0-dev.3.10",
+    "language-tags": "1.0.9",
+    "meshoptimizer": "1.0.1",
+    "mikktspace": "1.1.1",
+    "ndarray-pixels": "5.0.1",
+    "sharp": "0.34.2"
+  }
+}

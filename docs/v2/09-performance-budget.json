@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "baselineCommit": "f08452538bd283842140b28462ace52ef272c7c9",
+  "measurement": {
+    "manifest": "frontend/dist/.vite/manifest.json",
+    "rawBytes": "exact emitted file byte length",
+    "gzipBytes": "node:zlib gzipSync at level 9"
+  },
+  "acceptedPrompt08ReportedBaseline": {
+    "profileRoute": { "rawBytes": 10079, "gzipBytes": 3715 },
+    "cellarRoute": { "rawBytes": 28242, "gzipBytes": 9044 },
+    "sharedCss": { "rawBytes": 147451, "gzipBytes": 25655 },
+    "lazyWebgl": { "rawBytes": 906803, "gzipBytes": 247100 }
+  },
+  "prompt09Actual": {
+    "initial-javascript": { "rawBytes": 241125, "gzipBytes": 75981 },
+    "shared-css": { "rawBytes": 147451, "gzipBytes": 25325 },
+    "homepage-route": { "rawBytes": 27492, "gzipBytes": 9746 },
+    "discover-route": { "rawBytes": 15962, "gzipBytes": 5492 },
+    "wine-detail-route": { "rawBytes": 8497, "gzipBytes": 3012 },
+    "cellar-route": { "rawBytes": 28293, "gzipBytes": 9053 },
+    "profile-route": { "rawBytes": 10135, "gzipBytes": 3690 },
+    "lazy-webgl": { "rawBytes": 906803, "gzipBytes": 246504 }
+  },
+  "controlledLocalRuntimeLab": {
+    "command": "node scripts/run-e2e.mjs e2e/performance.spec.ts --project=desktop-chromium --workers=1",
+    "topology": "Vite production preview and Flask with a disposable SQLite database on loopback dynamic ports",
+    "cache": "fresh browser context; transfer sizes are browser PerformanceResourceTiming values",
+    "semanticHeroMs": 100.3,
+    "largestContentfulPaintMs": 316,
+    "cumulativeLayoutShift": 0.22507716049382714,
+    "initialLongTasksMs": [79, 110, 88, 1130],
+    "heroToFirstValidWebglFrameMs": 694.9,
+    "webglImportToFirstFrameMs": 511.8,
+    "initialRequestCount": 25,
+    "initialTransferredBytes": 5015783,
+    "apiDurationMs": {
+      "cellarList": 8.7,
+      "tasteProfile": 9.3,
+      "recommendations": 8.4
+    },
+    "approximateFrameCadenceFps": {
+      "desktopWebgl": 16.8624,
+      "mobileReducedMotionUnderThrottle": 96.463
+    },
+    "hardLifecycleResults": {
+      "semanticBeforeOptionalWebgl": true,
+      "nonHeroVideosOnInitialLoad": 0,
+      "webglOrModelRequestsOnProductRoutes": 0,
+      "canvasCountAtHomeMaximum": 1,
+      "canvasCountAfterLeavingHome": 0
+    },
+    "softTargetMisses": {
+      "cumulativeLayoutShiftMaximum": 0.1,
+      "singleInitializationLongTaskMaximumMs": 500
+    }
+  },
+  "budgets": [
+    {
+      "id": "initial-javascript",
+      "label": "Principal initial JavaScript",
+      "selector": { "type": "manifest-key", "value": "index.html" },
+      "baseline": { "rawBytes": 238877, "gzipBytes": 75335 },
+      "maximum": { "gzipBytes": 82000 }
+    },
+    {
+      "id": "shared-css",
+      "label": "Shared application CSS",
+      "selector": { "type": "entry-css", "value": "index.html", "index": 0 },
+      "baseline": { "rawBytes": 147451, "gzipBytes": 25325 },
+      "maximum": { "gzipBytes": 28000 }
+    },
+    {
+      "id": "homepage-route",
+      "label": "Homepage route JavaScript excluding optional imports",
+      "selector": { "type": "manifest-name", "value": "HomePage" },
+      "baseline": { "rawBytes": 27499, "gzipBytes": 9746 },
+      "maximum": { "gzipBytes": 12000 }
+    },
+    {
+      "id": "discover-route",
+      "label": "Discover route JavaScript",
+      "selector": { "type": "manifest-key", "value": "src/pages/DiscoverPage.tsx" },
+      "baseline": { "rawBytes": 15911, "gzipBytes": 5472 },
+      "maximum": { "gzipBytes": 8000 }
+    },
+    {
+      "id": "wine-detail-route",
+      "label": "Wine Detail route JavaScript",
+      "selector": { "type": "manifest-key", "value": "src/pages/WineDetailPage.tsx" },
+      "baseline": { "rawBytes": 8497, "gzipBytes": 3013 },
+      "maximum": { "gzipBytes": 6000 }
+    },
+    {
+      "id": "cellar-route",
+      "label": "Cellar route JavaScript",
+      "selector": { "type": "manifest-key", "value": "src/pages/CellarPage.tsx" },
+      "baseline": { "rawBytes": 28242, "gzipBytes": 9033 },
+      "maximum": { "gzipBytes": 12000 }
+    },
+    {
+      "id": "profile-route",
+      "label": "Taste Profile route JavaScript",
+      "selector": { "type": "manifest-key", "value": "src/pages/ProfilePage.tsx" },
+      "baseline": { "rawBytes": 10079, "gzipBytes": 3664 },
+      "maximum": { "gzipBytes": 6000 }
+    },
+    {
+      "id": "lazy-webgl",
+      "label": "Lazy WebGL graph entry",
+      "selector": { "type": "manifest-key", "value": "src/experience/webgl/ExperienceCanvas.tsx" },
+      "baseline": { "rawBytes": 906803, "gzipBytes": 246501 },
+      "maximum": { "rawBytes": 930000, "gzipBytes": 255000 }
+    }
+  ],
+  "productRouteIsolation": {
+    "routes": [
+      "src/pages/DiscoverPage.tsx",
+      "src/pages/WineDetailPage.tsx",
+      "src/pages/CellarPage.tsx",
+      "src/pages/ProfilePage.tsx",
+      "src/pages/LoginPage.tsx",
+      "src/pages/SignupPage.tsx",
+      "src/pages/DemoCellarPage.tsx",
+      "src/pages/DemoTasteAtlasPage.tsx"
+    ],
+    "forbiddenManifestKeys": [
+      "src/experience/webgl/ExperienceCanvas.tsx",
+      "node_modules/gsap/index.js",
+      "node_modules/gsap/ScrollTrigger.js",
+      "node_modules/lenis/dist/lenis.mjs"
+    ]
+  }
+}

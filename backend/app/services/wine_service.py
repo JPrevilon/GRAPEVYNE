@@ -1,3 +1,6 @@
+from copy import deepcopy
+
+
 MOCK_WINES = [
     {
         "externalWineId": "mock-argyle-reserve-pinot-noir-2021",
@@ -171,6 +174,18 @@ MOCK_WINES = [
 ]
 
 
+class WineServiceError(Exception):
+    """Base exception for real failures behind the wine-service boundary."""
+
+
+class WineServiceUnavailableError(WineServiceError):
+    """Raised when a configured wine provider is unavailable."""
+
+
+class WineServiceTimeoutError(WineServiceError):
+    """Raised when a configured wine provider exceeds its timeout."""
+
+
 class WineService:
     """Wine discovery abstraction.
 
@@ -180,6 +195,23 @@ class WineService:
     """
 
     source = "mock"
+
+    def list_candidates(self):
+        """Return isolated provider records for deterministic recommendation work."""
+
+        return deepcopy(MOCK_WINES)
+
+    def catalog_metadata(self):
+        return {
+            "provider": self.source,
+            "candidateCount": len(MOCK_WINES),
+            "isDemonstrationCatalog": True,
+            "limitations": (
+                "The current portfolio build uses a limited demonstration catalog. "
+                "Matching logic is real, but the available candidate set is "
+                "intentionally small."
+            ),
+        }
 
     def search(self, query):
         normalized_query = self._normalize_query(query)

@@ -14,6 +14,13 @@ from app.utils.validation import (
 auth_bp = Blueprint("auth", __name__)
 
 
+@auth_bp.after_request
+def prevent_shared_auth_caching(response):
+    response.headers["Cache-Control"] = "private, no-store"
+    response.vary.add("Cookie")
+    return response
+
+
 def _start_user_session(user):
     session.clear()
     session.permanent = True

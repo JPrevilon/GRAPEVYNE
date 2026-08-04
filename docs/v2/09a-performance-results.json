@@ -1,0 +1,284 @@
+{
+  "schemaVersion": 1,
+  "auditDate": "2026-08-03",
+  "branch": "feat/grapevyne-cinematic-v2",
+  "acceptedPrompt09Commit": "14f7e4cb85d585d6da1e153c3882da4549f6e4fa",
+  "status": "passed-local-release-gates",
+  "scopeBoundary": "Controlled local production-preview evidence only; hosted and physical-device validation is reserved for Prompt 10.",
+  "environment": {
+    "node": "20.19.6",
+    "npm": "10.8.2",
+    "browser": "Playwright Chromium production preview",
+    "topology": "Vite production preview and Flask on dynamic loopback ports with a disposable SQLite database",
+    "sampling": "Five cold or cache-controlled serial runs in a fresh browser context",
+    "percentileMethod": "Nearest-rank p95; with five samples this is the maximum",
+    "metricSources": [
+      "PerformanceObserver layout-shift entries using the standard 1-second-gap/5-second CLS session-window algorithm",
+      "PerformanceObserver longtask entries with preserved browser attribution",
+      "Largest Contentful Paint observer",
+      "PerformanceResourceTiming",
+      "Chrome trace and CPU-profile diagnosis for the baseline long task"
+    ]
+  },
+  "releaseTargets": {
+    "cumulativeLayoutShiftMaximum": 0.1,
+    "preferredCumulativeLayoutShiftMaximum": 0.05,
+    "singleApplicationCausedLongTaskMaximumMs": 500,
+    "preferredSingleApplicationCausedLongTaskMaximumMs": 250,
+    "preferredTotalBlockingTimeMaximumMs": 300
+  },
+  "acceptedPrompt09ReferenceRun": {
+    "semanticHeroMs": 100.3,
+    "largestContentfulPaintMs": 316,
+    "cumulativeLayoutShift": 0.22507716049382714,
+    "initialLongTasksMs": [
+      79,
+      110,
+      88,
+      1130
+    ],
+    "heroToFirstValidWebglFrameMs": 694.9,
+    "webglImportToFirstFrameMs": 511.8,
+    "initialRequestCount": 25,
+    "initialTransferredBytes": 5015783
+  },
+  "prompt09aBaselineFiveRun": {
+    "cumulativeLayoutShift": {
+      "samples": [
+        0.22507716049382714,
+        0.22541578811205953,
+        0.209300163120432,
+        0.22541578811205953,
+        0.209300163120432
+      ],
+      "median": 0.22507716049382714,
+      "p95": 0.22541578811205953,
+      "maximum": 0.22541578811205953,
+      "decision": "failed"
+    },
+    "maximumObservedLongTaskMs": {
+      "samples": [
+        1124,
+        1105,
+        1120,
+        1108,
+        1172
+      ],
+      "median": 1120,
+      "p95": 1172,
+      "maximum": 1172,
+      "decision": "failed"
+    }
+  },
+  "attribution": {
+    "layoutShift": {
+      "primarySource": ".gv-footer moving after the undersized lazy Home route fallback was replaced",
+      "primaryContributionApproximate": 0.20333,
+      "secondarySource": "CSS bottle geometry changing during the CSS-to-WebGL readiness handshake",
+      "secondaryContributionApproximate": 0.0045,
+      "conclusion": "The dominant CLS was late document-flow replacement above the footer; it was not a font, poster, or video dimension change."
+    },
+    "longTask": {
+      "separateTraceCaptureMaximumMs": 1308.5,
+      "mainThread": "CrRendererMain",
+      "traceEvents": [
+        "BeginMainFrame",
+        "Commit",
+        "DoUpdateLayers",
+        "GLES2 ReadPixels",
+        "SwiftShader wait"
+      ],
+      "opacityOffControlMaximumMs": 114,
+      "reducedMotionLongTasks": [],
+      "conclusion": "The blocking spike came from visible software-rendered WebGL composition/readback in the local SwiftShader environment, not JavaScript parsing, route rendering, font setup, GLB parsing, or a synchronous application loop."
+    }
+  },
+  "remediation": {
+    "layoutStability": [
+      "The lazy Home route now reserves max(46rem, calc(100svh - navigation height)) before the Home chunk resolves.",
+      "Desktop CSS bottle geometry is unconditional, so readiness changes opacity/visibility without changing its box or document flow.",
+      "The Home route remains lazy and semantic content is not hidden behind a mandatory loader."
+    ],
+    "mainThread": [
+      "Capability probing reads the WebGL renderer when available and selects the existing CSS fallback for SwiftShader, llvmpipe, softpipe, lavapipe, Microsoft Basic Render, and other explicit software rasterizers.",
+      "Renderer-detail privacy blocking is not treated as evidence of software rendering; normal capability selection continues.",
+      "The one-pixel diagnostic WebGL context is released, and capable hardware still follows the lazy route-local WebGL path.",
+      "The default software-renderer path does not import the WebGL graph or request the GLB and label textures."
+    ],
+    "measurementHardening": [
+      "CLS now uses browser layout-shift sources and the standard session-window algorithm instead of a lifetime sum.",
+      "The deterministic performance test fails above CLS 0.10 or above a 500 ms observed long task.",
+      "The WebGL capability decision and reason are preserved in a performance mark."
+    ]
+  },
+  "prompt09aFinalFiveRun": {
+    "cumulativeLayoutShift": {
+      "samples": [
+        0.001121257724421832,
+        0.001299892305183149,
+        0.001299892305183149,
+        0.001121257724421832,
+        0.001299892305183149
+      ],
+      "median": 0.001299892305183149,
+      "p95": 0.001299892305183149,
+      "maximum": 0.001299892305183149,
+      "decision": "passed"
+    },
+    "maximumObservedLongTaskMs": {
+      "samples": [
+        0,
+        0,
+        52,
+        0,
+        0
+      ],
+      "median": 0,
+      "p95": 52,
+      "maximum": 52,
+      "decision": "passed"
+    },
+    "largestContentfulPaintMs": {
+      "samples": [
+        348,
+        268,
+        264,
+        264,
+        188
+      ],
+      "median": 264,
+      "p95": 348,
+      "maximum": 348
+    },
+    "semanticHeroMs": {
+      "samples": [
+        172.7,
+        91.8,
+        79.4,
+        77.6,
+        82.3
+      ],
+      "median": 82.3,
+      "p95": 172.7,
+      "maximum": 172.7
+    },
+    "initialRequestCount": {
+      "samples": [
+        21,
+        22,
+        21,
+        21,
+        21
+      ],
+      "median": 21,
+      "p95": 22,
+      "maximum": 22
+    },
+    "initialTransferredBytes": {
+      "samples": [
+        2507064,
+        4564672,
+        2507064,
+        2507064,
+        2507064
+      ],
+      "median": 2507064,
+      "p95": 4564672,
+      "maximum": 4564672,
+      "note": "The larger second run is retained rather than discarded; even the maximum remained below the accepted Prompt 09 reference run."
+    },
+    "webgl": {
+      "defaultReferenceDecision": {
+        "tier": "fallback",
+        "reason": "software-renderer"
+      },
+      "heroToFirstValidWebglFrameMs": null,
+      "webglImportToFirstFrameMs": null,
+      "nullTimingReason": "The reference Chromium environment truthfully selected the CSS fallback and therefore produced no WebGL import or frame mark.",
+      "forcedLiveRendererSmoke": {
+        "decision": "passed",
+        "readyWithinAssertedCeilingMs": 8000,
+        "exactTimingPreserved": false,
+        "canvasCount": 1,
+        "fallbackGeometryStableWithinCssPixels": 1,
+        "modelAndBothLabelTexturesRequested": true,
+        "contextLossRecovery": "passed"
+      }
+    },
+    "decision": "passed"
+  },
+  "resourceAndLifecycleContracts": {
+    "semanticContentBeforeOptionalWebgl": true,
+    "initialNonHeroVideoRequests": 0,
+    "oppositeDeviceInitialVideoRequests": 0,
+    "reducedMotionVideoRequests": 0,
+    "reducedMotionWebglRequests": 0,
+    "discoverWebglOrModelRequests": 0,
+    "productRoutesImportWebglGsapOrLenis": false,
+    "maximumHomeCanvasCount": 1,
+    "canvasCountAfterLeavingHome": 0,
+    "approvedMediaModelLabelAndFontHashesChanged": false
+  },
+  "finalBundle": {
+    "measurement": "Exact emitted byte length and node:zlib gzipSync level 9",
+    "budgetsPassed": 8,
+    "isolatedProductRoutesPassed": 8,
+    "assets": {
+      "principalInitialJavascript": {
+        "rawBytes": 242970,
+        "gzipBytes": 76809,
+        "maximumGzipBytes": 82000
+      },
+      "sharedCss": {
+        "rawBytes": 147472,
+        "gzipBytes": 25362,
+        "maximumGzipBytes": 28000
+      },
+      "homepageRoute": {
+        "rawBytes": 28111,
+        "gzipBytes": 9960,
+        "maximumGzipBytes": 12000
+      },
+      "discoverRoute": {
+        "rawBytes": 15962,
+        "gzipBytes": 5490,
+        "maximumGzipBytes": 8000
+      },
+      "wineDetailRoute": {
+        "rawBytes": 8497,
+        "gzipBytes": 3011,
+        "maximumGzipBytes": 6000
+      },
+      "cellarRoute": {
+        "rawBytes": 28293,
+        "gzipBytes": 9051,
+        "maximumGzipBytes": 12000
+      },
+      "profileRoute": {
+        "rawBytes": 10135,
+        "gzipBytes": 3686,
+        "maximumGzipBytes": 6000
+      },
+      "lazyWebgl": {
+        "rawBytes": 907605,
+        "gzipBytes": 246633,
+        "maximumRawBytes": 930000,
+        "maximumGzipBytes": 255000
+      }
+    }
+  },
+  "interpretation": {
+    "passed": [
+      "CLS is below both the hard 0.10 and preferred 0.05 limits in all five final runs.",
+      "No observed application-caused long task exceeds 500 ms; the final maximum is 52 ms.",
+      "Median semantic hero and median LCP preserve or improve the accepted Prompt 09 reference values.",
+      "Capable-device WebGL remains lazy, visually present, layout-stable, and recoverable in the forced live-renderer smoke."
+    ],
+    "limits": [
+      "Loopback Playwright timing is laboratory evidence, not field performance or a public-domain guarantee.",
+      "The local Chromium renderer is software-backed, so a meaningful native-hardware hero-to-WebGL timing was not produced; Prompt 10 must record it on a real capable browser/device.",
+      "Total blocking time was not separately retained as a final aggregate, so no numeric TBT claim is made.",
+      "The forced renderer identity validates application lifecycle behavior but cannot turn SwiftShader into physical GPU evidence."
+    ]
+  }
+}
