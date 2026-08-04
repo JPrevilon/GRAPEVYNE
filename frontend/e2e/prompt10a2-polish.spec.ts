@@ -225,6 +225,61 @@ test("@smoke true-black hold resolves to the exact navigation color", async ({
   expect(new Set(Object.values(colors))).toEqual(new Set(["rgb(0, 0, 0)"]));
 });
 
+test("chapter copy fades in place without sliding vertically", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    !["desktop-chromium", "mobile-chromium"].includes(testInfo.project.name),
+    "The animated copy contract runs in desktop and mobile Chromium.",
+  );
+  await forceSoftwareWebGLCapability(page);
+  await page.goto("/");
+
+  const sampleDiscoveryCopy = () =>
+    page.locator("[data-story-chapter='discovery']").evaluate((section) => {
+      const panel = section.querySelector<HTMLElement>(
+        ".gv-story-chapter__panel",
+      );
+      const content = section.querySelector<HTMLElement>(
+        ".gv-story-chapter__content",
+      );
+      if (!panel || !content) throw new Error("Missing discovery copy panel.");
+      const style = getComputedStyle(panel);
+      return {
+        contentTop: content.getBoundingClientRect().top,
+        opacity: Number(style.opacity),
+        panelTop: panel.getBoundingClientRect().top,
+        position: style.position,
+        transform: style.transform,
+      };
+    });
+
+  await moveToTransitionPoint(page, 0, 0.58);
+  await expect
+    .poll(() => page.locator(".gv-story").getAttribute("data-story-owner"))
+    .toBe("discovery");
+  const hold = await sampleDiscoveryCopy();
+
+  await moveToTransitionPoint(page, 0, 0.8);
+  await expect
+    .poll(async () => (await sampleDiscoveryCopy()).opacity)
+    .toBeGreaterThan(0);
+  const reveal = await sampleDiscoveryCopy();
+
+  await moveToStableChapter(page, 1);
+  const stable = await sampleDiscoveryCopy();
+
+  expect(hold.position).toBe("fixed");
+  expect(hold.transform).toBe("none");
+  expect(reveal.opacity).toBeGreaterThan(0);
+  expect(reveal.opacity).toBeLessThan(1);
+  expect(stable.opacity).toBeCloseTo(1, 2);
+  expect(reveal.panelTop).toBeCloseTo(hold.panelTop, 2);
+  expect(stable.panelTop).toBeCloseTo(hold.panelTop, 2);
+  expect(reveal.contentTop).toBeCloseTo(hold.contentTop, 2);
+  expect(stable.contentTop).toBeCloseTo(hold.contentTop, 2);
+});
+
 test("all eight boundaries remain symmetric, black-gated, decoded, and mutually exclusive", async ({
   page,
 }, testInfo) => {

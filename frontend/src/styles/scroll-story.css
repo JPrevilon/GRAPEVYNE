@@ -205,8 +205,9 @@
 }
 
 .gv-story-chapter__panel {
-  position: sticky;
+  position: fixed;
   top: var(--nav-height);
+  inset-inline: 0;
   display: grid;
   width: 100%;
   height: calc(100svh - var(--nav-height));
@@ -215,10 +216,7 @@
   opacity: 0;
   overflow: hidden;
   pointer-events: none;
-  transform: translateY(0.8rem);
-  transition:
-    opacity 260ms ease-out,
-    transform 320ms ease-out;
+  will-change: opacity;
 }
 
 @supports (height: 100dvh) {
@@ -230,7 +228,6 @@
 .gv-story-chapter.is-active .gv-story-chapter__panel {
   opacity: var(--story-copy-opacity);
   pointer-events: auto;
-  transform: translateY(0);
 }
 
 .gv-story-subject-control {

@@ -82,3 +82,21 @@ describe("Prompt 10A2 true-black transition color contract", () => {
     }
   });
 });
+
+describe("cinematic story copy motion contract", () => {
+  it("fades chapter copy in place without a vertical entrance", () => {
+    const panel = ruleBlock(scrollStoryCss, ".gv-story-chapter__panel");
+    const activePanel = ruleBlock(
+      scrollStoryCss,
+      ".gv-story-chapter.is-active .gv-story-chapter__panel",
+    );
+
+    expect(panel).toContain("opacity: 0;");
+    expect(panel).toContain("position: fixed;");
+    expect(panel).toContain("will-change: opacity;");
+    expect(panel).not.toMatch(/\btransition\s*:/);
+    expect(panel).not.toMatch(/\btransform\s*:/);
+    expect(activePanel).toContain("opacity: var(--story-copy-opacity);");
+    expect(activePanel).not.toMatch(/\btransform\s*:/);
+  });
+});

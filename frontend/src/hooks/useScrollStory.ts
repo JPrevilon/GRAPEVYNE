@@ -547,12 +547,11 @@ export function useScrollStory(
                     target,
                     isMedia
                       ? { autoAlpha: 0.55, scale: 0.985, y: 18 }
-                      : { autoAlpha: 0.45, y: 32 },
+                      : { autoAlpha: 0.45 },
                     {
                       autoAlpha: 1,
                       ease: "none",
                       immediateRender: false,
-                      scale: 1,
                       scrollTrigger: {
                         end: "top 48%",
                         id: `grapevyne-story-reveal-${chapter}-${index}`,
@@ -561,7 +560,7 @@ export function useScrollStory(
                         start: "top 82%",
                         trigger: target,
                       },
-                      y: 0,
+                      ...(isMedia ? { scale: 1, y: 0 } : {}),
                     },
                   );
 

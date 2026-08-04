@@ -205,6 +205,11 @@ function createDesktopRuntimeMock() {
     tickerCallback: undefined as ((time: number) => void) | undefined,
     tickerRemove: vi.fn(),
     tickerSleep: vi.fn(),
+    tweens: [] as Array<{
+      from: Record<string, unknown>;
+      target: Element;
+      to: Record<string, unknown>;
+    }>,
     triggers: [] as Array<{
       kill: ReturnType<typeof vi.fn>;
       options: Record<string, unknown>;
@@ -269,14 +274,17 @@ function createDesktopRuntimeMock() {
       return { revert: state.contextRevert };
     },
     fromTo: (
-      _target: Element,
-      _from: Record<string, unknown>,
+      target: Element,
+      from: Record<string, unknown>,
       to: Record<string, unknown>,
-    ) => ({
-      scrollTrigger: createTrigger(
-        to.scrollTrigger as Record<string, unknown>,
-      ),
-    }),
+    ) => {
+      state.tweens.push({ from, target, to });
+      return {
+        scrollTrigger: createTrigger(
+          to.scrollTrigger as Record<string, unknown>,
+        ),
+      };
+    },
     matchMedia: () => {
       let matchCleanup: (() => void) | undefined;
       const media = {
@@ -692,6 +700,15 @@ describe("useScrollStory desktop runtime", () => {
         String(options.id).startsWith("grapevyne-story-pin-"),
       ),
     ).toBe(false);
+    const copyTweens = state.tweens.filter(({ target }) =>
+      target.matches("[data-story-reveal]"),
+    );
+    expect(copyTweens).toHaveLength(CHAPTERS.length - 1);
+    copyTweens.forEach(({ from, to }) => {
+      expect(from).toEqual({ autoAlpha: 0.45 });
+      expect(to).not.toHaveProperty("scale");
+      expect(to).not.toHaveProperty("y");
+    });
     expect(document.documentElement).toHaveClass(
       "has-scroll-story",
       "has-scroll-smoothing",
