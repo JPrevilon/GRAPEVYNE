@@ -35,6 +35,13 @@ interface IdleWindow {
 const WEBGL_IMPORT_MARK = "grapevyne-webgl-import-requested";
 const WEBGL_FIRST_FRAME_MARK = "grapevyne-webgl-first-frame";
 
+function isSameDecision(
+  current: WebGLCapabilityDecision | null,
+  next: WebGLCapabilityDecision,
+) {
+  return current?.tier === next.tier && current.reason === next.reason;
+}
+
 function markPerformance(name: string, detail?: unknown) {
   if (typeof performance.mark !== "function") return;
 
@@ -53,22 +60,51 @@ export default function WebGLExperience({
   const [decision, setDecision] = useState<WebGLCapabilityDecision | null>(null);
   const [activated, setActivated] = useState(false);
   const [status, setStatus] = useState<WebGLStatus>("loading");
+  const decisionRef = useRef<WebGLCapabilityDecision | null>(null);
   const layerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!homepageActive) {
+      decisionRef.current = null;
       setDecision(null);
       setActivated(false);
       setStatus("loading");
-      return;
+      return undefined;
     }
 
-    markPerformance("grapevyne-webgl-capability-start");
-    const nextDecision = inspectBrowserWebGLCapability(prefersReducedMotion);
-    markPerformance("grapevyne-webgl-capability-decided", nextDecision);
-    setDecision(nextDecision);
-    setActivated(false);
-    setStatus("loading");
+    let resizeFrame: number | undefined;
+
+    const syncDecision = () => {
+      markPerformance("grapevyne-webgl-capability-start");
+      const nextDecision = inspectBrowserWebGLCapability(prefersReducedMotion);
+      markPerformance("grapevyne-webgl-capability-decided", nextDecision);
+
+      if (isSameDecision(decisionRef.current, nextDecision)) return;
+      decisionRef.current = nextDecision;
+      setDecision(nextDecision);
+      setActivated(false);
+      setStatus("loading");
+    };
+
+    const scheduleDecisionSync = () => {
+      if (resizeFrame !== undefined) return;
+      resizeFrame = window.requestAnimationFrame(() => {
+        resizeFrame = undefined;
+        syncDecision();
+      });
+    };
+
+    syncDecision();
+    window.addEventListener("resize", scheduleDecisionSync);
+    window.addEventListener("orientationchange", scheduleDecisionSync);
+
+    return () => {
+      window.removeEventListener("resize", scheduleDecisionSync);
+      window.removeEventListener("orientationchange", scheduleDecisionSync);
+      if (resizeFrame !== undefined) {
+        window.cancelAnimationFrame(resizeFrame);
+      }
+    };
   }, [homepageActive, prefersReducedMotion]);
 
   useLayoutEffect(() => {

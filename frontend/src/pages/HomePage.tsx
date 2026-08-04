@@ -1,72 +1,45 @@
+import { ArrowRight, Rotate3D, Search } from "lucide-react";
 import {
-  ArrowRight,
-  Check,
-  ExternalLink,
-  LockKeyhole,
-  ShieldCheck,
-} from "lucide-react";
-import { type ReactNode, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+  lazy,
+  Suspense,
+  type MouseEvent,
+  useCallback,
+  useRef,
+  useState,
+} from "react";
+import { Link, useNavigate } from "react-router-dom";
 
-import BrandLockup from "@/components/brand/BrandLockup";
 import ChapterProgress from "@/components/navigation/ChapterProgress";
 import DirectoryHeading from "@/components/typography/DirectoryHeading";
-import { ButtonLink } from "@/components/ui/Button";
-import { NaturalLanguageSearch } from "@/components/ui/FormControls";
 import { WineBottleFallback } from "@/components/wine/WineBottleFallback";
-import CinematicVideo from "@/experience/CinematicVideo";
-import type { MediaKey } from "@/experience/media";
+import StoryMediaStack from "@/experience/StoryMediaStack";
+import { CINEMATIC_MEDIA } from "@/experience/media";
 import {
   STORY_CHAPTERS,
+  STORY_SUBJECTS,
   type StoryChapter,
   type StoryChapterDefinition,
 } from "@/experience/storyChapters";
+import { getNextStoryChapter } from "@/experience/storySubject";
+import { useScene } from "@/experience/useScene";
 import WebGLExperience from "@/experience/webgl/WebGLExperience";
+import { STORY_SUBJECT_FALLBACK_PATHS } from "@/experience/webgl/modelAssets";
 import { useAuth } from "@/features/auth/useAuth";
 import { useScrollStory } from "@/hooks/useScrollStory";
+import { useStoryStaticMode } from "@/hooks/useStoryStaticMode";
 import "@/styles/scroll-story.css";
 
-const discoveryPrompts = [
-  "Bold red for steak night",
-  "Crisp white for oysters",
-  "Celebration bottle",
-  "Gift under $75",
-  "Something new",
-] as const;
-
-const matchDimensions = [
-  "Pairing fit",
-  "Requested style",
-  "Budget fit",
-  "Occasion fit",
-  "Source-data confidence",
-  "Discovery balance when you request it",
-  "Personal taste fit after you have rated bottles",
-] as const;
-
-const cellarCapabilities = [
-  "Recently added",
-  "Favorites",
-  "Highly rated",
-  "Dinner pairings",
-  "Celebrations",
-  "Wishlist",
-  "Buy again",
-  "Tasted dates, places, and pairings",
-  "Private tasting notes",
-] as const;
-
-const tasteSignals = ["Bright", "Silky", "Mineral", "Savory", "Cellar-worthy"] as const;
+const LazyBottleInspectorModal = lazy(
+  () => import("@/experience/webgl/BottleInspectorModal"),
+);
 
 function discoverHref(query: string) {
   return `/discover?query=${encodeURIComponent(query)}`;
 }
 
 function ChapterHeading({ chapter }: { chapter: StoryChapterDefinition }) {
-  const headingId = `${chapter.anchorId}-title`;
-
   return (
-    <header className="gv-story-heading" data-story-reveal>
+    <header className="gv-story-heading">
       <p className="gv-story-heading__number">
         <span>{chapter.number}</span>
         <span aria-hidden="true"> / </span>
@@ -75,7 +48,7 @@ function ChapterHeading({ chapter }: { chapter: StoryChapterDefinition }) {
       <DirectoryHeading
         ariaLabel={chapter.title}
         as={chapter.key === "hero" ? "h1" : "h2"}
-        id={headingId}
+        id={`${chapter.anchorId}-title`}
         scale={chapter.key === "hero" ? "hero" : "chapter"}
         segments={chapter.headingSegments}
       />
@@ -83,42 +56,53 @@ function ChapterHeading({ chapter }: { chapter: StoryChapterDefinition }) {
   );
 }
 
-function StorySearch({ id, label }: { id: string; label: string }) {
+function StorySearch() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
 
-  function submit() {
-    const trimmedQuery = query.trim();
-
-    if (!trimmedQuery) {
-      setError("Describe a wine, meal, mood, or occasion to begin.");
-      return;
-    }
-
-    setError("");
-    navigate(discoverHref(trimmedQuery));
-  }
-
   return (
-    <NaturalLanguageSearch
-      buttonLabel="Discover"
-      description="Search the current wine catalog with natural-language clues."
-      error={error}
-      id={id}
-      label={label}
-      onChange={(value) => {
-        setQuery(value);
-        if (error) setError("");
+    <form
+      className="gv-story-search"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const trimmed = query.trim();
+        if (!trimmed) {
+          setError("Describe a wine, meal, mood, or occasion to begin.");
+          return;
+        }
+        setError("");
+        navigate(discoverHref(trimmed));
       }}
-      onSubmit={submit}
-      placeholder="A Cabernet for steak night"
-      value={query}
-    />
+    >
+      <label className="gv-visually-hidden" htmlFor="story-wine-search">
+        Describe the moment
+      </label>
+      <div className="gv-story-search__control">
+        <Search aria-hidden="true" size={17} />
+        <input
+          aria-describedby={error ? "story-wine-search-error" : undefined}
+          id="story-wine-search"
+          onChange={(event) => {
+            setQuery(event.target.value);
+            if (error) setError("");
+          }}
+          placeholder="A Cabernet for steak night"
+          type="search"
+          value={query}
+        />
+        <button type="submit">SEARCH WINES</button>
+      </div>
+      {error ? (
+        <p className="gv-story-search__error" id="story-wine-search-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </form>
   );
 }
 
-function AuthCellarAction({ finale = false }: { finale?: boolean }) {
+function AuthCellarAction() {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -129,371 +113,209 @@ function AuthCellarAction({ finale = false }: { finale?: boolean }) {
     );
   }
 
-  return isAuthenticated ? (
-    <ButtonLink to="/cellar" variant={finale ? "primary" : "secondary"}>
-      Open my cellar
-      <ArrowRight aria-hidden="true" size={17} />
-    </ButtonLink>
-  ) : (
-    <ButtonLink to="/signup" variant={finale ? "primary" : "secondary"}>
-      {finale ? "Create your cellar" : "Create my cellar"}
-      <ArrowRight aria-hidden="true" size={17} />
-    </ButtonLink>
+  return (
+    <Link className="gv-story-action gv-story-action--primary" to={isAuthenticated ? "/cellar" : "/signup"}>
+      {isAuthenticated ? "OPEN CELLAR" : "CREATE CELLAR"}
+      <ArrowRight aria-hidden="true" size={16} />
+    </Link>
   );
 }
 
-function ChapterMedia({ mediaKey }: { mediaKey: MediaKey }) {
+function HeroActions({
+  onInspect,
+}: {
+  onInspect: (event: MouseEvent<HTMLButtonElement>) => void;
+}) {
   return (
-    <div className="gv-story-media" aria-hidden="true">
-      {mediaKey === "hero" ? (
-        <CinematicVideo
-          className="gv-story-media__visual"
-          mediaKey="hero"
-          priority
-        />
-      ) : (
-        <CinematicVideo
-          className="gv-story-media__visual"
-          mediaKey={mediaKey}
-        />
-      )}
+    <div className="gv-story-actions">
+      <Link className="gv-story-action gv-story-action--primary" to="/discover">
+        DISCOVER
+        <ArrowRight aria-hidden="true" size={16} />
+      </Link>
+      <button className="gv-story-action gv-story-action--quiet" onClick={onInspect} type="button">
+        <Rotate3D aria-hidden="true" size={16} />
+        INSPECT BOTTLE
+      </button>
     </div>
   );
 }
 
-function HeroChapter() {
+function ChapterBody({
+  chapter,
+  onInspect,
+}: {
+  chapter: StoryChapter;
+  onInspect: (event: MouseEvent<HTMLButtonElement>) => void;
+}) {
+  switch (chapter) {
+    case "hero":
+      return <HeroActions onInspect={onInspect} />;
+    case "discovery":
+      return <StorySearch />;
+    case "portal":
+      return <AuthCellarAction />;
+    case "atlas":
+      return (
+        <Link className="gv-story-action gv-story-action--quiet" to="/profile">
+          VIEW TASTE PROFILE
+          <ArrowRight aria-hidden="true" size={16} />
+        </Link>
+      );
+    case "finale":
+      return (
+        <div className="gv-story-finale-actions">
+          <Link className="gv-story-action gv-story-action--primary" to="/discover">
+            DISCOVER
+            <ArrowRight aria-hidden="true" size={16} />
+          </Link>
+          <details className="gv-under-cork">
+            <summary>Under the Cork</summary>
+            <p>
+              Local scroll-scrubbed film, conditional WebGL subjects, exact label artwork,
+              and the existing same-origin Flask product—without exposing private cellar data.
+            </p>
+          </details>
+        </div>
+      );
+    case "match":
+    case "taste":
+    case "cellar":
+    case "memory":
+      return null;
+  }
+}
+
+function StaticChapterVisual({ chapter }: { chapter: StoryChapterDefinition }) {
+  const media = CINEMATIC_MEDIA[chapter.mediaKey];
+
   return (
-    <>
-      <div className="gv-hero-bottle" aria-hidden="true">
+    <div aria-hidden="true" className="gv-story-static-visual">
+      <picture>
+        <source media="(max-width: 720px)" srcSet={media.mobile.poster} />
+        <img
+          alt=""
+          decoding="async"
+          loading={chapter.key === "hero" ? "eager" : "lazy"}
+          src={media.desktop.poster}
+        />
+      </picture>
+      {chapter.subject === "bottle" ? (
+        <div className="gv-story-static-subject gv-story-static-subject--bottle">
+          <WineBottleFallback label="From Vine to Memory" tone="red" />
+        </div>
+      ) : chapter.subject === "grapes" ? (
+        <img
+          alt=""
+          className="gv-story-static-subject gv-story-static-subject--grapes"
+          src={STORY_SUBJECT_FALLBACK_PATHS.grapes}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function StoryFallbackSubjects({
+  currentChapter,
+  hidden,
+}: {
+  currentChapter: StoryChapter;
+  hidden: boolean;
+}) {
+  const nextChapter = getNextStoryChapter(currentChapter);
+  const bottleTarget =
+    STORY_SUBJECTS[currentChapter] === "bottle"
+      ? currentChapter
+      : STORY_SUBJECTS[nextChapter] === "bottle"
+        ? nextChapter
+        : currentChapter;
+
+  return (
+    <div
+      aria-hidden="true"
+      className={`gv-story-fallback-subjects${hidden ? " is-webgl-ready" : ""}`}
+      data-story-fallback-subjects
+    >
+      <div
+        className="gv-story-fallback-subject gv-story-fallback-subject--bottle"
+        data-subject-chapter={bottleTarget}
+      >
         <WineBottleFallback label="From Vine to Memory" tone="red" />
       </div>
-      <div className="gv-story-copy gv-story-copy--hero">
-        <BrandLockup className="gv-story-brand" />
-        <p className="gv-story-lede">
-          Discover wines for the meal, moment, or mood. Save every bottle worth
-          remembering in a private cellar.
-        </p>
-        <StorySearch id="hero-wine-search" label="What is the bottle for?" />
-        <div className="gv-story-actions">
-          <ButtonLink to="/discover" variant="primary">
-            Begin the tasting
-            <ArrowRight aria-hidden="true" size={17} />
-          </ButtonLink>
-          <ButtonLink to="/demo/cellar" variant="ghost">
-            Explore the demo cellar
-          </ButtonLink>
-        </div>
-        <p className="gv-story-privacy">
-          <ShieldCheck aria-hidden="true" size={17} />
-          Personal cellar entries and notes stay behind your signed Flask session.
-        </p>
-      </div>
-    </>
-  );
-}
-
-function DiscoveryChapter() {
-  return (
-    <div className="gv-story-copy gv-story-copy--wide">
-      <p className="gv-story-lede">
-        Start with a meal, grape, region, price, or occasion. GRAPEVYNE sends that
-        description to the current discovery service and takes you to real results.
-      </p>
-      <StorySearch id="discovery-wine-search" label="Describe the moment" />
-      <div aria-label="Example discovery searches" className="gv-story-chips">
-        {discoveryPrompts.map((prompt) => (
-          <a href={discoverHref(prompt)} key={prompt}>
-            {prompt}
-            <ArrowRight aria-hidden="true" size={14} />
-          </a>
-        ))}
-      </div>
-      <p className="gv-story-disclosure">
-        These examples are search shortcuts, not wine results or availability claims.
-      </p>
+      <img
+        alt=""
+        className="gv-story-fallback-subject gv-story-fallback-subject--grapes"
+        data-subject-chapter="discovery"
+        src={STORY_SUBJECT_FALLBACK_PATHS.grapes}
+      />
     </div>
   );
 }
-
-function MatchChapter() {
-  return (
-    <div className="gv-story-copy gv-story-copy--split">
-      <div>
-        <p className="gv-story-kicker">Explainable match reasoning</p>
-        <p className="gv-story-lede">
-          Why a bottle fits should be as clear as the recommendation itself.
-        </p>
-        <p>
-          The implemented engine parses controlled request clues and scores sourced
-          catalog evidence across pairing, style, budget, occasion, source confidence,
-          discovery balance, and optional aggregate cellar signals.
-        </p>
-        <p className="gv-story-disclosure">
-          Results stay request-only until at least three meaningful cellar signals exist
-          across two sourced bottles. Every available point remains visible on Discover.
-        </p>
-      </div>
-      <ul className="gv-match-signals">
-        {matchDimensions.map((dimension) => (
-          <li key={dimension}>
-            <span aria-hidden="true" />
-            {dimension}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function TasteChapter() {
-  return (
-    <div className="gv-story-copy gv-story-copy--taste">
-      <p className="gv-story-lede">
-        Your Taste Atlas begins with bottles you actually taste, rate, favorite, or
-        mark for another pour. Persisted behavior—not account demographics—forms each branch.
-      </p>
-      <div aria-label="Illustrative taste vocabulary" className="gv-taste-orbit">
-        {tasteSignals.map((signal) => (
-          <span key={signal}>{signal}</span>
-        ))}
-      </div>
-      <p className="gv-story-disclosure">
-        This public vocabulary remains illustrative. Your protected Profile derives
-        its own deterministic signals from your private cellar.
-      </p>
-    </div>
-  );
-}
-
-function PortalChapter() {
-  return (
-    <div className="gv-story-copy gv-story-copy--portal">
-      <p className="gv-story-lede">
-        Keep saved bottles, ratings, occasions, favorites, tasting dates, pairings,
-        and private memories tied to your account—not to this marketing page.
-      </p>
-      <div className="gv-story-actions">
-        <AuthCellarAction />
-        <ButtonLink to="/demo/cellar" variant="ghost">
-          Explore the demo cellar
-        </ButtonLink>
-      </div>
-      <p className="gv-story-privacy">
-        <LockKeyhole aria-hidden="true" size={17} />
-        The real cellar remains a protected route.
-      </p>
-    </div>
-  );
-}
-
-function CellarChapter() {
-  return (
-    <div className="gv-story-copy gv-story-copy--wide">
-      <p className="gv-story-lede">
-        Build a collection on the protected cellar route, where every edit is
-        confirmed by the owner-scoped API.
-      </p>
-      <ul className="gv-cellar-capabilities">
-        {cellarCapabilities.map((capability) => (
-          <li key={capability}>
-            <Check aria-hidden="true" size={17} />
-            {capability}
-          </li>
-        ))}
-      </ul>
-      <div className="gv-story-actions">
-        <AuthCellarAction />
-        <ButtonLink to="/demo/cellar" variant="ghost">
-          See a read-only demonstration
-        </ButtonLink>
-      </div>
-      <p className="gv-story-disclosure">
-        Saving, editing, rating, favoriting, and deleting happen only in the real
-        authenticated product experience.
-      </p>
-    </div>
-  );
-}
-
-function MemoryChapter() {
-  return (
-    <div className="gv-story-copy gv-story-copy--memory">
-      <article className="gv-memory-card" aria-labelledby="demo-memory-title">
-        <p className="gv-story-kicker">Demonstration tasting memory</p>
-        <h3 id="demo-memory-title">CELEBRATION DINNER</h3>
-        <p>Blackberry and cedar opened after twenty minutes.</p>
-        <dl>
-          <div>
-            <dt>Rating</dt>
-            <dd>4 out of 5</dd>
-          </div>
-          <div>
-            <dt>Favorite</dt>
-            <dd>Yes</dd>
-          </div>
-          <div>
-            <dt>Status</dt>
-            <dd>Tasted</dd>
-          </div>
-        </dl>
-        <p className="gv-story-disclosure">
-          Fictional example—not connected to the current visitor or an account.
-        </p>
-      </article>
-    </div>
-  );
-}
-
-function AtlasChapter() {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  return (
-    <div className="gv-story-copy gv-story-copy--atlas">
-      <p className="gv-story-lede">
-        Your taste is not a score. It is a story that becomes clearer with every
-        bottle.
-      </p>
-      <div
-        aria-label="Demonstration of taste preference clusters"
-        className="gv-atlas-demo"
-        role="group"
-      >
-        <span>Fresh &amp; mineral</span>
-        <span>Silky reds</span>
-        <span>Curious pours</span>
-      </div>
-      <p className="gv-story-disclosure">
-        Demonstration only. The protected Profile route now provides an accessible,
-        owner-scoped Taste Atlas grounded in the signed-in user’s recorded cellar history.
-      </p>
-      <div className="gv-story-actions">
-        <ButtonLink to="/demo/taste-atlas" variant="secondary">
-          Explore the demo Taste Atlas
-        </ButtonLink>
-        {!isLoading && isAuthenticated ? (
-          <ButtonLink to="/profile" variant="ghost">
-            View my profile
-          </ButtonLink>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function FinaleChapter() {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  return (
-    <div className="gv-story-copy gv-story-copy--finale">
-      <BrandLockup className="gv-story-wordmark" />
-      <p className="gv-story-lede">
-        Search with a moment in mind, then keep the bottles that deserve another pour.
-      </p>
-      <div className="gv-story-actions gv-story-actions--finale">
-        <AuthCellarAction finale />
-        <ButtonLink to="/demo/cellar" variant="secondary">
-          Explore the demo
-        </ButtonLink>
-        {!isLoading && !isAuthenticated ? (
-          <ButtonLink to="/login" variant="ghost">
-            Sign in
-          </ButtonLink>
-        ) : null}
-        <a
-          className="gv-button gv-button--ghost"
-          href="https://github.com/JPrevilon/GRAPEVYNE"
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          <span>
-            View source
-            <ExternalLink aria-hidden="true" size={16} />
-          </span>
-        </a>
-      </div>
-      <details className="gv-under-cork">
-        <summary>Under the Cork</summary>
-        <div>
-          <p>
-            The current product uses React, TypeScript, Vite, Flask, PostgreSQL,
-            Flask session authentication, React Query, and owner-scoped cellar CRUD.
-          </p>
-          <p>
-            This homepage adds GSAP and Lenis choreography with reduced-motion,
-            accessible navigation, responsive final media, and a persistent React Three
-            Fiber WebGL bottle built from local desktop and mobile GLB models. Capability
-            checks and reduced-motion preferences retain the CSS bottle fallback when
-            needed. Persisted private tasting memories now support a deterministic,
-            owner-scoped Taste Profile and accessible Taste Atlas, while Discover uses
-            the existing explainable recommendation engine.
-          </p>
-        </div>
-      </details>
-    </div>
-  );
-}
-
-const chapterBodies: Record<StoryChapter, () => ReactNode> = {
-  atlas: AtlasChapter,
-  cellar: CellarChapter,
-  discovery: DiscoveryChapter,
-  finale: FinaleChapter,
-  hero: HeroChapter,
-  match: MatchChapter,
-  memory: MemoryChapter,
-  portal: PortalChapter,
-  taste: TasteChapter,
-};
-
-const pinnedChapters = new Set<StoryChapter>([
-  "hero",
-  "match",
-  "portal",
-  "memory",
-  "atlas",
-]);
-
-const chapterMedia: Partial<Record<StoryChapter, MediaKey>> = {
-  atlas: "atlas",
-  hero: "hero",
-  memory: "memory",
-  portal: "cellar",
-  taste: "liquid",
-};
 
 export default function HomePage() {
   const storyRef = useRef<HTMLDivElement>(null);
+  const inspectButtonRef = useRef<HTMLButtonElement | null>(null);
   const [webglReady, setWebglReady] = useState(false);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const { currentChapterId } = useScene();
+  const { reason: staticReason, staticMode } = useStoryStaticMode();
+  const handleInspect = useCallback((event: MouseEvent<HTMLButtonElement>) => {
+    inspectButtonRef.current = event.currentTarget;
+    setInspectorOpen(true);
+  }, []);
+  const handleInspectorClose = useCallback(() => {
+    setInspectorOpen(false);
+  }, []);
   useScrollStory(storyRef);
 
   return (
     <div
-      className={`gv-story${webglReady ? " gv-story--webgl-ready" : ""}`}
+      className={`gv-story${webglReady ? " gv-story--webgl-ready" : ""}${staticMode ? " gv-story--static" : ""}`}
+      data-story-mode={staticReason ?? "scrub"}
       ref={storyRef}
     >
-      <ChapterProgress />
-      <WebGLExperience onReadyChange={setWebglReady} />
-      {STORY_CHAPTERS.map((chapter) => {
-        const ChapterBody = chapterBodies[chapter.key];
-        const mediaKey = chapterMedia[chapter.key];
+      {!staticMode ? (
+        <div aria-hidden="true" className="gv-story-stage" data-story-stage>
+          <StoryMediaStack />
+          <StoryFallbackSubjects currentChapter={currentChapterId} hidden={webglReady} />
+          <WebGLExperience onReadyChange={setWebglReady} />
+          <div className="gv-story-stage__grain" />
+        </div>
+      ) : null}
 
-        return (
+      <ChapterProgress />
+
+      <div className="gv-story-track" data-story-track>
+        {STORY_CHAPTERS.map((chapter) => (
           <section
             aria-labelledby={`${chapter.anchorId}-title`}
-            className={`gv-story-chapter gv-story-chapter--${chapter.key}`}
+            className={`gv-story-chapter gv-story-chapter--${chapter.key}${currentChapterId === chapter.key ? " is-active" : ""}`}
             data-story-chapter={chapter.key}
-            data-story-pin={pinnedChapters.has(chapter.key) || undefined}
             id={chapter.anchorId}
             key={chapter.key}
           >
-            {mediaKey ? <ChapterMedia mediaKey={mediaKey} /> : null}
-            <div className="gv-story-chapter__inner">
-              <ChapterHeading chapter={chapter} />
-              <ChapterBody />
+            <div className="gv-story-chapter__panel">
+              {staticMode ? <StaticChapterVisual chapter={chapter} /> : null}
+              <div className="gv-story-chapter__content">
+                <ChapterHeading chapter={chapter} />
+                <p className="gv-story-supporting-line">{chapter.supportingLine}</p>
+                <ChapterBody
+                  chapter={chapter.key}
+                  onInspect={handleInspect}
+                />
+              </div>
             </div>
           </section>
-        );
-      })}
+        ))}
+      </div>
+
+      {inspectorOpen ? (
+        <Suspense fallback={<span className="gv-visually-hidden">Loading bottle viewer…</span>}>
+          <LazyBottleInspectorModal
+            onClose={handleInspectorClose}
+            returnFocus={inspectButtonRef.current}
+          />
+        </Suspense>
+      ) : null}
     </div>
   );
 }

@@ -1255,7 +1255,8 @@ h2 em {
   .gv-natural-search__control .gv-button { grid-column: 1 / -1; width: 100%; }
   .gv-nav__search,
   .gv-nav__login,
-  .gv-nav__signup { display: none; }
+  .gv-nav__signup,
+  .gv-nav__session-status { display: none; }
   .gv-footer { grid-template-columns: 1fr; justify-items: start; }
   .gv-footer p { text-align: left; }
 }

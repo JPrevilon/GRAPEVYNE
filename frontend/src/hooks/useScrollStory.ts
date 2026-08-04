@@ -179,8 +179,14 @@ export function useScrollStory(
 
     let activeChapter: StoryChapter | undefined;
     let disposed = false;
+    let hashFrame: number | undefined;
     let runtimeGeneration = 0;
     let stopRuntime: Cleanup = noop;
+
+    const scrollSectionNatively = ({ element }: StorySection) => {
+      element.scrollIntoView({ block: "start" });
+    };
+    let scrollToSection = scrollSectionNatively;
 
     const setStoryProgress = (progress: number) => {
       sceneProgress.story = clampProgress(progress);
@@ -188,6 +194,7 @@ export function useScrollStory(
         STORY_PROGRESS_PROPERTY,
         formatProgress(sceneProgress.story),
       );
+      sceneProgress.requestStoryFrame?.();
     };
 
     const setChapterProgress = (progress: number) => {
@@ -196,12 +203,14 @@ export function useScrollStory(
         CHAPTER_PROGRESS_PROPERTY,
         formatProgress(sceneProgress.chapter),
       );
+      sceneProgress.requestStoryFrame?.();
     };
 
     const setStoryVisible = (visible: boolean) => {
       if (sceneProgress.storyVisible === visible) return;
       sceneProgress.storyVisible = visible;
       sceneProgress.setRenderActivity?.(visible);
+      sceneProgress.requestStoryFrame?.();
     };
 
     const setSmoothingActive = (active: boolean) => {
@@ -335,14 +344,32 @@ export function useScrollStory(
         let gsapMedia: ReturnType<typeof gsap.matchMedia> | undefined;
         let gsapContext: ReturnType<typeof gsap.context> | undefined;
 
-        const createMatchedRuntime = (): Cleanup => {
+          const createMatchedRuntime = (): Cleanup => {
           type OwnedTrigger = ReturnType<typeof ScrollTrigger.create>;
 
           const ownedTriggers = new Set<OwnedTrigger>();
           let lenis: InstanceType<typeof Lenis> | undefined;
           let tickerCallback: ((time: number) => void) | undefined;
-          let ownsTicker = false;
-          let lenisScrollCallback: (() => void) | undefined;
+            let ownsTicker = false;
+            let lenisScrollCallback: (() => void) | undefined;
+            const scrollWithLenis = (section: StorySection) => {
+              const bounds = section.element.getBoundingClientRect();
+              const scrollMargin = Number.parseFloat(
+                getComputedStyle(section.element).scrollMarginTop || "0",
+              );
+              const target = Math.max(
+                0,
+                window.scrollY + bounds.top -
+                  (Number.isFinite(scrollMargin) ? scrollMargin : 0),
+              );
+
+              // A direct hash can arrive before Lenis has observed the final
+              // story height under a busy startup. Refresh its limit and use
+              // an absolute coordinate so a stale animated-scroll value cannot
+              // misplace later history jumps.
+              lenis?.resize();
+              lenis?.scrollTo(target, { force: true, immediate: true });
+            };
 
           const cleanup = once(() => {
             if (tickerCallback) {
@@ -365,6 +392,10 @@ export function useScrollStory(
 
             lenis?.destroy();
             lenis = undefined;
+
+            if (scrollToSection === scrollWithLenis) {
+              scrollToSection = scrollSectionNatively;
+            }
 
             ownedTriggers.forEach((trigger) => trigger.kill(true));
             ownedTriggers.clear();
@@ -398,6 +429,7 @@ export function useScrollStory(
             gsap.ticker.add(tickerCallback);
             activeStoryTickerOwners += 1;
             ownsTicker = true;
+            scrollToSection = scrollWithLenis;
             setSmoothingActive(true);
 
             own(
@@ -529,6 +561,10 @@ export function useScrollStory(
         }
 
         stopRuntime = cleanup;
+        // The initial native anchor restoration can be superseded when Lenis
+        // starts from its own scroll state. Re-apply it through the runtime
+        // that now owns scrolling so direct chapter URLs remain stable.
+        syncHashTarget();
 
         const fontSet = document.fonts;
 
@@ -540,6 +576,7 @@ export function useScrollStory(
               stopRuntime === cleanup
             ) {
               ScrollTrigger.refresh();
+              syncHashTarget();
             }
           });
         }
@@ -570,6 +607,31 @@ export function useScrollStory(
       void startDesktopRuntime(generation);
     };
 
+    const syncHashTarget = () => {
+      if (!window.location.hash) return;
+
+      let anchorId: string;
+      try {
+        anchorId = decodeURIComponent(window.location.hash.slice(1));
+      } catch {
+        return;
+      }
+
+      const target = sections.find(({ element }) => element.id === anchorId);
+      if (!target) return;
+
+      if (hashFrame !== undefined) {
+        window.cancelAnimationFrame(hashFrame);
+      }
+      hashFrame = window.requestAnimationFrame(() => {
+        hashFrame = undefined;
+        if (disposed) return;
+        scrollToSection(target);
+        activateChapter(target.chapter);
+        syncNativeMetrics(target);
+      });
+    };
+
     documentElement.classList.add(STORY_CLASS);
     setHomepageActive(true);
     setStoryVisible(true);
@@ -582,13 +644,20 @@ export function useScrollStory(
 
     mobileQuery?.addEventListener("change", restartRuntime);
     coarsePointerQuery?.addEventListener("change", restartRuntime);
+    window.addEventListener("hashchange", syncHashTarget);
     restartRuntime();
+    syncHashTarget();
 
     return () => {
       disposed = true;
       runtimeGeneration += 1;
       mobileQuery?.removeEventListener("change", restartRuntime);
       coarsePointerQuery?.removeEventListener("change", restartRuntime);
+      window.removeEventListener("hashchange", syncHashTarget);
+      if (hashFrame !== undefined) {
+        window.cancelAnimationFrame(hashFrame);
+        hashFrame = undefined;
+      }
       stopRuntime();
       stopRuntime = noop;
       setSmoothingActive(false);

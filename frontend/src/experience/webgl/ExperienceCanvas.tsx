@@ -65,10 +65,21 @@ function RendererLifecycle({
     };
 
     const syncRenderActivity = (
-      storyVisible = sceneProgress?.storyVisible ?? true,
+      renderActive = sceneProgress?.storyVisible ?? true,
     ) => {
-      if (document.hidden || contextLost.current || !storyVisible) {
+      if (
+        document.hidden ||
+        contextLost.current ||
+        sceneProgress?.storyVisible === false
+      ) {
         setFrameloop("never");
+      } else if (!renderActive) {
+        // Paint one final projected frame before sleeping. StoryMediaStack
+        // updates the shared progress/subject state and requests inactivity in
+        // the same browser frame; stopping immediately would leave the prior
+        // bottle or grape frozen over a subject-free chapter.
+        setFrameloop("demand");
+        invalidate();
       } else {
         setFrameloop("always");
         invalidate();

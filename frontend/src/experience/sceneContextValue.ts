@@ -9,6 +9,7 @@ import type { StoryChapter } from "./storyChapters";
 
 export interface SceneProgress {
   chapter: number;
+  requestStoryFrame?: () => void;
   setRenderActivity?: (active: boolean) => void;
   story: number;
   storyVisible: boolean;

@@ -5,6 +5,20 @@ export const BOTTLE_MODEL_PATHS: Record<WebGLQualityTier, string> = {
   standard: "/assets/models/grapevyne-master-bottle-mobile.glb",
 };
 
+export const MESHY_BOTTLE_MODEL_PATHS: Record<WebGLQualityTier, string> = {
+  high: "/assets/models/grapevyne-meshy-bottle.desktop.glb",
+  standard: "/assets/models/grapevyne-meshy-bottle.mobile.glb",
+};
+
+export const MESHY_GRAPE_MODEL_PATHS: Record<WebGLQualityTier, string> = {
+  high: "/assets/models/grapevyne-meshy-grapes.desktop.glb",
+  standard: "/assets/models/grapevyne-meshy-grapes.mobile.glb",
+};
+
+export const STORY_SUBJECT_FALLBACK_PATHS = {
+  grapes: "/assets/models/fallbacks/grapevyne-meshy-grapes.png",
+} as const;
+
 export type BottleLabelFamily = "red" | "white" | "sparkling" | "rose";
 
 export const BOTTLE_LABEL_PATHS: Record<BottleLabelFamily, string> = {
