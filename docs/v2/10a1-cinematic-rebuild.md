@@ -6,14 +6,12 @@ This is the implementation report for Prompt 10A1R on
 `feat/grapevyne-cinematic-v2`, based on accepted commit
 `b99dd6d8bc75f97f3047ba71c3c92b9f34df9c0f`.
 
-**Current verdict: PENDING FINAL RELEASE GATES.** The fixed-stage rebuild, media
-pipeline, conditional Meshy subjects, static fallbacks, compact navigation, and
-interactive bottle viewer are implemented in the working tree. The final local
-frontend, backend, browser, accessibility, deterministic-visual, performance,
-and evidence gates are complete. GitHub-hosted checks, a SHA-bound Vercel
-Preview, hosted session/privacy checks, and deployment logs must still complete
-before this report may be changed to PASS. No Production deployment or PR merge
-is claimed.
+**Current verdict: PASS.** The fixed-stage rebuild, media pipeline, conditional
+Meshy subjects, static fallbacks, compact navigation, and interactive bottle
+viewer passed the final local matrix, all five GitHub Actions jobs, GitGuardian,
+and the protected SHA-bound Vercel Preview matrix. The verified app-bearing
+release SHA is `9828c3185807e21c3e272b8fa465f897225ff5b1`. PR #1 remains open
+and unmerged, and Production remains untouched.
 
 Prompt 10A1R replaces the older Prompt 10A1. Prompt 10B is outside this report.
 
@@ -24,12 +22,11 @@ one restrained cinematic stage driven by a nine-step semantic scroll track.
 The homepage now gives media, negative space, and one permitted 3D subject visual
 priority. Copy and actions follow the locked minimal-content ceiling.
 
-The final local Chromium matrix and checked-in evidence show the intended hero,
+The final local and hosted Chromium matrices and checked-in evidence show the intended hero,
 vineyard/grape, subject-free, transition, static-fallback, mobile, and
 bottle-inspector compositions. The local visual verdict is PASS, including the
 regression that every settled subject-free chapter clears any preceding WebGL
-subject frame. Final release acceptance remains pending the new hosted Preview
-review and its exact-SHA checks.
+subject frame. The protected Preview review and exact-SHA checks also passed.
 
 ## 2. Before and after architecture
 
@@ -175,9 +172,8 @@ Localized source cleanup is recorded rather than hidden: the barrel-house
 mobile center bottle and ocean-voyage glyphs were removed with narrowly scoped,
 tracked masks. The approximately 4:3 ocean desktop source keeps its complete
 foreground frame over restrained ambient side fill rather than using a
-destructive center crop. Final local browser evidence confirms clean settled
-barrel-house and ocean-voyage compositions with no leaked 3D subject; hosted
-media delivery remains part of the Preview release gate.
+destructive center crop. Final local and hosted browser evidence confirms clean
+settled barrel-house and ocean-voyage compositions with no leaked 3D subject.
 
 ## 6. Meshy model provenance and optimization
 
@@ -249,9 +245,9 @@ story canvas. It provides:
 
 Local Chromium coverage passed pointer/touch behavior, focus containment,
 scroll lock, RESET VIEW, and exact-label readability from front, quarter, and
-side angles at desktop and mobile sizes. Hosted re-attestation is still part of
-the Preview release gate; physical iOS Safari and assistive-technology checks
-remain recommended device follow-ups.
+side angles at desktop and mobile sizes. Hosted re-attestation also passed;
+physical iOS Safari and assistive-technology checks remain recommended device
+follow-ups.
 
 ## 8. Text, controls, and navigation reductions
 
@@ -335,15 +331,15 @@ recommendation weights, limited-catalog disclosures, free-form-memory privacy,
 and Preview-only Neon isolation remain unchanged.
 
 The prior one-origin Vercel topology remains static SPA assets plus `/api` and
-`/api/*` rewrites to the existing Flask function. Prompt 10A1R must deploy only
-to the already linked Vercel project's Preview target and use the existing
+`/api/*` rewrites to the existing Flask function. Prompt 10A1R deployed only to
+the already linked Vercel project's Preview target and used the existing
 Preview-only Neon `grapevyne-preview` resource in `iad1`.
 
 ## 11. Implementation files
 
-This local working-tree inventory is relative to accepted commit `b99dd6d8…`.
-The release step must re-attest it against the final commit SHA; hosted evidence
-and deployment identifiers are intentionally not present yet.
+This implementation inventory is relative to accepted commit `b99dd6d8…` and
+was re-attested at app-bearing release SHA `9828c318…`. The report-only closeout
+changes only this document.
 
 ### Added implementation and tests
 
@@ -366,6 +362,7 @@ frontend/src/hooks/useStoryStaticMode.ts
 ### Modified implementation and tests
 
 ```text
+backend/tests/test_deployment_contract.py
 frontend/e2e/helpers/browser.ts
 frontend/e2e/hosted-preview.spec.ts
 frontend/e2e/modes-and-failures.spec.ts
@@ -394,6 +391,7 @@ frontend/src/pages/HomePage.test.tsx
 frontend/src/pages/HomePage.tsx
 frontend/src/styles/design-system.css
 frontend/src/styles/scroll-story.css
+vercel.json
 ```
 
 ### Deleted obsolete implementation
@@ -431,9 +429,9 @@ exact generated-asset path, byte count, hash, and derivation.
 
 ## 12. Automated gate ledger
 
-The local Prompt 10A1R matrix is complete and green except for the explicitly
-hosted PostgreSQL stage. These results describe the final local working tree;
-the release commit still requires GitHub and Vercel SHA-bound re-attestation.
+The Prompt 10A1R local, GitHub-hosted, and protected-Preview matrices are
+complete and green for app-bearing release SHA
+`9828c3185807e21c3e272b8fa465f897225ff5b1`.
 
 | Gate | Current evidence | Final status |
 | --- | --- | --- |
@@ -449,7 +447,7 @@ the release commit still requires GitHub and Vercel SHA-bound re-attestation.
 | Backend dependency/compile/unit | Python 3.12.12 disposable environment: `pip check` pass, `compileall` pass, 310 passed / 3 opt-in PostgreSQL skips | **PASS** for supported local stages |
 | Python security | `pip-audit` 0 findings; Bandit 0 medium/high and 4 low findings | **PASS** under the existing low-finding policy |
 | SQLite Alembic | heads/upgrade/current/check passed at `0002_prompt08_cellar_memories`; 7 migration tests passed | **PASS** |
-| PostgreSQL migration stage | No safe local test database and Docker unavailable; 3 PostgreSQL tests skipped | **BLOCKED LOCALLY; GitHub-hosted PostgreSQL job required** |
+| PostgreSQL migration stage | No safe local test database and Docker unavailable; 3 local tests skipped; the required GitHub-hosted PostgreSQL job completed | **PASS in CI** |
 | Flask route inventory | 14 API endpoints plus the existing static SPA route, unchanged | Verified read-only |
 | `git diff --check` | No whitespace errors | **PASS** |
 | Frontend `npm audit` | 2 moderate vulnerable packages (`react-router`, `react-router-dom`), representing 3 advisory records; no fix available; 0 high/critical | Recorded risk; expected exit 1 |
@@ -459,12 +457,18 @@ the release commit still requires GitHub and Vercel SHA-bound re-attestation.
 | Axe accessibility | 1 passed | **PASS** |
 | Deterministic visual suite | 1 strict comparison passed after the three intentional baseline updates | **PASS** |
 | Performance suite | 5/5 passed; no long tasks; detailed samples below | **PASS** |
-| GitHub Actions | No Prompt 10A1R release-commit run recorded yet | **PENDING** |
-| Vercel Preview/hosted contract | No new Prompt 10A1R Preview ID or URL recorded yet | **PENDING** |
+| GitHub Actions | Run [30890320050](https://github.com/JPrevilon/GRAPEVYNE/actions/runs/30890320050): all 5 jobs succeeded, including PostgreSQL, Chromium, and cross-browser; GitGuardian also succeeded | **PASS** |
+| Hosted cinematic | 9 passed / 18 intentionally project-skipped | **PASS** |
+| Hosted primary contract | 18 passed / 36 intentionally project-skipped; guarded database cleanup passed | **PASS** |
+| Hosted cross-browser | 5 passed / 4 intentionally project-skipped | **PASS** |
+| Hosted Axe | 1 passed | **PASS** |
+| Hosted performance | 5/5 passed; no long tasks; detailed samples below | **PASS** |
+| Vercel Preview/hosted contract | Deployment `dpl_FCKZL3hbmiyj9ETZaxehvMeiCkEj`, READY, Preview, exact source SHA, protected | **PASS** |
 
 The repository's existing `.venv` uses unsupported Python 3.14.3 and was not
 used for the backend run. The supported disposable environment used
-Python 3.12.12. No database was mutated.
+Python 3.12.12. No local database was mutated; disposable hosted records were
+removed by guarded cleanup after every hosted runner.
 
 ## 13. Bundle and performance report
 
@@ -480,7 +484,7 @@ The final local production build and bundle-contract run reported:
 | Cellar route JS | 28,260 | 9,038 | Within budget |
 | Taste Profile route JS | 10,135 | 3,686 | Within budget |
 | Lazy `ExperienceCanvas` entry | 6,422 | 2,647 | Within the lazy-entry budget |
-| Lazy bottle inspector | 20.23 kB | 6.85 kB | Home-only optional import |
+| Lazy bottle inspector | 20,230 | 6,850 | Home-only optional import |
 | Optional shared Meshy/Three graph | 897.41 kB | 243.65 kB | Home-only; expected Vite >500 kB warning |
 
 Current model payloads are 3,954,456/
@@ -502,9 +506,18 @@ A supplemental production-mode frame sample measured approximately 89.97 FPS
 at desktop size and 117.29 FPS at mobile size. Chromium contracts also passed
 forward/reverse seek stability, stopped-frame hold, route/device cleanup,
 repeated story entry, and zero heavy story-video/GLB requests in reduced-motion,
-Save-Data, and disabled-WebGL modes. Hosted cache/transfer behavior, protected
-session paths, and runtime logs still require the Preview release run; physical
-device memory and thermals are explicitly outside the local automation claim.
+Save-Data, and disabled-WebGL modes.
+
+Five protected-Preview performance runs also passed. Semantic Hero timing was
+`[281.3, 282.2, 696.1, 320.5, 322.1]` ms; LCP was
+`[388, 360, 848, 468, 500]` ms; and CLS was
+`[0.0013893775, 0.0012998923, 0.0012998923, 0.0012998923, 0.0012998923]`.
+Request counts were `[23, 23, 23, 23, 24]`; transfer totals were
+`[4,733,226, 1,128,746, 1,128,746, 5,289,982, 4,744,867]` bytes. No long task
+was observed. The hosted browser exposed only software-fallback rendering, so
+its WebGL renderer value was `null`; the FPS figures above are explicitly local
+hardware samples. Physical-device memory and thermals remain outside the
+automated claim.
 
 ## 14. Browser, accessibility, and visual evidence matrix
 
@@ -540,10 +553,10 @@ included in that visual-payload digest.
 | Save-Data fallback | `local-public/save-data-fallback-hero-{desktop-1440x900,mobile-390x844}.png` — PASS |
 | WebGL/model-failure fallback | `local-public/webgl-unavailable-css-fallback-desktop-1440x900.png` — PASS |
 | Discover route | `product-regressions/discover-route-regression.png` plus `local-public/discover-route-public-desktop-1440x900.png` — PASS locally |
-| Authenticated Cellar | `product-regressions/authenticated-cellar-regression.png` — PASS locally; hosted owner-isolation recheck pending |
-| Active Taste Profile | `product-regressions/active-taste-profile-regression.png` — PASS locally; hosted private-data recheck pending |
+| Authenticated Cellar | `product-regressions/authenticated-cellar-regression.png` — PASS locally and hosted, including owner isolation and cleanup |
+| Active Taste Profile | `product-regressions/active-taste-profile-regression.png` — PASS locally and hosted, including private-data isolation |
 | Source-versus-production model renders | Four `model-comparisons/*-source-vs-production.png` captures — PASS |
-| After-state walkthrough | `local-public/after-state-public-walkthrough-desktop.webm` — local capture complete; hosted replacement pending |
+| After-state walkthrough | `local-public/after-state-public-walkthrough-desktop.webm` — local capture complete; the hosted capture attempt produced a zero-byte artifact, which was removed rather than misrepresented |
 
 The passing Chromium matrix exercised 1440×900, 1920×1080, 768×1024,
 1024×768, 360×800, 390×844, and 430×932, plus desktop/mobile
@@ -552,6 +565,11 @@ errors, failed resources, horizontal overflow, touch/native scrolling, viewer
 scroll lock, forward/reverse scrubbing, stopped-frame hold, direct hashes,
 history navigation, device-source replacement, and subject exclusivity. Strict
 visual comparison, Axe, and Firefox/WebKit smoke also passed.
+
+The protected Preview independently passed 9 cinematic tests, 18 primary
+contract tests, 5 cross-browser smoke tests, 1 Axe test, and 5 performance runs.
+The missing hosted walkthrough video is a capture-tool limitation, not a missing
+functional gate; the local walkthrough remains the checked-in visual record.
 
 Physical VoiceOver/NVDA and physical iOS Safari touch testing remain recommended
 device checks; automated Axe and desktop/mobile WebKit are not represented as
@@ -564,44 +582,65 @@ verdict.
 | --- | --- |
 | Branch | `feat/grapevyne-cinematic-v2` |
 | Accepted base | `b99dd6d8bc75f97f3047ba71c3c92b9f34df9c0f` |
-| Commit hash(es) | **PENDING** focused commits |
-| Pull request | Existing PR #1; must remain open and unmerged — final status **PENDING** recheck |
-| GitHub Actions run | **PENDING** URL, run ID, exact SHA, jobs, and conclusions |
+| Focused commits | `d30a2e3` media; `75f12ba` cinematic story; `1f4d351` tests/evidence; `9828c31` CSP fix |
+| App-bearing release SHA | `9828c3185807e21c3e272b8fa465f897225ff5b1` |
+| Pull request | Existing PR #1 rechecked **OPEN and unmerged** |
+| GitHub Actions run | [30890320050](https://github.com/JPrevilon/GRAPEVYNE/actions/runs/30890320050), exact release SHA, all 5 jobs succeeded; GitGuardian succeeded |
 | Vercel target | Preview only |
-| New immutable Preview URL | **PENDING** |
-| Stable branch Preview URL | **PENDING** re-attestation |
-| Deployment ID | **PENDING** |
-| Deployment source SHA | **PENDING** exact match |
-| Deployment Protection | Must remain enabled; **PENDING** re-attestation |
-| Database | Existing Preview-only Neon `grapevyne-preview`, `free_v3`, `iad1`; **PENDING** hosted sentinel re-attestation |
-| Production | Must remain untouched; **PENDING** final read-only proof |
+| Verified immutable Preview | `https://grapevyne-mt7kuq2rh-joshuaprevilon13-7141s-projects.vercel.app` |
+| Stable branch Preview | `https://grapevyne-joshuaprevilon13-7141-joshuaprevilon13-7141s-projects.vercel.app` |
+| Deployment ID/status/region | `dpl_FCKZL3hbmiyj9ETZaxehvMeiCkEj`; READY; `iad1` |
+| Deployment source SHA | Exact match: `9828c3185807e21c3e272b8fa465f897225ff5b1` |
+| Deployment Protection | Vercel SSO enabled with `all_except_custom_domains`; one pre-existing automation bypass remains |
+| Database | Preview-only Neon `grapevyne-preview`, `free_v3`, `iad1`; health sentinel `grapevyne-preview-neon-iad1` |
+| Production | Untouched: `dpl_Apcw8QS6Q3LHuPFP7P8WYkBp2t4X`, source `4e58cac57d2e114f4d1b6626b3085b7a51e8741b`, target Production |
 
 The accepted Prompt 10A Preview described in
 [`10a-hosted-preview-report.md`](10a-hosted-preview-report.md) is prior-state
-evidence only. It must not be reported as the Prompt 10A1R deployment.
+evidence only; the deployment above is the Prompt 10A1R result.
 
-Hosted completion requires exact-SHA deployment inspection, `/api/health`,
-signed-session signup/login/refresh/logout, exact-origin and rejected-origin
-CORS/CSRF behavior, private cache headers, owner-isolated Cellar CRUD, Taste
-Profile privacy, recommendation behavior, guarded disposable-account cleanup,
-missing-asset/5xx checks, and final build/runtime logs. Credentials, cookies,
-database URLs, tokens, and protection bypass values must remain redacted.
+`/api/health` returned 200 with environment `preview`, `databaseVerified: true`,
+and sentinel `grapevyne-preview-neon-iad1`. Hosted tests passed signed-session
+signup/login/refresh/logout, exact-origin acceptance, rejected-origin CORS/CSRF,
+private cache headers, owner-isolated Cellar CRUD, Taste Profile privacy,
+recommendation behavior, missing assets, and guarded disposable-account
+cleanup. Temporary credentials and transient protection bypasses used by the
+runner were removed; the single remaining bypass predates this release.
 
-## 16. Risks and remaining work
+Runtime-log status totals were 111 responses at 200, 86 at 401, 16 at 201,
+3 at 404, 2 at 403, and 1 at 409. The non-2xx responses matched intentional
+authentication, missing-resource, CSRF, and consistency-precondition probes.
+There were no error/fatal records and no 5xx response.
 
-- The 44 new media files total 283.37 MB. Runtime loading is bounded, but Vercel
-  upload/build limits and hosted cache behavior require actual Preview proof.
+The first candidate deployment exposed a real CSP failure: `connect-src`
+blocked the `blob:` URLs used for embedded model textures. Commit `9828c31`
+updated `vercel.json` to permit `connect-src 'self' blob:` and added the matching
+assertion to `backend/tests/test_deployment_contract.py`. The exact checks that
+failed on the candidate passed on deployment `dpl_FCKZL3hbmiyj9ETZaxehvMeiCkEj`.
+
+This report is necessarily closed in a report-only commit after the verified
+app-bearing SHA and deployment exist. That report-only commit hash, and any
+automatic documentation-only Preview coordinates it causes, belong in the final
+handoff to avoid a self-referential SHA/deployment claim. The application proof
+above remains bound to `9828c3185807e21c3e272b8fa465f897225ff5b1`.
+
+## 16. Residual risks and follow-ups
+
+- The 44 new media files total 283.37 MB. The Vercel upload/build and protected
+  Preview passed; first-visit cache and transfer cost remain material and should
+  be monitored.
 - The desktop grape is 8,187,568 bytes, below the stated 8 MiB target by a narrow
   margin. Local browser visual quality passed; real-device memory/thermal review
   remains recommended.
 - Production GLBs require native embedded-WebP support. No decoder fallback is
   added; the CSS/static experience is the failure path.
 - The stale-subject demand-render regression is now covered by real WebGL
-  clear/draw probing, the passing bidirectional story suite, and settled NONE
-  chapter evidence. It remains an important hosted regression check rather than
-  an unresolved local defect.
+  clear/draw probing, passing local/hosted story suites, and settled NONE chapter
+  evidence. It remains an important future regression check rather than an
+  unresolved defect.
 - Local PostgreSQL migration-stage tests could not run safely without a test
-  PostgreSQL instance or Docker. The GitHub-hosted PostgreSQL job is mandatory.
+  PostgreSQL instance or Docker; the required GitHub-hosted PostgreSQL job
+  passed.
 - The full local accessibility, deterministic-visual, performance, and model
   comparison gates passed. Physical mobile and assistive-technology review is
   still recommended but is outside the automated proof.
@@ -612,15 +651,21 @@ database URLs, tokens, and protection bypass values must remain redacted.
 - Gitleaks retained exactly two previously adjudicated generic-key test-fixture
   findings. They are redacted/non-secret, but their accepted adjudication must
   remain explicit in CI/release records.
-- No broad media or model payload should be assumed cached on first visit;
-  hosted initial/current-adjacent transfer must be measured rather than derived
-  from repository totals.
+- The hosted runner exposed software-fallback WebGL only. Local hardware samples
+  passed, but additional physical-device GPU/memory/thermal review remains a
+  useful follow-up.
+- The project retains one pre-existing Vercel automation bypass. All transient
+  Prompt 10A1R bypasses were revoked; the retained bypass should continue to be
+  governed and periodically reviewed by the project owner.
+- Vercel emitted a Node.js 20 deprecation warning with an October 1 cutoff. A
+  supported runtime upgrade should be scheduled separately; it did not prevent
+  this READY Preview or its hosted validation.
 
 ## 17. Command ledger
 
-The completed local ledger used the following principal commands. The release
-step must append credential-redacted commit/push, CI, Preview, hosted-contract,
-and log-inspection commands without exposing environment values.
+The completed local and hosted ledger used the following principal command
+forms. Environment values, connection strings, auth state, cookies, tokens, and
+protection-bypass secrets remain omitted or redacted.
 
 ```bash
 git status --short --branch
@@ -660,21 +705,31 @@ find docs/screenshots/prompt-10a1/local-public -type f -print ...
 find docs/screenshots/prompt-10a1/product-regressions -type f -print ...
 find docs/screenshots/prompt-10a1/model-comparisons -name '*-source-vs-production.png' -print ...
 shasum -a 256 <sorted-evidence-paths> | shasum -a 256
+git push origin feat/grapevyne-cinematic-v2
+gh pr view 1 ...
+gh run view 30890320050 ...
+vercel inspect dpl_FCKZL3hbmiyj9ETZaxehvMeiCkEj ...
+(cd frontend && npm run test:e2e:hosted-preview)
+(cd frontend && npm run test:e2e:hosted-preview:cross-browser)
+(cd frontend && npm run test:a11y:hosted-preview)
+(cd frontend && npm run test:performance:hosted-preview)
+curl <protected-preview>/api/health ...
+vercel logs <protected-preview> ...
 ```
 
 Browser inspection used the repository's Vercel agent-browser workflow against
 the local Vite server. The npm scripts above expand to the exact Playwright
 projects declared in `package.json`; the Chromium run used desktop, mobile, and
 reduced-motion Chromium, while cross-browser smoke used desktop Firefox,
-desktop WebKit, and mobile WebKit. Final release entries must include
-commit/push/CI inspection, Preview deployment/inspection, the hosted contract
-runner, log checks, and guarded Preview cleanup. Any environment-variable
-values, connection strings, auth state, cookies, tokens, or bypass secrets must
-be replaced by names or `<redacted>`.
+desktop WebKit, and mobile WebKit. The hosted commands used the protected
+Preview URL, exact-SHA deployment inspection, credential-redacted contract
+runners, runtime-log inspection, and guarded Preview-data cleanup.
 
 ## 18. Completion boundary
 
-Do not change this report to PASS until every pending item above is replaced by
-evidence from the final committed SHA and its new protected Vercel Preview. PR #1
-must remain unmerged, Production must remain untouched, and Prompt 10B must not
-begin.
+Prompt 10A1R is complete and PASS for the app-bearing release SHA and protected
+Preview recorded above. PR #1 is open and unmerged, Production is untouched,
+the older Prompt 10A1 was not executed, and Prompt 10B did not begin. The only
+post-proof repository change is this report-only closeout, whose commit and any
+automatic documentation-only Preview are reported in the final handoff rather
+than recursively embedded here.
