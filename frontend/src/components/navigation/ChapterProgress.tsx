@@ -5,7 +5,7 @@ import { STORY_CHAPTERS, getStoryChapter } from "@/experience/storyChapters";
 import { useScene } from "@/experience/useScene";
 
 export default function ChapterProgress() {
-  const { chapterIndex, currentChapterId, setCurrentChapterId } = useScene();
+  const { chapterIndex, currentChapterId, progressRef } = useScene();
   const [open, setOpen] = useState(false);
   const menuId = `${useId()}-story-chapters`;
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -56,13 +56,15 @@ export default function ChapterProgress() {
 
       <div className="gv-chapter-progress__menu" hidden={!open} id={menuId}>
         <ol>
-          {STORY_CHAPTERS.map(({ anchorId, key, navLabel, number }) => (
+          {STORY_CHAPTERS.map(({ anchorId, key, navLabel, number }, index) => (
             <li key={key}>
               <a
                 aria-current={currentChapterId === key ? "step" : undefined}
                 href={`#${anchorId}`}
                 onClick={() => {
-                  setCurrentChapterId(key);
+                  progressRef.current.forceBlackGate = true;
+                  progressRef.current.navigationTargetIndex = index;
+                  progressRef.current.requestStoryFrame?.();
                   setOpen(false);
                   triggerRef.current?.focus();
                 }}

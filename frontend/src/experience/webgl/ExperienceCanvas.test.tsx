@@ -19,6 +19,10 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { SceneProgress } from "@/experience/sceneContextValue";
+import {
+  DEFAULT_STORY_BOUNDARIES,
+  deriveStoryTransitionState,
+} from "@/experience/storyTransition";
 
 interface MockCanvasProps {
   "aria-hidden"?: boolean | "true";
@@ -140,7 +144,16 @@ function createStoryProgressRef(
   storyVisible = true,
 ): MutableRefObject<SceneProgress> {
   return {
-    current: { chapter: 0, story: 0, storyVisible },
+    current: {
+      boundaries: [...DEFAULT_STORY_BOUNDARIES],
+      chapter: 0,
+      direction: 0,
+      forceBlackGate: false,
+      navigationTargetIndex: null,
+      story: 0,
+      storyVisible,
+      transition: deriveStoryTransitionState({ overallProgress: 0 }),
+    },
   };
 }
 

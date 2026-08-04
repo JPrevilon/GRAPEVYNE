@@ -8,6 +8,7 @@ import {
 } from "react";
 import {
   Box3,
+  DoubleSide,
   FrontSide,
   Group,
   Material,
@@ -53,7 +54,10 @@ const MODEL_HEIGHT = 2;
 // The optimized Meshy bottle normalizes to a body radius of about 0.253.
 // Keep the neutral paper mask and exact artwork close to that surface so the
 // label reads as wrapped paper instead of a floating card at quarter angles.
-function cloneRuntimeModel(cachedScene: Object3D): RuntimeModel {
+function cloneRuntimeModel(
+  cachedScene: Object3D,
+  kind: MeshySubjectKind,
+): RuntimeModel {
   const scene = cachedScene.clone(true);
   const materials: RuntimeModel["materials"] = [];
 
@@ -66,6 +70,7 @@ function cloneRuntimeModel(cachedScene: Object3D): RuntimeModel {
     const clonedMaterials = sourceMaterials.map((sourceMaterial) => {
       const material = sourceMaterial.clone();
       const baseOpacity = material.opacity;
+      if (kind === "grapes") material.side = DoubleSide;
       material.transparent = true;
       material.opacity = 0;
       material.needsUpdate = true;
@@ -75,6 +80,7 @@ function cloneRuntimeModel(cachedScene: Object3D): RuntimeModel {
     object.material = Array.isArray(object.material)
       ? clonedMaterials
       : clonedMaterials[0];
+    if (kind === "grapes") object.frustumCulled = false;
     object.castShadow = false;
     object.receiveShadow = false;
   });
@@ -189,7 +195,10 @@ export default function MeshySubjectModel({
       : MESHY_GRAPE_MODEL_PATHS[tier];
   const { scene: cachedScene } = useGLTF(path, false, false);
   const groupRef = useRef<Group>(null);
-  const runtime = useMemo(() => cloneRuntimeModel(cachedScene), [cachedScene]);
+  const runtime = useMemo(
+    () => cloneRuntimeModel(cachedScene, kind),
+    [cachedScene, kind],
+  );
 
   useEffect(() => {
     let handshakeMesh: Mesh | undefined;

@@ -12,7 +12,6 @@ import { Link, useNavigate } from "react-router-dom";
 import ChapterProgress from "@/components/navigation/ChapterProgress";
 import DirectoryHeading from "@/components/typography/DirectoryHeading";
 import { WineBottleFallback } from "@/components/wine/WineBottleFallback";
-import StoryMediaStack from "@/experience/StoryMediaStack";
 import { CINEMATIC_MEDIA } from "@/experience/media";
 import {
   STORY_CHAPTERS,
@@ -23,7 +22,15 @@ import {
 import { getNextStoryChapter } from "@/experience/storySubject";
 import { useScene } from "@/experience/useScene";
 import WebGLExperience from "@/experience/webgl/WebGLExperience";
+import {
+  getStoryInteractionRegionStyle,
+  isInteractiveStoryChapter,
+} from "@/experience/webgl/storyInteractionRegions";
 import { STORY_SUBJECT_FALLBACK_PATHS } from "@/experience/webgl/modelAssets";
+import {
+  createSubjectInteractionState,
+  type InteractiveStorySubject,
+} from "@/experience/webgl/subjectInteraction";
 import { useAuth } from "@/features/auth/useAuth";
 import { useScrollStory } from "@/hooks/useScrollStory";
 import { useStoryStaticMode } from "@/hooks/useStoryStaticMode";
@@ -31,6 +38,10 @@ import "@/styles/scroll-story.css";
 
 const LazyBottleInspectorModal = lazy(
   () => import("@/experience/webgl/BottleInspectorModal"),
+);
+const LazyStoryMediaStack = lazy(() => import("@/experience/StoryMediaStack"));
+const LazyStorySubjectInteractionControl = lazy(
+  () => import("@/experience/webgl/StorySubjectInteractionControl"),
 );
 
 function discoverHref(query: string) {
@@ -254,7 +265,10 @@ function StoryFallbackSubjects({
 export default function HomePage() {
   const storyRef = useRef<HTMLDivElement>(null);
   const inspectButtonRef = useRef<HTMLButtonElement | null>(null);
+  const subjectInteractionRef = useRef(createSubjectInteractionState());
   const [webglReady, setWebglReady] = useState(false);
+  const [interactiveSubject, setInteractiveSubject] =
+    useState<InteractiveStorySubject | null>(null);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const { currentChapterId } = useScene();
   const { reason: staticReason, staticMode } = useStoryStaticMode();
@@ -265,7 +279,7 @@ export default function HomePage() {
   const handleInspectorClose = useCallback(() => {
     setInspectorOpen(false);
   }, []);
-  useScrollStory(storyRef);
+  useScrollStory(storyRef, undefined, !staticMode);
 
   return (
     <div
@@ -275,10 +289,23 @@ export default function HomePage() {
     >
       {!staticMode ? (
         <div aria-hidden="true" className="gv-story-stage" data-story-stage>
-          <StoryMediaStack />
+          <Suspense fallback={null}>
+            <LazyStoryMediaStack
+              interactionRef={subjectInteractionRef}
+              onInteractiveSubjectChange={setInteractiveSubject}
+            />
+          </Suspense>
           <StoryFallbackSubjects currentChapter={currentChapterId} hidden={webglReady} />
-          <WebGLExperience onReadyChange={setWebglReady} />
+          <WebGLExperience
+            interactionRef={subjectInteractionRef}
+            onReadyChange={setWebglReady}
+          />
           <div className="gv-story-stage__grain" />
+          <div
+            aria-hidden="true"
+            className="gv-story-transition-veil"
+            data-story-transition-veil
+          />
         </div>
       ) : null}
 
@@ -295,6 +322,22 @@ export default function HomePage() {
           >
             <div className="gv-story-chapter__panel">
               {staticMode ? <StaticChapterVisual chapter={chapter} /> : null}
+              {!staticMode &&
+              webglReady &&
+              interactiveSubject === chapter.subject &&
+              currentChapterId === chapter.key ? (
+                <Suspense fallback={null}>
+                  <LazyStorySubjectInteractionControl
+                    interactionRef={subjectInteractionRef}
+                    regionStyle={
+                      isInteractiveStoryChapter(chapter.key)
+                        ? getStoryInteractionRegionStyle(chapter.key)
+                        : undefined
+                    }
+                    subject={interactiveSubject}
+                  />
+                </Suspense>
+              ) : null}
               <div className="gv-story-chapter__content">
                 <ChapterHeading chapter={chapter} />
                 <p className="gv-story-supporting-line">{chapter.supportingLine}</p>

@@ -4,6 +4,8 @@
 
 :root {
   color-scheme: dark;
+  --color-navigation-black: #000000;
+  --color-story-transition: var(--color-navigation-black);
   --color-obsidian: #070706;
   --color-cellar-black: #100e0c;
   --color-oxblood: #4a1020;
@@ -821,7 +823,7 @@ h2 em {
   gap: clamp(1rem, 3vw, 2.5rem);
   padding: 0.65rem var(--page-gutter);
   border-bottom: var(--border-hairline);
-  background: rgba(7, 7, 6, 0.88);
+  background: var(--color-navigation-black);
   backdrop-filter: blur(20px);
 }
 

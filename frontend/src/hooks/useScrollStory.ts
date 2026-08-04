@@ -141,6 +141,7 @@ function findActiveSection(sections: readonly StorySection[]) {
 export function useScrollStory(
   rootRef: RefObject<HTMLElement>,
   loadRuntime: ScrollRuntimeLoader = loadScrollRuntimeDependencies,
+  transitionCoordinated = false,
 ) {
   const {
     prefersReducedMotion,
@@ -178,6 +179,7 @@ export function useScrollStory(
         : undefined;
 
     let activeChapter: StoryChapter | undefined;
+    let boundariesDirty = true;
     let disposed = false;
     let hashFrame: number | undefined;
     let runtimeGeneration = 0;
@@ -188,8 +190,49 @@ export function useScrollStory(
     };
     let scrollToSection = scrollSectionNatively;
 
+    const syncStoryBoundaries = () => {
+      if (!boundariesDirty) return;
+
+      const viewportHeight = window.innerHeight || 1;
+      const rootBounds = root.getBoundingClientRect();
+      const storyDistance = rootBounds.height - viewportHeight;
+      const boundaries = sceneProgress.boundaries ?? [];
+      sceneProgress.boundaries = boundaries;
+
+      boundaries.length = sections.length;
+      if (!Number.isFinite(storyDistance) || storyDistance <= 1) {
+        sections.forEach((_, index) => {
+          boundaries[index] = index / Math.max(sections.length - 1, 1);
+        });
+        boundariesDirty = false;
+        return;
+      }
+
+      const rootDocumentTop = window.scrollY + rootBounds.top;
+      sections.forEach(({ element }, index) => {
+        if (index === 0) {
+          boundaries[index] = 0;
+          return;
+        }
+
+        const bounds = element.getBoundingClientRect();
+        const activationScroll = window.scrollY + bounds.top - viewportHeight / 2;
+        const measured = clampProgress(
+          (activationScroll - rootDocumentTop) / storyDistance,
+        );
+        const previous = boundaries[index - 1] ?? 0;
+        boundaries[index] = Math.max(previous + 0.0001, measured);
+      });
+      boundariesDirty = false;
+    };
+
     const setStoryProgress = (progress: number) => {
-      sceneProgress.story = clampProgress(progress);
+      const nextProgress = clampProgress(progress);
+      const delta = nextProgress - sceneProgress.story;
+      if (Math.abs(delta) > 0.00001) {
+        sceneProgress.direction = delta > 0 ? 1 : -1;
+      }
+      sceneProgress.story = nextProgress;
       root.style.setProperty(
         STORY_PROGRESS_PROPERTY,
         formatProgress(sceneProgress.story),
@@ -224,10 +267,14 @@ export function useScrollStory(
     const activateChapter = (chapter: StoryChapter) => {
       if (activeChapter === chapter || disposed) return;
       activeChapter = chapter;
-      setCurrentChapterId(chapter);
+      // In full-motion mode StoryMediaStack is the only React chapter owner.
+      // Native/GSAP callbacks publish progress candidates, while the central
+      // black-gate coordinator commits the chapter only during full cover.
+      if (!transitionCoordinated) setCurrentChapterId(chapter);
     };
 
     const syncNativeMetrics = (preferredSection?: StorySection) => {
+      syncStoryBoundaries();
       const activeSection = preferredSection ?? findActiveSection(sections);
       const viewportHeight = window.innerHeight || 1;
       const rootBounds = root.getBoundingClientRect();
@@ -262,6 +309,10 @@ export function useScrollStory(
       const scheduleMetricsUpdate = () => {
         if (stopped || animationFrame !== undefined) return;
         animationFrame = window.requestAnimationFrame(updateMetrics);
+      };
+      const handleResize = () => {
+        boundariesDirty = true;
+        scheduleMetricsUpdate();
       };
 
       const observer =
@@ -310,14 +361,15 @@ export function useScrollStory(
       window.addEventListener("scroll", scheduleMetricsUpdate, {
         passive: true,
       });
-      window.addEventListener("resize", scheduleMetricsUpdate);
+      window.addEventListener("resize", handleResize);
+      syncStoryBoundaries();
       syncNativeMetrics();
 
       return once(() => {
         stopped = true;
         observer?.disconnect();
         window.removeEventListener("scroll", scheduleMetricsUpdate);
-        window.removeEventListener("resize", scheduleMetricsUpdate);
+        window.removeEventListener("resize", handleResize);
 
         if (animationFrame !== undefined) {
           window.cancelAnimationFrame(animationFrame);
@@ -448,7 +500,11 @@ export function useScrollStory(
                 onLeaveBack: () => {
                   setStoryVisible(false);
                 },
-                onRefresh: ({ progress }) => setStoryProgress(progress),
+                onRefresh: ({ progress }) => {
+                  boundariesDirty = true;
+                  syncStoryBoundaries();
+                  setStoryProgress(progress);
+                },
                 onUpdate: ({ progress }) => setStoryProgress(progress),
                 start: "top top",
                 trigger: root,
@@ -607,18 +663,31 @@ export function useScrollStory(
       void startDesktopRuntime(generation);
     };
 
-    const syncHashTarget = () => {
-      if (!window.location.hash) return;
-
-      let anchorId: string;
-      try {
-        anchorId = decodeURIComponent(window.location.hash.slice(1));
-      } catch {
-        return;
+    const syncHashTarget = (event?: Event) => {
+      let target: StorySection | undefined;
+      if (!window.location.hash) {
+        // Clearing a chapter hash through browser history means returning to
+        // the original, unfragmented Home URL. Preserve ordinary scroll
+        // restoration on initial mount, but make that history step explicit.
+        if (!event) return;
+        target = sections[0];
+      } else {
+        let anchorId: string;
+        try {
+          anchorId = decodeURIComponent(window.location.hash.slice(1));
+        } catch {
+          return;
+        }
+        target = sections.find(({ element }) => element.id === anchorId);
       }
-
-      const target = sections.find(({ element }) => element.id === anchorId);
       if (!target) return;
+
+      sceneProgress.forceBlackGate = true;
+      sceneProgress.navigationTargetIndex = sections.indexOf(target);
+      const veilTarget =
+        root.querySelector<HTMLElement>("[data-story-stage]") ?? root;
+      veilTarget.style.setProperty("--story-veil-opacity", "1");
+      sceneProgress.requestStoryFrame?.();
 
       if (hashFrame !== undefined) {
         window.cancelAnimationFrame(hashFrame);
@@ -677,6 +746,9 @@ export function useScrollStory(
         chapterProgressSnapshot,
       );
       sceneProgress.chapter = 0;
+      sceneProgress.direction = 0;
+      sceneProgress.forceBlackGate = true;
+      sceneProgress.navigationTargetIndex = null;
       sceneProgress.story = 0;
       setStoryVisible(false);
       setHomepageActive(false);
@@ -688,6 +760,7 @@ export function useScrollStory(
     rootRef,
     setCurrentChapterId,
     setHomepageActive,
+    transitionCoordinated,
   ]);
 
   return STORY_CHAPTER_KEYS;

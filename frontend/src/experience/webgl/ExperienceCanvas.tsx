@@ -16,8 +16,13 @@ import type { SceneProgress } from "@/experience/sceneContextValue";
 
 import SceneRig from "./SceneRig";
 import type { WebGLQualityTier } from "./qualityTier";
+import {
+  createSubjectInteractionState,
+  type SubjectInteractionState,
+} from "./subjectInteraction";
 
 interface ExperienceCanvasProps {
+  interactionRef?: MutableRefObject<SubjectInteractionState>;
   onFailure: (error: unknown) => void;
   onReady: () => void;
   onRecovering: () => void;
@@ -26,7 +31,7 @@ interface ExperienceCanvasProps {
 }
 
 interface RendererLifecycleProps
-  extends Omit<ExperienceCanvasProps, "onReady"> {
+  extends Omit<ExperienceCanvasProps, "interactionRef" | "onReady"> {
   frameHandshakeRef: MutableRefObject<boolean>;
 }
 
@@ -167,6 +172,7 @@ function RendererLifecycle({
 }
 
 export default function ExperienceCanvas({
+  interactionRef,
   onFailure,
   onReady,
   onRecovering,
@@ -174,6 +180,8 @@ export default function ExperienceCanvas({
   tier,
 }: ExperienceCanvasProps) {
   const frameHandshakeRef = useRef(false);
+  const fallbackInteractionRef = useRef(createSubjectInteractionState());
+  const resolvedInteractionRef = interactionRef ?? fallbackInteractionRef;
   const handleCreated = useCallback(
     ({ gl }: RootState) => {
       configureRenderer(gl, tier);
@@ -218,6 +226,7 @@ export default function ExperienceCanvas({
       <Suspense fallback={null}>
         <SceneRig
           frameHandshakeRef={frameHandshakeRef}
+          interactionRef={resolvedInteractionRef}
           onRendered={onReady}
           tier={tier}
         />

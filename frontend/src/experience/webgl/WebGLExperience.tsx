@@ -6,6 +6,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type MutableRefObject,
 } from "react";
 
 import { useScene } from "@/experience/useScene";
@@ -15,12 +16,17 @@ import {
   type WebGLCapabilityDecision,
 } from "./qualityTier";
 import { WebGLBoundary } from "./WebGLBoundary";
+import {
+  createSubjectInteractionState,
+  type SubjectInteractionState,
+} from "./subjectInteraction";
 
 const LazyExperienceCanvas = lazy(() => import("./ExperienceCanvas"));
 
 type WebGLStatus = "loading" | "ready" | "recovering" | "failed";
 
 interface WebGLExperienceProps {
+  interactionRef?: MutableRefObject<SubjectInteractionState>;
   onReadyChange: (ready: boolean) => void;
 }
 
@@ -54,6 +60,7 @@ function markPerformance(name: string, detail?: unknown) {
 }
 
 export default function WebGLExperience({
+  interactionRef,
   onReadyChange,
 }: WebGLExperienceProps) {
   const { homepageActive, prefersReducedMotion, progressRef } = useScene();
@@ -61,6 +68,7 @@ export default function WebGLExperience({
   const [activated, setActivated] = useState(false);
   const [status, setStatus] = useState<WebGLStatus>("loading");
   const decisionRef = useRef<WebGLCapabilityDecision | null>(null);
+  const fallbackInteractionRef = useRef(createSubjectInteractionState());
   const layerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -221,6 +229,7 @@ export default function WebGLExperience({
       >
         <Suspense fallback={null}>
           <LazyExperienceCanvas
+            interactionRef={interactionRef ?? fallbackInteractionRef}
             onFailure={markFailed}
             onReady={markReady}
             onRecovering={markRecovering}

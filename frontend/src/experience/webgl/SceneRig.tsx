@@ -1,20 +1,34 @@
 import { useFrame } from "@react-three/fiber";
-import { type MutableRefObject, useEffect, useRef } from "react";
-import { Group, MathUtils, PointLight, SpotLight, type Mesh } from "three";
+import { type MutableRefObject, useRef } from "react";
+import {
+  Box3,
+  type Camera,
+  Group,
+  Matrix4,
+  MathUtils,
+  PointLight,
+  SpotLight,
+  Vector3,
+  type Mesh,
+} from "three";
 
 import { useScene } from "@/experience/useScene";
 import {
-  SUBJECT_HIDDEN_AT,
-  deriveStorySubjectFrame,
-  getNextStoryChapter,
-} from "@/experience/storySubject";
+  STORY_CHAPTERS,
+  STORY_SUBJECTS,
+  type StoryChapter,
+} from "@/experience/storyChapters";
 
 import MeshySubjectModel from "./MeshySubjectModel";
-import { getClampedPointerRotation } from "./pointerMotion";
 import type { WebGLQualityTier } from "./qualityTier";
+import {
+  createSubjectInteractionState,
+  type SubjectInteractionState,
+} from "./subjectInteraction";
 
 interface SceneRigProps {
   frameHandshakeRef: MutableRefObject<boolean>;
+  interactionRef?: MutableRefObject<SubjectInteractionState>;
   onRendered: () => void;
   tier: WebGLQualityTier;
 }
@@ -23,6 +37,19 @@ interface SubjectTarget {
   position: [number, number, number];
   rotation: [number, number, number];
   scale: number;
+}
+
+interface ProjectionScratch {
+  box: Box3;
+  element: HTMLButtonElement | null;
+  group: Group | null;
+  height: number;
+  inverseWorld: Matrix4;
+  left: number;
+  localCorners: Vector3[];
+  projectedCorners: Vector3[];
+  top: number;
+  width: number;
 }
 
 const DESKTOP_TARGETS = {
@@ -78,7 +105,7 @@ const FALLBACK_TARGET: SubjectTarget = {
 };
 
 function getTarget(
-  chapter: string,
+  chapter: StoryChapter,
   tier: WebGLQualityTier,
 ): SubjectTarget {
   const targets = tier === "high" ? DESKTOP_TARGETS : MOBILE_TARGETS;
@@ -94,12 +121,132 @@ function applyTargetPosition(group: Group | null, target: SubjectTarget) {
   group.rotation.z = target.rotation[2];
 }
 
+function createProjectionScratch(): ProjectionScratch {
+  return {
+    box: new Box3(),
+    element: null,
+    group: null,
+    height: -1,
+    inverseWorld: new Matrix4(),
+    left: -1,
+    localCorners: Array.from({ length: 8 }, () => new Vector3()),
+    projectedCorners: Array.from({ length: 8 }, () => new Vector3()),
+    top: -1,
+    width: -1,
+  };
+}
+
+function setBoxCorners(box: Box3, corners: Vector3[]) {
+  const { max, min } = box;
+  corners[0]?.set(min.x, min.y, min.z);
+  corners[1]?.set(min.x, min.y, max.z);
+  corners[2]?.set(min.x, max.y, min.z);
+  corners[3]?.set(min.x, max.y, max.z);
+  corners[4]?.set(max.x, min.y, min.z);
+  corners[5]?.set(max.x, min.y, max.z);
+  corners[6]?.set(max.x, max.y, min.z);
+  corners[7]?.set(max.x, max.y, max.z);
+}
+
+function projectInteractionBounds(
+  camera: Camera,
+  element: HTMLButtonElement,
+  group: Group,
+  scratch: ProjectionScratch,
+  viewportHeight: number,
+  viewportWidth: number,
+) {
+  if (scratch.element !== element || scratch.group !== group) {
+    group.updateWorldMatrix(true, true);
+    scratch.box.setFromObject(group, true);
+    if (scratch.box.isEmpty()) return;
+
+    setBoxCorners(scratch.box, scratch.localCorners);
+    scratch.inverseWorld.copy(group.matrixWorld).invert();
+    for (const corner of scratch.localCorners) {
+      corner.applyMatrix4(scratch.inverseWorld);
+    }
+    scratch.element = element;
+    scratch.group = group;
+    scratch.height = -1;
+    scratch.left = -1;
+    scratch.top = -1;
+    scratch.width = -1;
+  }
+
+  group.updateWorldMatrix(true, false);
+
+  let minimumX = 1;
+  let maximumX = -1;
+  let minimumY = 1;
+  let maximumY = -1;
+  for (let index = 0; index < scratch.localCorners.length; index += 1) {
+    const corner = scratch.projectedCorners[index];
+    const localCorner = scratch.localCorners[index];
+    if (!corner || !localCorner) continue;
+    corner.copy(localCorner).applyMatrix4(group.matrixWorld);
+    corner.project(camera);
+    minimumX = Math.min(minimumX, corner.x);
+    maximumX = Math.max(maximumX, corner.x);
+    minimumY = Math.min(minimumY, corner.y);
+    maximumY = Math.max(maximumY, corner.y);
+  }
+
+  const rawLeft = ((minimumX + 1) / 2) * viewportWidth;
+  const rawRight = ((maximumX + 1) / 2) * viewportWidth;
+  const rawTop = ((1 - maximumY) / 2) * viewportHeight;
+  const rawBottom = ((1 - minimumY) / 2) * viewportHeight;
+  const horizontalPadding = MathUtils.clamp(
+    (rawRight - rawLeft) * 0.28,
+    18,
+    52,
+  );
+  const verticalPadding = MathUtils.clamp(
+    (rawBottom - rawTop) * 0.1,
+    14,
+    36,
+  );
+  const left = Math.max(0, rawLeft - horizontalPadding);
+  const top = Math.max(0, rawTop - verticalPadding);
+  const width = Math.max(
+    44,
+    Math.min(viewportWidth - left, rawRight - rawLeft + 2 * horizontalPadding),
+  );
+  const height = Math.max(
+    44,
+    Math.min(viewportHeight - top, rawBottom - rawTop + 2 * verticalPadding),
+  );
+
+  if (
+    Math.abs(left - scratch.left) < 0.5 &&
+    Math.abs(top - scratch.top) < 0.5 &&
+    Math.abs(width - scratch.width) < 0.5 &&
+    Math.abs(height - scratch.height) < 0.5
+  ) {
+    return;
+  }
+
+  scratch.left = left;
+  scratch.top = top;
+  scratch.width = width;
+  scratch.height = height;
+  element.style.left = `${left}px`;
+  element.style.right = "auto";
+  element.style.top = `${top}px`;
+  element.style.width = `${width}px`;
+  element.style.height = `${height}px`;
+  element.dataset.projectedHitArea = "true";
+}
+
 export default function SceneRig({
   frameHandshakeRef,
+  interactionRef,
   onRendered,
   tier,
 }: SceneRigProps) {
-  const { chapter, progressRef } = useScene();
+  const { progressRef } = useScene();
+  const fallbackInteractionRef = useRef(createSubjectInteractionState());
+  const resolvedInteractionRef = interactionRef ?? fallbackInteractionRef;
   const bottleGroup = useRef<Group>(null);
   const grapeGroup = useRef<Group>(null);
   const bottleOpacity = useRef(0);
@@ -107,48 +254,30 @@ export default function SceneRig({
   const keyLight = useRef<SpotLight>(null);
   const fillLight = useRef<PointLight>(null);
   const shadow = useRef<Mesh>(null);
-  const pointerYaw = useRef(0);
-  const pointerPitch = useRef(0);
+  const projectionScratch = useRef(createProjectionScratch());
 
-  useEffect(() => {
-    if (tier !== "high") return undefined;
-    const finePointer = window.matchMedia?.("(pointer: fine)").matches ?? false;
-    if (!finePointer) return undefined;
-
-    const handlePointerMove = (event: PointerEvent) => {
-      if (event.pointerType === "touch" || document.hidden) return;
-      const pointer = getClampedPointerRotation(
-        event.clientX,
-        event.clientY,
-        window.innerWidth,
-        window.innerHeight,
-      );
-      pointerYaw.current = pointer.yaw;
-      pointerPitch.current = pointer.pitch;
-    };
-
-    window.addEventListener("pointermove", handlePointerMove, { passive: true });
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      pointerYaw.current = 0;
-      pointerPitch.current = 0;
-    };
-  }, [tier]);
-
-  useFrame((_state, rawDelta) => {
-    const progress = MathUtils.clamp(progressRef.current.chapter, 0, 1);
-    const frame = deriveStorySubjectFrame(chapter, progress);
-    const nextChapter = getNextStoryChapter(chapter);
-    const targetChapter = progress >= SUBJECT_HIDDEN_AT ? nextChapter : chapter;
+  useFrame((state, rawDelta) => {
+    const transition = progressRef.current.transition;
+    const lowerChapter = STORY_CHAPTERS[transition.lowerIndex]?.key ?? "hero";
+    const upperChapter = STORY_CHAPTERS[transition.upperIndex]?.key ?? lowerChapter;
+    const lowerSubject = STORY_SUBJECTS[lowerChapter];
+    const upperSubject = STORY_SUBJECTS[upperChapter];
+    const targetChapter = STORY_CHAPTERS[transition.ownerIndex]?.key ?? lowerChapter;
     const target = getTarget(targetChapter, tier);
     const delta = Math.min(rawDelta, 1 / 20);
 
     bottleOpacity.current =
-      (frame.current === "bottle" ? frame.currentOpacity : 0) +
-      (frame.next === "bottle" ? frame.nextOpacity : 0);
+      (lowerSubject === "bottle" ? transition.lowerOpacity : 0) +
+      (transition.upperIndex !== transition.lowerIndex &&
+      upperSubject === "bottle"
+        ? transition.upperOpacity
+        : 0);
     grapeOpacity.current =
-      (frame.current === "grapes" ? frame.currentOpacity : 0) +
-      (frame.next === "grapes" ? frame.nextOpacity : 0);
+      (lowerSubject === "grapes" ? transition.lowerOpacity : 0) +
+      (transition.upperIndex !== transition.lowerIndex &&
+      upperSubject === "grapes"
+        ? transition.upperOpacity
+        : 0);
 
     // Group visibility is owned by this parent frame so a final demand-render
     // can hide a subject synchronously even when child material callbacks were
@@ -168,26 +297,44 @@ export default function SceneRig({
     applyTargetPosition(bottleGroup.current, target);
     applyTargetPosition(grapeGroup.current, target);
 
+    const bottleInteraction = resolvedInteractionRef.current.bottle;
+    bottleInteraction.renderedPitch = MathUtils.damp(
+      bottleInteraction.renderedPitch,
+      bottleInteraction.targetPitch,
+      bottleInteraction.dragging ? 12 : 8,
+      delta,
+    );
+    bottleInteraction.renderedYaw = MathUtils.damp(
+      bottleInteraction.renderedYaw,
+      bottleInteraction.targetYaw,
+      bottleInteraction.dragging ? 12 : 8,
+      delta,
+    );
     if (bottleGroup.current) {
-      bottleGroup.current.rotation.x = MathUtils.damp(
-        bottleGroup.current.rotation.x,
-        target.rotation[0] + pointerPitch.current,
-        6,
-        delta,
-      );
-      bottleGroup.current.rotation.y = MathUtils.damp(
-        bottleGroup.current.rotation.y,
-        target.rotation[1] + pointerYaw.current,
-        6,
-        delta,
-      );
+      bottleGroup.current.rotation.x =
+        target.rotation[0] + bottleInteraction.renderedPitch;
+      bottleGroup.current.rotation.y =
+        target.rotation[1] + bottleInteraction.renderedYaw;
     }
 
+    const grapeInteraction = resolvedInteractionRef.current.grapes;
+    grapeInteraction.renderedPitch = MathUtils.damp(
+      grapeInteraction.renderedPitch,
+      grapeInteraction.targetPitch,
+      grapeInteraction.dragging ? 12 : 8,
+      delta,
+    );
+    grapeInteraction.renderedYaw = MathUtils.damp(
+      grapeInteraction.renderedYaw,
+      grapeInteraction.targetYaw,
+      grapeInteraction.dragging ? 12 : 8,
+      delta,
+    );
     if (grapeGroup.current) {
-      const scrollRotation = frame.current === "grapes" ? progress * 0.14 : 0;
+      grapeGroup.current.rotation.x =
+        target.rotation[0] + grapeInteraction.renderedPitch;
       grapeGroup.current.rotation.y =
-        target.rotation[1] + scrollRotation;
-      grapeGroup.current.rotation.x = target.rotation[0] - progress * 0.035;
+        target.rotation[1] + grapeInteraction.renderedYaw;
     }
 
     const visibleOpacity = Math.max(
@@ -218,6 +365,24 @@ export default function SceneRig({
         ? shadow.current.material[0]
         : shadow.current.material;
       if (material) material.opacity = 0.22 * bottleOpacity.current;
+    }
+
+    const control = resolvedInteractionRef.current.control;
+    if (control.element && control.subject) {
+      const group =
+        control.subject === "bottle"
+          ? bottleGroup.current
+          : grapeGroup.current;
+      if (group) {
+        projectInteractionBounds(
+          state.camera,
+          control.element,
+          group,
+          projectionScratch.current,
+          state.size.height,
+          state.size.width,
+        );
+      }
     }
   });
 

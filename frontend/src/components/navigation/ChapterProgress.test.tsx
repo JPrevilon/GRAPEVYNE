@@ -1,20 +1,34 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import type { MutableRefObject } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { SceneProvider } from "@/experience";
+import type { SceneProgress } from "@/experience/sceneContextValue";
+import { useScene } from "@/experience/useScene";
 
 import ChapterProgress from "./ChapterProgress";
+
+let capturedProgressRef: MutableRefObject<SceneProgress> | undefined;
+
+function ProgressProbe() {
+  capturedProgressRef = useScene().progressRef;
+  return null;
+}
 
 function renderProgress() {
   return render(
     <SceneProvider>
+      <ProgressProbe />
       <ChapterProgress />
     </SceneProvider>,
   );
 }
 
 describe("ChapterProgress", () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    capturedProgressRef = undefined;
+  });
 
   it("keeps a compact accessible current-state indicator", () => {
     renderProgress();
@@ -53,14 +67,16 @@ describe("ChapterProgress", () => {
     links.forEach((link) => expect(link).not.toHaveAttribute("tabindex", "-1"));
   });
 
-  it("updates the compact state and closes the chapter menu on activation", () => {
+  it("requests a black-gated hash jump and closes the chapter menu", () => {
     renderProgress();
     fireEvent.click(screen.getByRole("button", { name: /ALL CHAPTERS/i }));
     fireEvent.click(screen.getByRole("link", { name: "TASTE ATLAS" }));
 
     expect(
-      screen.getByRole("progressbar", { name: "08 of 09 — TASTE ATLAS" }),
-    ).toHaveAttribute("aria-valuenow", "8");
+      screen.getByRole("progressbar", { name: "01 of 09 — DISCOVERY" }),
+    ).toHaveAttribute("aria-valuenow", "1");
+    expect(capturedProgressRef?.current.forceBlackGate).toBe(true);
+    expect(capturedProgressRef?.current.navigationTargetIndex).toBe(7);
     expect(screen.queryAllByRole("link")).toHaveLength(0);
     expect(screen.getByRole("button", { name: /ALL CHAPTERS/i })).toHaveAttribute(
       "aria-expanded",

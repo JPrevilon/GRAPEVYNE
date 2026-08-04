@@ -2,13 +2,28 @@ import { type PropsWithChildren, useMemo, useRef, useState } from "react";
 
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
-import { SceneContext } from "./sceneContextValue";
+import { SceneContext, type SceneProgress } from "./sceneContextValue";
 import { STORY_CHAPTER_KEYS, type StoryChapter } from "./storyChapters";
+import { deriveStoryTransitionState } from "./storyTransition";
 
 export function SceneProvider({ children }: PropsWithChildren) {
   const [chapter, setChapter] = useState<StoryChapter>("hero");
   const [homepageActive, setHomepageActive] = useState(false);
-  const progressRef = useRef({ chapter: 0, story: 0, storyVisible: false });
+  const progressRef = useRef<SceneProgress>({
+    boundaries: STORY_CHAPTER_KEYS.map((_, index) =>
+      index / Math.max(STORY_CHAPTER_KEYS.length - 1, 1),
+    ),
+    chapter: 0,
+    direction: 0,
+    forceBlackGate: true,
+    navigationTargetIndex: null,
+    story: 0,
+    storyVisible: false,
+    transition: deriveStoryTransitionState({
+      lowerReady: false,
+      overallProgress: 0,
+    }),
+  });
   const prefersReducedMotion = useReducedMotion();
 
   const value = useMemo(

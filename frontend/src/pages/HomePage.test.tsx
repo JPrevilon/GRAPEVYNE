@@ -1,8 +1,18 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, useLocation } from "react-router-dom";
 
-import { SceneProvider, STORY_CHAPTERS } from "@/experience";
+import { SceneProvider, STORY_CHAPTERS, useScene } from "@/experience";
+import type { StoryChapter } from "@/experience/storyChapters";
+import type { InteractiveStorySubject } from "@/experience/webgl/subjectInteraction";
 
 import HomePage from "./HomePage";
 
@@ -13,6 +23,13 @@ const auth = vi.hoisted(() => ({
 
 const presentation = vi.hoisted(() => ({
   staticMode: false,
+}));
+
+const cinematic = vi.hoisted(() => ({
+  onReadyChange: null as ((ready: boolean) => void) | null,
+  onSubjectChange: null as
+    | ((subject: "bottle" | "grapes" | null) => void)
+    | null,
 }));
 
 vi.mock("@/features/auth/useAuth", () => ({
@@ -31,10 +48,26 @@ vi.mock("@/hooks/useStoryStaticMode", () => ({
   }),
 }));
 vi.mock("@/experience/StoryMediaStack", () => ({
-  default: () => <div aria-hidden="true" data-testid="story-media-stack" />,
+  default: ({
+    onInteractiveSubjectChange,
+  }: {
+    onInteractiveSubjectChange: (
+      subject: InteractiveStorySubject | null,
+    ) => void;
+  }) => {
+    cinematic.onSubjectChange = onInteractiveSubjectChange;
+    return <div aria-hidden="true" data-testid="story-media-stack" />;
+  },
 }));
 vi.mock("@/experience/webgl/WebGLExperience", () => ({
-  default: () => <div aria-hidden="true" data-testid="webgl-shell" />,
+  default: ({
+    onReadyChange,
+  }: {
+    onReadyChange: (ready: boolean) => void;
+  }) => {
+    cinematic.onReadyChange = onReadyChange;
+    return <div aria-hidden="true" data-testid="webgl-shell" />;
+  },
 }));
 vi.mock("@/experience/webgl/BottleInspectorModal", () => ({
   default: ({ onClose }: { onClose: () => void }) => (
@@ -49,6 +82,13 @@ function LocationProbe() {
   return <output data-testid="location">{`${location.pathname}${location.search}`}</output>;
 }
 
+let setTestChapter: ((chapter: StoryChapter) => void) | undefined;
+
+function SceneControlProbe() {
+  setTestChapter = useScene().setCurrentChapterId;
+  return null;
+}
+
 function renderHome() {
   return render(
     <MemoryRouter
@@ -58,6 +98,7 @@ function renderHome() {
       <SceneProvider>
         <HomePage />
         <LocationProbe />
+        <SceneControlProbe />
       </SceneProvider>
     </MemoryRouter>,
   );
@@ -70,9 +111,12 @@ describe("HomePage cinematic story", () => {
     auth.isAuthenticated = false;
     auth.isLoading = false;
     presentation.staticMode = false;
+    cinematic.onReadyChange = null;
+    cinematic.onSubjectChange = null;
+    setTestChapter = undefined;
   });
 
-  it("renders one fixed visual stage and nine stable semantic chapter steps", () => {
+  it("renders one fixed visual stage and nine stable semantic chapter steps", async () => {
     const { container } = renderHome();
     const chapters = Array.from(
       container.querySelectorAll<HTMLElement>("section[data-story-chapter]"),
@@ -80,7 +124,7 @@ describe("HomePage cinematic story", () => {
 
     expect(container.querySelectorAll("[data-story-stage]")).toHaveLength(1);
     expect(container.querySelectorAll("[data-story-track]")).toHaveLength(1);
-    expect(screen.getByTestId("story-media-stack")).toBeInTheDocument();
+    expect(await screen.findByTestId("story-media-stack")).toBeInTheDocument();
     expect(screen.getByTestId("webgl-shell")).toBeInTheDocument();
     expect(chapters).toHaveLength(9);
     expect(chapters.map(({ id }) => id)).toEqual(
@@ -181,5 +225,60 @@ describe("HomePage cinematic story", () => {
     expect(container.querySelectorAll("canvas")).toHaveLength(0);
     expect(container.querySelectorAll(".gv-story-static-subject--bottle")).toHaveLength(3);
     expect(container.querySelectorAll(".gv-story-static-subject--grapes")).toHaveLength(1);
+    expect(container.querySelectorAll("[data-story-subject-control]")).toHaveLength(0);
+  });
+
+  it("mounts one live semantic control only for the approved stable subject chapters", async () => {
+    const { container } = renderHome();
+    act(() => cinematic.onReadyChange?.(true));
+    await waitFor(() => expect(cinematic.onSubjectChange).not.toBeNull());
+
+    const approved = [
+      ["hero", "bottle", "Rotate the GRAPEVYNE wine bottle"],
+      ["discovery", "grapes", "Rotate the GRAPEVYNE grape cluster"],
+      ["portal", "bottle", "Rotate the GRAPEVYNE wine bottle"],
+      ["atlas", "bottle", "Rotate the GRAPEVYNE wine bottle"],
+    ] as const;
+    for (const [chapter, subject, accessibleName] of approved) {
+      act(() => {
+        setTestChapter?.(chapter);
+        cinematic.onSubjectChange?.(subject);
+      });
+      expect(
+        await screen.findByRole("button", { name: accessibleName }),
+      ).toHaveAttribute("data-interaction-subject", subject);
+      expect(
+        container.querySelectorAll("[data-story-subject-control]"),
+      ).toHaveLength(1);
+    }
+
+    for (const chapter of ["match", "taste", "cellar", "memory", "finale"] as const) {
+      act(() => {
+        setTestChapter?.(chapter);
+        cinematic.onSubjectChange?.(null);
+      });
+      await waitFor(() => {
+        expect(
+          container.querySelectorAll("[data-story-subject-control]"),
+        ).toHaveLength(0);
+      });
+    }
+  });
+
+  it("removes the live interaction control when WebGL is recovering or failed", async () => {
+    const { container } = renderHome();
+    await waitFor(() => expect(cinematic.onSubjectChange).not.toBeNull());
+    act(() => {
+      cinematic.onReadyChange?.(true);
+      cinematic.onSubjectChange?.("bottle");
+    });
+    expect(
+      await screen.findByRole("button", {
+        name: "Rotate the GRAPEVYNE wine bottle",
+      }),
+    ).toBeInTheDocument();
+
+    act(() => cinematic.onReadyChange?.(false));
+    expect(container.querySelectorAll("[data-story-subject-control]")).toHaveLength(0);
   });
 });

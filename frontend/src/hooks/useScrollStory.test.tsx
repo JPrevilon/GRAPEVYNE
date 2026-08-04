@@ -119,13 +119,15 @@ function installMediaQueries(matches: (query: string) => boolean) {
 }
 
 function StoryHarness({
+  coordinated = false,
   loadRuntime,
 }: {
+  coordinated?: boolean;
   loadRuntime: ScrollRuntimeLoader;
 }) {
   const rootRef = useRef<HTMLElement>(null);
 
-  useScrollStory(rootRef, loadRuntime);
+  useScrollStory(rootRef, loadRuntime, coordinated);
 
   return (
     <main
@@ -133,6 +135,12 @@ function StoryHarness({
       ref={rootRef}
       style={{ "--story-progress": "0.25" } as CSSProperties}
     >
+      {coordinated ? (
+        <div
+          data-story-stage
+          style={{ "--story-veil-opacity": "0.25" } as CSSProperties}
+        />
+      ) : null}
       {CHAPTERS.map((chapter, index) => (
         <section
           data-story-chapter={chapter}
@@ -363,6 +371,35 @@ afterEach(() => {
 });
 
 describe("useScrollStory native runtime", () => {
+  it("publishes candidates without competing while the lazy media coordinator is suspended", () => {
+    sceneMock.prefersReducedMotion = true;
+    installMediaQueries(() => false);
+    const loadRuntime = vi.fn() as unknown as ScrollRuntimeLoader;
+    const view = render(
+      <StoryHarness coordinated loadRuntime={loadRuntime} />,
+    );
+    const root = screen.getByTestId("story-root");
+    expect(root.querySelector("[data-story-media-stack]")).toBeNull();
+    const discovery = root.querySelector('[data-story-chapter="discovery"]');
+    const observer = IntersectionObserverMock.instances[0];
+    expect(discovery).not.toBeNull();
+    vi.spyOn(root, "getBoundingClientRect").mockReturnValue({
+      ...getEntry(root).boundingClientRect,
+      bottom: 900,
+      height: 1000,
+      top: -100,
+      y: -100,
+    });
+    vi.spyOn(discovery!, "getBoundingClientRect").mockReturnValue(
+      getEntry(discovery!).boundingClientRect,
+    );
+
+    observer?.callback([getEntry(discovery!)], observer);
+    expect(sceneMock.setCurrentChapterId).not.toHaveBeenCalled();
+    expect(sceneMock.progressRef.current.story).toBeGreaterThan(0);
+    view.unmount();
+  });
+
   it("restores a direct chapter hash and handles later history navigation", () => {
     sceneMock.prefersReducedMotion = true;
     installMediaQueries(() => false);
@@ -388,6 +425,40 @@ describe("useScrollStory native runtime", () => {
 
     expect(scrollIntoView).toHaveBeenCalledTimes(2);
     expect(sceneMock.setCurrentChapterId).toHaveBeenLastCalledWith("atlas");
+
+    window.history.pushState(null, "", "/");
+    fireEvent(window, new Event("hashchange"));
+    const clearedHashFrame = requestAnimationFrameMock.mock.calls.at(-1)?.[0];
+    act(() => clearedHashFrame?.(performance.now()));
+
+    expect(scrollIntoView).toHaveBeenCalledTimes(3);
+    expect(sceneMock.setCurrentChapterId).toHaveBeenLastCalledWith("hero");
+    view.unmount();
+  });
+
+  it("closes the actual stage veil before a coordinated direct-hash scroll", () => {
+    sceneMock.prefersReducedMotion = true;
+    installMediaQueries(() => false);
+    window.history.replaceState(null, "", "/#chapter-05-portal");
+    const loadRuntime = vi.fn() as unknown as ScrollRuntimeLoader;
+
+    const view = render(
+      <StoryHarness coordinated loadRuntime={loadRuntime} />,
+    );
+    const stage = view.container.querySelector<HTMLElement>(
+      "[data-story-stage]",
+    );
+
+    expect(stage).not.toBeNull();
+    expect(stage?.style.getPropertyValue("--story-veil-opacity")).toBe("1");
+    expect(
+      view.container.querySelector("[data-story-media-stack]"),
+    ).toBeNull();
+    expect(sceneMock.progressRef.current).toMatchObject({
+      forceBlackGate: true,
+      navigationTargetIndex: 4,
+    });
+
     view.unmount();
   });
 

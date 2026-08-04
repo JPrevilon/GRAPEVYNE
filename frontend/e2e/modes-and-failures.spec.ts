@@ -53,6 +53,7 @@ test("reduced motion keeps the complete story semantic and poster-based", async 
   await expect(page.locator("[data-story-stage]")).toHaveCount(0);
   await expect(page.locator("video")).toHaveCount(0);
   await expect(page.locator("canvas")).toHaveCount(0);
+  await expect(page.locator("[data-story-subject-control]")).toHaveCount(0);
   await expect(page.locator(".gv-story-static-visual picture")).toHaveCount(9);
   await expect(page.locator("#chapter-09-finale")).toBeAttached();
   await expect(page.locator("#chapter-08-atlas img")).toHaveAttribute(
@@ -128,6 +129,7 @@ test("disabled WebGL and Save-Data retain approved static subjects without heavy
   await expect(page.locator("#chapter-03-match .gv-story-static-subject")).toHaveCount(0);
   await expect(page.locator("video")).toHaveCount(0);
   await expect(page.locator("canvas")).toHaveCount(0);
+  await expect(page.locator("[data-story-subject-control]")).toHaveCount(0);
   await expect(page.locator("[data-webgl-status]")).toHaveCount(0);
   const resources = await resourceNames(page);
   expect(resources.some((name) => /ExperienceCanvas|\.glb(?:$|\?)/i.test(name))).toBe(false);
@@ -178,6 +180,7 @@ test("software WebGL renderers retain the CSS bottle without 3D requests", async
     "0",
   );
   await expect(page.locator("canvas")).toHaveCount(0);
+  await expect(page.locator("[data-story-subject-control]")).toHaveCount(0);
   const resources = await resourceNames(page);
   expect(
     resources.some((name) =>

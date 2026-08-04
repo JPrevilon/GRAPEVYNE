@@ -12,17 +12,3 @@ export function getScrubTime(progress: number, duration: number) {
     Math.max(0, duration - SEEK_END_EPSILON_SECONDS)
   );
 }
-
-export function getMediaTransition(progress: number) {
-  const value = clampStoryProgress(progress);
-  const fadeOut = clampStoryProgress((value - 0.7) / 0.14);
-  const fadeIn = clampStoryProgress((value - 0.9) / 0.1);
-  const currentOpacity = 1 - fadeOut;
-  const nextOpacity = fadeIn;
-  const veilOpacity = Math.min(
-    clampStoryProgress((value - 0.7) / 0.16),
-    1 - clampStoryProgress((value - 0.86) / 0.14),
-  );
-
-  return { currentOpacity, nextOpacity, veilOpacity };
-}

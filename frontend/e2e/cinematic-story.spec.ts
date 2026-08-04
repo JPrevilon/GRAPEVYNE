@@ -205,6 +205,52 @@ async function moveToChapterProgress(
   );
 }
 
+async function moveToMeasuredBoundaryProgress(
+  page: Page,
+  boundaryIndex: number,
+  transitionProgress: number,
+): Promise<void> {
+  await page.locator(".gv-story").evaluate(
+    (root, request) => {
+      const sections = [
+        ...root.querySelectorAll<HTMLElement>("[data-story-chapter]"),
+      ];
+      const viewportHeight = window.innerHeight || 1;
+      const rootBounds = root.getBoundingClientRect();
+      const rootTop = window.scrollY + rootBounds.top;
+      const distance = Math.max(rootBounds.height - viewportHeight, 1);
+      const anchors = sections.map((section, index) => {
+        if (index === 0) return 0;
+        const bounds = section.getBoundingClientRect();
+        const activation =
+          window.scrollY + bounds.top - viewportHeight / 2;
+        return Math.min(1, Math.max(0, (activation - rootTop) / distance));
+      });
+      const lower = anchors[request.boundaryIndex] ?? 0;
+      const upper = anchors[request.boundaryIndex + 1] ?? 1;
+      const segmentProgress = 0.7 + 0.3 * request.transitionProgress;
+      window.scrollTo({
+        behavior: "instant",
+        top: rootTop +
+          distance * (lower + (upper - lower) * segmentProgress),
+      });
+    },
+    { boundaryIndex, transitionProgress },
+  );
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        let frames = 4;
+        const settle = () => {
+          frames -= 1;
+          if (frames === 0) resolve();
+          else window.requestAnimationFrame(settle);
+        };
+        window.requestAnimationFrame(settle);
+      }),
+  );
+}
+
 async function preparedMediaKeys(page: Page): Promise<string[]> {
   return page
     .locator('[data-media-prepared="true"]')
@@ -478,21 +524,20 @@ test("scroll progress deterministically scrubs forward and backward through the 
     }
   }
 
-  // The center-band IntersectionObserver intentionally hands ownership to the
-  // next chapter just before 1.0, so 0.99 is not a stable current-chapter E2E
-  // coordinate. The pure transition boundary at 1.0 is covered by unit tests.
-  for (const progress of [0.68, 0.74, 0.82, 0.86, 0.9, 0.95]) {
-    await moveToChapterProgress(page, "hero", progress);
+  // Resolve the measured 01→02 boundary instead of assuming a fixed absolute
+  // section coordinate across viewports and font metrics.
+  for (const progress of [0.2, 0.39, 0.5, 0.58, 0.8, 0.95]) {
+    await moveToMeasuredBoundaryProgress(page, 0, progress);
     const opacity = await subjectOpacities(page);
     expect(
       opacity.bottle > 0.001 && opacity.grapes > 0.001,
       `bottle/grapes overlap at hero progress ${progress}`,
     ).toBe(false);
 
-    if (progress === 0.86) {
+    if (progress === 0.58) {
       expect(opacity.bottle).toBeLessThanOrEqual(0.001);
       expect(opacity.grapes).toBeLessThanOrEqual(0.001);
-      expect(opacity.veil).toBeGreaterThan(0.7);
+      expect(opacity.veil).toBeGreaterThan(0.99);
     }
   }
 
