@@ -108,6 +108,8 @@ def test_runtime_and_cache_contracts_are_bounded_and_non_secret():
     assert "style-src-attr 'unsafe-inline'" in content_security_policy
     assert "media-src 'self'" in content_security_policy
     assert "media-src 'self' blob:" not in content_security_policy
+    assert "connect-src 'self' blob:" in content_security_policy
+    assert "connect-src 'self' data:" not in content_security_policy
     assert "worker-src 'none'" in content_security_policy
     assert "worker-src 'self'" not in content_security_policy
     assert "worker-src 'none' blob:" not in content_security_policy
