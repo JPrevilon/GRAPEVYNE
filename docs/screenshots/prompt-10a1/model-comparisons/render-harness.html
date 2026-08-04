@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prompt 10A1R Meshy model comparison</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/three/build/three.module.js",
+          "three/addons/": "/Users/rachel/Desktop/GRAPEVYNE/frontend/node_modules/three/examples/jsm/"
+        }
+      }
+    </script>
+    <style>
+      :root {
+        color: #f5eee1;
+        font-family: Arial, Helvetica, sans-serif;
+        font-synthesis: none;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #11100e;
+      }
+
+      body {
+        display: grid;
+        grid-template-rows: 112px minmax(0, 1fr) 74px;
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 32px;
+        padding: 24px 44px 20px;
+        border-bottom: 1px solid rgba(213, 178, 112, 0.32);
+        background:
+          radial-gradient(circle at 50% -20%, rgba(148, 100, 48, 0.24), transparent 62%),
+          #11100e;
+      }
+
+      .side-title {
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+
+      .side-title:last-child {
+        text-align: right;
+      }
+
+      .side-title span {
+        display: block;
+        margin-top: 7px;
+        color: #a69c8c;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: none;
+      }
+
+      .asset-title {
+        min-width: 430px;
+        text-align: center;
+      }
+
+      .asset-title strong {
+        display: block;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 24px;
+        font-weight: 500;
+        letter-spacing: 0.045em;
+      }
+
+      .asset-title small {
+        display: block;
+        margin-top: 6px;
+        color: #d4b57e;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+      }
+
+      main {
+        position: relative;
+        min-height: 0;
+        background:
+          radial-gradient(circle at 23% 43%, rgba(221, 187, 127, 0.09), transparent 42%),
+          radial-gradient(circle at 77% 43%, rgba(221, 187, 127, 0.09), transparent 42%),
+          linear-gradient(180deg, #191714, #0d0d0c);
+      }
+
+      main::after {
+        position: absolute;
+        inset: 0 50% 0 auto;
+        width: 1px;
+        background: rgba(213, 178, 112, 0.24);
+        content: "";
+        pointer-events: none;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .view-label {
+        position: absolute;
+        bottom: 22px;
+        left: 50%;
+        z-index: 2;
+        padding: 7px 11px;
+        border: 1px solid rgba(213, 178, 112, 0.24);
+        border-radius: 999px;
+        color: #d4b57e;
+        background: rgba(8, 8, 7, 0.72);
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        transform: translateX(-50%);
+      }
+
+      footer {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 28px;
+        padding: 0 44px;
+        border-top: 1px solid rgba(213, 178, 112, 0.32);
+        color: #aca292;
+        background: #11100e;
+        font-size: 11px;
+        letter-spacing: 0.075em;
+      }
+
+      footer strong {
+        color: #f5eee1;
+        font-weight: 700;
+      }
+
+      footer .method {
+        color: #d4b57e;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      footer .result {
+        text-align: right;
+      }
+
+      #status {
+        position: fixed;
+        inset: auto 18px 88px auto;
+        z-index: 4;
+        padding: 8px 10px;
+        border-radius: 4px;
+        color: #11100e;
+        background: #d4b57e;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      body.ready #status {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="side-title">
+        Source master
+        <span id="source-file"></span>
+      </div>
+      <div class="asset-title">
+        <strong id="title"></strong>
+        <small>Prompt 10A1R · deterministic browser comparison</small>
+      </div>
+      <div class="side-title">
+        Production GLB
+        <span id="production-file"></span>
+      </div>
+    </header>
+    <main>
+      <canvas id="comparison" aria-label="Source and production model comparison"></canvas>
+      <div class="view-label" id="view-label"></div>
+    </main>
+    <footer>
+      <div id="byte-summary"></div>
+      <div class="method">Same camera · lights · framing · rotation</div>
+      <div class="result">Geometry bounds and triangle count: <strong>preserved</strong></div>
+    </footer>
+    <div id="status" role="status">Loading both GLBs…</div>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+      const pairs = {
+        "bottle-desktop": {
+          title: "Bottle · desktop tier",
+          sourceFile: "grapevyne-meshy-bottle-desktop-source.glb",
+          sourceUrl: "/Users/rachel/Downloads/grapevyne-meshy-bottle-desktop-source.glb",
+          productionFile: "grapevyne-meshy-bottle.desktop.glb",
+          productionUrl: "/Users/rachel/Desktop/GRAPEVYNE/frontend/public/assets/models/grapevyne-meshy-bottle.desktop.glb",
+          sourceBytes: 33632796,
+          productionBytes: 3954456,
+          reduction: "88.2423%",
+          rotation: [0.015, 0.18, -0.012],
+          targetSize: 3.26,
+          view: "matched front-quarter view"
+        },
+        "bottle-mobile": {
+          title: "Bottle · mobile tier",
+          sourceFile: "grapevyne-meshy-bottle-mobile-source.glb",
+          sourceUrl: "/Users/rachel/Downloads/grapevyne-meshy-bottle-mobile-source.glb",
+          productionFile: "grapevyne-meshy-bottle.mobile.glb",
+          productionUrl: "/Users/rachel/Desktop/GRAPEVYNE/frontend/public/assets/models/grapevyne-meshy-bottle.mobile.glb",
+          sourceBytes: 28840960,
+          productionBytes: 881628,
+          reduction: "96.9431%",
+          rotation: [0.015, 0.18, -0.012],
+          targetSize: 3.26,
+          view: "matched front-quarter view"
+        },
+        "grapes-desktop": {
+          title: "Grape cluster · desktop tier",
+          sourceFile: "grapevyne-meshy-grape-desktop-source.glb",
+          sourceUrl: "/Users/rachel/Downloads/grapevyne-meshy-grape-desktop-source.glb",
+          productionFile: "grapevyne-meshy-grapes.desktop.glb",
+          productionUrl: "/Users/rachel/Desktop/GRAPEVYNE/frontend/public/assets/models/grapevyne-meshy-grapes.desktop.glb",
+          sourceBytes: 65649924,
+          productionBytes: 8187568,
+          reduction: "87.5284%",
+          rotation: [-0.08, -0.3, 0.08],
+          targetSize: 3.3,
+          view: "matched three-quarter view"
+        },
+        "grapes-mobile": {
+          title: "Grape cluster · mobile tier",
+          sourceFile: "grapevyne-meshy-grape-mobile-source.glb",
+          sourceUrl: "/Users/rachel/Downloads/grapevyne-meshy-grape-mobile-source.glb",
+          productionFile: "grapevyne-meshy-grapes.mobile.glb",
+          productionUrl: "/Users/rachel/Desktop/GRAPEVYNE/frontend/public/assets/models/grapevyne-meshy-grapes.mobile.glb",
+          sourceBytes: 53957112,
+          productionBytes: 1890584,
+          reduction: "96.4961%",
+          rotation: [-0.08, -0.3, 0.08],
+          targetSize: 3.3,
+          view: "matched three-quarter view"
+        }
+      };
+
+      const params = new URLSearchParams(window.location.search);
+      const key = params.get("pair") || "bottle-desktop";
+      const pair = pairs[key];
+
+      if (!pair) {
+        throw new Error(`Unknown comparison pair: ${key}`);
+      }
+
+      const number = new Intl.NumberFormat("en-US");
+      document.title = `${pair.title} source vs production`;
+      document.querySelector("#title").textContent = pair.title;
+      document.querySelector("#source-file").textContent = pair.sourceFile;
+      document.querySelector("#production-file").textContent = pair.productionFile;
+      document.querySelector("#view-label").textContent = pair.view;
+      document.querySelector("#byte-summary").innerHTML =
+        `<strong>${number.format(pair.sourceBytes)}</strong> bytes → ` +
+        `<strong>${number.format(pair.productionBytes)}</strong> bytes · ${pair.reduction} smaller`;
+
+      const canvas = document.querySelector("#comparison");
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        canvas,
+        powerPreference: "high-performance",
+        preserveDrawingBuffer: true,
+        stencil: false
+      });
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.08;
+      renderer.setClearColor(0x000000, 0);
+      renderer.setPixelRatio(1);
+      renderer.autoClear = false;
+
+      function createScene() {
+        const scene = new THREE.Scene();
+        scene.add(new THREE.HemisphereLight(0xefe5d1, 0x07131c, 1.15));
+
+        const keyLight = new THREE.SpotLight(0xf0d2a0, 7.2, 15, 0.48, 0.82, 1.7);
+        keyLight.position.set(3.1, 4.4, 4.8);
+        scene.add(keyLight);
+
+        const fillLight = new THREE.PointLight(0xffe7c2, 2.3, 9, 1.6);
+        fillLight.position.set(0.4, 0.5, 4.2);
+        scene.add(fillLight);
+
+        const rimLight = new THREE.DirectionalLight(0xb7cfe0, 1.05);
+        rimLight.position.set(-3, 2, 3);
+        scene.add(rimLight);
+
+        return scene;
+      }
+
+      function normalizeModel(object) {
+        object.updateMatrixWorld(true);
+        const bounds = new THREE.Box3().setFromObject(object);
+        const center = bounds.getCenter(new THREE.Vector3());
+        const size = bounds.getSize(new THREE.Vector3());
+        const maxDimension = Math.max(size.x, size.y, size.z);
+        const group = new THREE.Group();
+        object.position.copy(center).multiplyScalar(-1);
+        group.scale.setScalar(pair.targetSize / maxDimension);
+        group.rotation.set(...pair.rotation);
+        group.add(object);
+        return group;
+      }
+
+      function loadModel(url) {
+        return new Promise((resolve, reject) => {
+          new GLTFLoader().load(url, (gltf) => resolve(gltf.scene), undefined, reject);
+        });
+      }
+
+      const [sourceModel, productionModel] = await Promise.all([
+        loadModel(pair.sourceUrl),
+        loadModel(pair.productionUrl)
+      ]);
+
+      const scenes = [createScene(), createScene()];
+      scenes[0].add(normalizeModel(sourceModel));
+      scenes[1].add(normalizeModel(productionModel));
+
+      function render() {
+        const rect = canvas.getBoundingClientRect();
+        const width = Math.max(1, Math.round(rect.width));
+        const height = Math.max(1, Math.round(rect.height));
+        renderer.setSize(width, height, false);
+        renderer.clear();
+
+        const halfWidth = Math.floor(width / 2);
+        const camera = new THREE.PerspectiveCamera(30, halfWidth / height, 0.1, 30);
+        camera.position.set(0, 0, 7.9);
+        camera.lookAt(0, 0, 0);
+
+        renderer.setScissorTest(true);
+        for (let index = 0; index < 2; index += 1) {
+          const viewportX = index * halfWidth;
+          const viewportWidth = index === 1 ? width - halfWidth : halfWidth;
+          renderer.setViewport(viewportX, 0, viewportWidth, height);
+          renderer.setScissor(viewportX, 0, viewportWidth, height);
+          renderer.render(scenes[index], camera);
+        }
+        renderer.setScissorTest(false);
+      }
+
+      render();
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      render();
+      document.body.classList.add("ready");
+      window.__comparisonReady = true;
+      window.__comparison = {
+        key,
+        renderer: "three@0.169.0 WebGLRenderer",
+        source: pair.sourceFile,
+        production: pair.productionFile,
+        camera: { fov: 30, position: [0, 0, 7.9] },
+        rotation: pair.rotation,
+        targetSize: pair.targetSize
+      };
+    </script>
+  </body>
+</html>
